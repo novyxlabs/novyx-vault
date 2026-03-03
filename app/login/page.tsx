@@ -29,6 +29,8 @@ export default function LoginPage() {
           password,
         });
         if (error) throw error;
+        // Provision Novyx key (fire-and-forget, idempotent)
+        fetch("/api/auth/provision", { method: "POST" }).catch(() => {});
         window.location.href = "/";
       } else {
         const { error } = await supabase.auth.signUp({

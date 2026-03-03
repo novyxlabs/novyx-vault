@@ -7,6 +7,7 @@ import {
 } from "@/lib/memory";
 import { getStorage } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 const TASK_REGEX = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/;
 
@@ -47,16 +48,18 @@ async function scanPendingTasks(userId?: string, cookieHeader?: string): Promise
 export async function GET() {
   try {
   const ctx = await getStorageContext();
+  const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+  const nk = apiKey ?? undefined;
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
   const nowISO = now.toISOString();
 
   // Fetch all data in parallel
   const [context, insights, drift, recentMems, taskData] = await Promise.all([
-    getContextNow(),
-    getCortexInsights(5),
-    getMemoryDrift(weekAgo, nowISO),
-    listMemories(undefined, 10, 0, ctx.userId),
+    getContextNow(nk),
+    getCortexInsights(5, nk),
+    getMemoryDrift(weekAgo, nowISO, nk),
+    listMemories(undefined, 10, 0, ctx.userId, nk),
     scanPendingTasks(ctx.userId, ctx.cookieHeader),
   ]);
 

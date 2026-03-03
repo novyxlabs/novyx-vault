@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { getStorage } from "@/lib/storage";
 import { rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 interface ClipRemixRequest {
   clipText: string;
@@ -95,6 +96,7 @@ export async function POST(req: NextRequest) {
   // Read voice samples from note files
   let ctx;
   try { ctx = await getStorageContext(); } catch (e) { if (e instanceof Response) return e; throw e; }
+  const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
   const storage = getStorage(ctx.userId, ctx.cookieHeader);
   const samples: string[] = [];
   for (const notePath of sampleNotePaths.slice(0, 5)) {
@@ -203,7 +205,8 @@ export async function POST(req: NextRequest) {
     rememberExchange(
       clipText.slice(0, 300),
       `Remixed content: ${parsed.title}`,
-      ctx.userId
+      ctx.userId,
+      apiKey ?? undefined
     ).catch(() => {});
 
     return new Response(JSON.stringify(parsed), {

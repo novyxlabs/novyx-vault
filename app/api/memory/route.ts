@@ -1,16 +1,18 @@
 import { NextRequest } from "next/server";
 import { listMemories, forgetMemory, rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 export async function GET(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     const { searchParams } = req.nextUrl;
     const query = searchParams.get("q") || undefined;
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
-    const result = await listMemories(query, limit, offset, ctx.userId);
+    const result = await listMemories(query, limit, offset, ctx.userId, apiKey ?? undefined);
     return Response.json(result);
   } catch (e) {
     if (e instanceof Response) return e;
@@ -21,12 +23,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     const { observation } = await req.json();
     if (!observation || typeof observation !== "string" || !observation.trim()) {
       return Response.json({ error: "Missing observation text" }, { status: 400 });
     }
 
-    await rememberExchange(observation.trim(), undefined, ctx.userId);
+    await rememberExchange(observation.trim(), undefined, ctx.userId, apiKey ?? undefined);
     return Response.json({ success: true });
   } catch (e) {
     if (e instanceof Response) return e;
@@ -36,13 +39,14 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    await getStorageContext();
+    const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     const { id } = await req.json();
     if (!id) {
       return Response.json({ error: "Missing memory id" }, { status: 400 });
     }
 
-    const success = await forgetMemory(id);
+    const success = await forgetMemory(id, apiKey ?? undefined);
     if (!success) {
       return Response.json({ error: "Failed to delete memory" }, { status: 500 });
     }

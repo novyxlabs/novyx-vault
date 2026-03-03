@@ -1,12 +1,14 @@
 import { NextRequest } from "next/server";
 import { getCortexInsights, runCortex } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 export async function GET(req: NextRequest) {
   try {
-    await getStorageContext();
+    const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     const limit = parseInt(req.nextUrl.searchParams.get("limit") || "20", 10);
-    const result = await getCortexInsights(limit);
+    const result = await getCortexInsights(limit, apiKey ?? undefined);
     return Response.json(result);
   } catch (e) {
     if (e instanceof Response) return e;
@@ -16,8 +18,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST() {
   try {
-    await getStorageContext();
-    const result = await runCortex();
+    const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    const result = await runCortex(apiKey ?? undefined);
     if (!result) {
       return Response.json({ error: "Cortex unavailable" }, { status: 500 });
     }

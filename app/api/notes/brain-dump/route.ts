@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 interface BrainDumpRequest {
   rawText: string;
@@ -48,6 +49,7 @@ function buildSystemPrompt(existingNotes: string[]): string {
 export async function POST(req: NextRequest) {
   let ctx;
   try { ctx = await getStorageContext(); } catch (e) { if (e instanceof Response) return e; throw e; }
+  const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
 
   let body: BrainDumpRequest;
   try {
@@ -184,7 +186,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save a memory of this brain dump (fire-and-forget)
-    rememberExchange(rawText.slice(0, 500), parsed.title, ctx.userId).catch(() => {});
+    rememberExchange(rawText.slice(0, 500), parsed.title, ctx.userId, apiKey ?? undefined).catch(() => {});
 
     return new Response(JSON.stringify(parsed), {
       status: 200,

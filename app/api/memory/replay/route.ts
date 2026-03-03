@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server";
 import { getReplayTimeline, getMemoryDrift } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 export async function GET(req: NextRequest) {
   try {
-    await getStorageContext();
+    const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     const { searchParams } = req.nextUrl;
     const type = searchParams.get("type") || "timeline";
 
@@ -14,12 +16,12 @@ export async function GET(req: NextRequest) {
       if (!from || !to) {
         return Response.json({ error: "Missing from/to params" }, { status: 400 });
       }
-      const drift = await getMemoryDrift(from, to);
+      const drift = await getMemoryDrift(from, to, apiKey ?? undefined);
       return Response.json({ drift });
     }
 
     const limit = parseInt(searchParams.get("limit") || "100", 10);
-    const result = await getReplayTimeline(limit);
+    const result = await getReplayTimeline(limit, apiKey ?? undefined);
     return Response.json(result);
   } catch (e) {
     if (e instanceof Response) return e;

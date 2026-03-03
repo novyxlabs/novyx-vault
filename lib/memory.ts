@@ -1,13 +1,12 @@
 import { Novyx } from "novyx";
+import { getNovyxForKey } from "./novyx";
 
-let client: Novyx | null = null;
-
-function getClient(): Novyx | null {
-  if (client) return client;
-  const apiKey = process.env.NOVYX_MEMORY_API_KEY;
-  if (!apiKey) return null;
-  client = new Novyx({ apiKey });
-  return client;
+/** Resolve a Novyx client from an explicit apiKey or fall back to env var */
+function resolveClient(apiKey?: string): Novyx | null {
+  if (apiKey) return getNovyxForKey(apiKey);
+  // Desktop fallback
+  const envKey = process.env.NOVYX_MEMORY_API_KEY;
+  return envKey ? getNovyxForKey(envKey) : null;
 }
 
 /** Build the user-scoping tag for multi-user memory isolation */
@@ -22,8 +21,8 @@ function withUserTag(userId?: string, extraTags?: string[]): string[] {
   return tags;
 }
 
-export async function recallMemories(query: string, userId?: string): Promise<string[]> {
-  const nx = getClient();
+export async function recallMemories(query: string, userId?: string, apiKey?: string): Promise<string[]> {
+  const nx = resolveClient(apiKey);
   if (!nx) return [];
   try {
     const tags = userTag(userId);
@@ -37,9 +36,10 @@ export async function recallMemories(query: string, userId?: string): Promise<st
 export async function rememberExchange(
   userMessage: string,
   aiResponse?: string,
-  userId?: string
+  userId?: string,
+  apiKey?: string
 ): Promise<void> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return;
   try {
     const tags = userTag(userId);
@@ -67,9 +67,10 @@ export async function listMemories(
   query?: string,
   limit = 50,
   offset = 0,
-  userId?: string
+  userId?: string,
+  apiKey?: string
 ): Promise<{ memories: MemoryItem[]; total: number }> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return { memories: [], total: 0 };
   try {
     const tags = userTag(userId);
@@ -105,8 +106,8 @@ export async function listMemories(
   }
 }
 
-export async function forgetMemory(id: string): Promise<boolean> {
-  const nx = getClient();
+export async function forgetMemory(id: string, apiKey?: string): Promise<boolean> {
+  const nx = resolveClient(apiKey);
   if (!nx) return false;
   try {
     return await nx.forget(id);
@@ -124,9 +125,10 @@ export interface InsightItem {
 }
 
 export async function getCortexInsights(
-  limit = 20
+  limit = 20,
+  apiKey?: string
 ): Promise<{ insights: InsightItem[]; total: number }> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return { insights: [], total: 0 };
   try {
     const results = await nx.cortexInsights({ limit });
@@ -145,13 +147,13 @@ export async function getCortexInsights(
   }
 }
 
-export async function runCortex(): Promise<{
+export async function runCortex(apiKey?: string): Promise<{
   consolidated: number;
   boosted: number;
   decayed: number;
   insights_generated: number;
 } | null> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
     return await nx.cortexRun();
@@ -182,11 +184,11 @@ export interface KGEdge {
   confidence: number;
 }
 
-export async function getKnowledgeGraph(): Promise<{
+export async function getKnowledgeGraph(apiKey?: string): Promise<{
   nodes: KGNode[];
   edges: KGEdge[];
 }> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return { nodes: [], edges: [] };
   try {
     const [entityResult, tripleResult] = await Promise.all([
@@ -223,9 +225,10 @@ export interface ReplayTimelineEntry {
 }
 
 export async function getReplayTimeline(
-  limit = 100
+  limit = 100,
+  apiKey?: string
 ): Promise<{ entries: ReplayTimelineEntry[]; total: number }> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return { entries: [], total: 0 };
   try {
     const result = await nx.replayTimeline({ limit });
@@ -258,9 +261,10 @@ export interface DriftAnalysis {
 
 export async function getMemoryDrift(
   from: string,
-  to: string
+  to: string,
+  apiKey?: string
 ): Promise<DriftAnalysis | null> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
     const result = await nx.replayDrift(from, to);
@@ -293,9 +297,10 @@ export interface AuditEntry {
 }
 
 export async function getAuditLog(
-  limit = 50
+  limit = 50,
+  apiKey?: string
 ): Promise<AuditEntry[]> {
-  const nx = getClient();
+  const nx = resolveClient(apiKey);
   if (!nx) return [];
   try {
     const entries = await nx.audit({ limit });
@@ -310,8 +315,8 @@ export async function getAuditLog(
   }
 }
 
-export async function getMemoryUsage(): Promise<Record<string, unknown> | null> {
-  const nx = getClient();
+export async function getMemoryUsage(apiKey?: string): Promise<Record<string, unknown> | null> {
+  const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
     return await nx.usage();
@@ -320,8 +325,8 @@ export async function getMemoryUsage(): Promise<Record<string, unknown> | null> 
   }
 }
 
-export async function getContextNow(): Promise<ContextNow | null> {
-  const nx = getClient();
+export async function getContextNow(apiKey?: string): Promise<ContextNow | null> {
+  const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
     const result = await nx.contextNow();

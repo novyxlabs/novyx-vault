@@ -5,6 +5,7 @@ import { readNote, listNotes, type StorageContext } from "@/lib/notes";
 import type { NoteEntry } from "@/lib/notes";
 import { recallMemories, rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -151,6 +152,7 @@ function buildSystemPrompt(
 export async function POST(req: NextRequest) {
   try {
   const ctx = await getStorageContext();
+  const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
   const { messages, noteContext, provider } = (await req.json()) as ChatRequest;
 
   if (!provider?.model) {
@@ -173,7 +175,7 @@ export async function POST(req: NextRequest) {
   const latestUserMessage = [...messages].reverse().find((m) => m.role === "user")?.content || "";
   const [relatedNotes, memories, noteTree] = await Promise.all([
     gatherRelatedNotes(latestUserMessage, noteContext?.path, ctx),
-    recallMemories(latestUserMessage, ctx.userId),
+    recallMemories(latestUserMessage, ctx.userId, apiKey ?? undefined),
     listNotes(undefined, ctx),
   ]);
   const allNoteNames = flattenNoteNames(noteTree);
@@ -281,7 +283,7 @@ export async function POST(req: NextRequest) {
           }
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           // Store user message in memory with AI response as context (fire-and-forget)
-          rememberExchange(latestUserMessage, fullResponse, ctx.userId).catch(() => {});
+          rememberExchange(latestUserMessage, fullResponse, ctx.userId, apiKey ?? undefined).catch(() => {});
         } catch (err) {
           const message = err instanceof Error ? err.message : "Stream error";
           controller.enqueue(

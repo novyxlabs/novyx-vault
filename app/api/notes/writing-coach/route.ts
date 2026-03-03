@@ -3,6 +3,7 @@ import { listMemories, getCortexInsights, getMemoryDrift } from "@/lib/memory";
 import { getStorage } from "@/lib/storage";
 import type { NoteFile } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 const TAG_REGEX = /#[a-zA-Z][\w-]*/g;
 const WIKILINK_REGEX = /\[\[([^\]]+)\]\]/g;
@@ -35,6 +36,8 @@ function extractWikiLinks(content: string): string[] {
 export async function GET() {
   try {
     const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    const nk = apiKey ?? undefined;
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const nowISO = now.toISOString();
@@ -43,9 +46,9 @@ export async function GET() {
     const storage = getStorage(ctx.userId, ctx.cookieHeader);
     const [notes, memoriesResult, insightsResult, driftResult] = await Promise.all([
       storage.walkAllNotes(),
-      listMemories(undefined, 20, 0, ctx.userId).catch(() => ({ memories: [], total: 0 })),
-      getCortexInsights(10).catch(() => ({ insights: [], total: 0 })),
-      getMemoryDrift(weekAgo, nowISO).catch(() => null),
+      listMemories(undefined, 20, 0, ctx.userId, nk).catch(() => ({ memories: [], total: 0 })),
+      getCortexInsights(10, nk).catch(() => ({ insights: [], total: 0 })),
+      getMemoryDrift(weekAgo, nowISO, nk).catch(() => null),
     ]);
 
     // Build per-note metadata

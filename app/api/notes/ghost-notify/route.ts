@@ -4,6 +4,7 @@ import { getStorage } from "@/lib/storage";
 import type { NoteFile } from "@/lib/storage";
 import { recallMemories, listMemories } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 // --- Stop words for concept extraction ---
 
@@ -96,6 +97,7 @@ function formatTimeAgo(date: Date): string {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     const body = await req.json();
     const { content, notePath } = body as {
       content: string;
@@ -117,7 +119,7 @@ export async function POST(req: NextRequest) {
     // Run memory search and note search in parallel
     const storage = getStorage(ctx.userId, ctx.cookieHeader);
     const [memoryResults, noteFiles] = await Promise.all([
-      searchMemories(query, ctx.userId),
+      searchMemories(query, ctx.userId, apiKey ?? undefined),
       storage.walkAllNotes(),
     ]);
 
@@ -201,13 +203,14 @@ export async function POST(req: NextRequest) {
 
 async function searchMemories(
   query: string,
-  userId?: string
+  userId?: string,
+  apiKey?: string
 ): Promise<
   { observation: string; importance: number; created_at: string }[]
 > {
   try {
     // Use listMemories with query to get structured results
-    const { memories } = await listMemories(query, 10, 0, userId);
+    const { memories } = await listMemories(query, 10, 0, userId, apiKey);
     return memories.map((m) => ({
       observation: m.observation,
       importance: m.importance,
@@ -216,7 +219,7 @@ async function searchMemories(
   } catch {
     // Fall back to recallMemories for plain text results
     try {
-      const observations = await recallMemories(query, userId);
+      const observations = await recallMemories(query, userId, apiKey);
       return observations.slice(0, 5).map((obs) => ({
         observation: obs,
         importance: 0.5,

@@ -1,10 +1,12 @@
 import { getContextNow } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 export async function GET() {
   try {
-    await getStorageContext();
-    const result = await getContextNow();
+    const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    const result = await getContextNow(apiKey ?? undefined);
     if (!result) {
       return Response.json({ recent: [], recentCount: 0, upcoming: [], upcomingCount: 0, lastSessionAt: null });
     }

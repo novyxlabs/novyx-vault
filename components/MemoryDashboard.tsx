@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield } from "lucide-react";
+import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock } from "lucide-react";
 import MemoryGraph from "./MemoryGraph";
 
 interface Memory {
@@ -136,8 +136,13 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Usage stats
+  // Usage stats & feature gating
   const [usage, setUsage] = useState<Record<string, unknown> | null>(null);
+  const [gating, setGating] = useState<{
+    tier: string;
+    features: { graph: boolean; cortex: boolean; replay: boolean; insights: boolean; drift: boolean };
+    usage: { memories_count?: number; memories_limit?: number };
+  } | null>(null);
 
   // Insights state
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -325,14 +330,17 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       setReplayFetched(false);
       setAuditFetched(false);
       fetchMemories();
-      fetch("/api/memory/usage").then(r => r.json()).then(d => setUsage(d.usage || null)).catch(() => {});
+      fetch("/api/memory/usage").then(r => r.json()).then(d => {
+        setUsage(d.usage || null);
+        if (d.gating) setGating(d.gating);
+      }).catch(() => {});
       setTimeout(() => searchRef.current?.focus(), 100);
     }
   }, [isOpen, fetchMemories]);
 
   useEffect(() => {
     if (!isOpen) return;
-    if (tab === "insights" && !insightsFetched && !insightsLoading) {
+    if (tab === "insights" && !insightsFetched && !insightsLoading && !isTabLocked("insights")) {
       setInsightsFetched(true);
       fetchInsights();
     }
@@ -340,7 +348,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       setContextFetched(true);
       fetchContext();
     }
-    if (tab === "graph" && !graphFetched && !graphLoading) {
+    if (tab === "graph" && !graphFetched && !graphLoading && !isTabLocked("graph")) {
       setGraphFetched(true);
       fetchGraph();
     }
@@ -348,7 +356,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       setTimelineFetched(true);
       fetchTimeline();
     }
-    if (tab === "replay" && !replayFetched && !replayLoading) {
+    if (tab === "replay" && !replayFetched && !replayLoading && !isTabLocked("replay")) {
       setReplayFetched(true);
       fetchReplay();
     }
@@ -394,6 +402,15 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
 
   if (!isOpen) return null;
 
+  const isTabLocked = (tabId: Tab): boolean => {
+    if (!gating) return false; // No gating data = desktop mode or loading, show all
+    const { features } = gating;
+    if (tabId === "insights") return !features.insights;
+    if (tabId === "graph") return !features.graph;
+    if (tabId === "replay") return !features.replay;
+    return false;
+  };
+
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "memories", label: "Memories", icon: <Brain size={14} /> },
     { id: "timeline", label: "Timeline", icon: <CalendarDays size={14} /> },
@@ -426,8 +443,8 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               {typeof usage.api_calls_used === "number" && typeof usage.api_calls_limit === "number" && (
                 <span>{(usage.api_calls_used as number).toLocaleString()}/{(usage.api_calls_limit as number).toLocaleString()} API calls</span>
               )}
-              {typeof usage.plan === "string" && (
-                <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent">{usage.plan as string}</span>
+              {(gating?.tier || typeof usage.plan === "string") && (
+                <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent capitalize">{gating?.tier || (usage.plan as string)}</span>
               )}
             </div>
           )}
@@ -442,20 +459,26 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
 
       {/* Tabs */}
       <div className="px-4 py-2 border-b border-sidebar-border flex gap-1 overflow-x-auto scrollbar-none">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors ${
-              tab === t.id
-                ? "bg-accent/15 text-accent"
-                : "text-muted hover:text-foreground hover:bg-muted-bg"
-            }`}
-          >
-            {t.icon}
-            {t.label}
-          </button>
-        ))}
+        {tabs.map((t) => {
+          const locked = isTabLocked(t.id);
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors ${
+                tab === t.id
+                  ? "bg-accent/15 text-accent"
+                  : locked
+                    ? "text-muted/50 hover:text-muted hover:bg-muted-bg"
+                    : "text-muted hover:text-foreground hover:bg-muted-bg"
+              }`}
+            >
+              {t.icon}
+              {t.label}
+              {locked && <Lock size={10} className="text-muted/40" />}
+            </button>
+          );
+        })}
       </div>
 
       {/* Search (memories tab only) */}
@@ -475,14 +498,39 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
         </div>
       )}
 
-      {/* Upgrade nudge */}
-      {total >= 4000 && tab === "memories" && (
-        <div className="mx-4 mt-3 px-4 py-2.5 bg-accent/10 border border-accent/20 rounded-lg">
-          <p className="text-xs text-accent">
-            You have {total.toLocaleString()} memories — approaching the free tier limit.
-            Upgrade for unlimited memory.
-          </p>
-        </div>
+      {/* Usage nudge */}
+      {tab === "memories" && gating && gating.usage.memories_limit && gating.usage.memories_count !== undefined && (
+        (() => {
+          const count = gating.usage.memories_count!;
+          const limit = gating.usage.memories_limit!;
+          const pct = Math.min((count / limit) * 100, 100);
+          if (pct < 70) return null;
+          return (
+            <div className="mx-4 mt-3 px-4 py-2.5 bg-accent/10 border border-accent/20 rounded-lg">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs text-accent">
+                  {count.toLocaleString()} / {limit.toLocaleString()} memories used
+                </p>
+                {gating.tier !== "pro" && gating.tier !== "enterprise" && (
+                  <a
+                    href="https://novyx.ai/pricing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-accent hover:underline"
+                  >
+                    Upgrade →
+                  </a>
+                )}
+              </div>
+              <div className="w-full h-1.5 bg-sidebar-border rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${pct >= 90 ? "bg-red-400" : "bg-accent"}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })()
       )}
 
       {/* Content */}
@@ -616,7 +664,22 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
         )}
 
         {/* === INSIGHTS TAB === */}
-        {tab === "insights" && (
+        {tab === "insights" && isTabLocked("insights") && (
+          <div className="flex flex-col items-center justify-center h-full text-muted">
+            <Lock size={48} className="text-accent/20 mb-3" />
+            <p className="text-sm font-medium text-foreground">Cortex Insights</p>
+            <p className="text-xs mt-1">Available on Pro plan</p>
+            <a
+              href="https://novyx.ai/pricing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 px-4 py-2 bg-accent/15 text-accent rounded-md text-xs hover:bg-accent/25 transition-colors"
+            >
+              Upgrade to Pro →
+            </a>
+          </div>
+        )}
+        {tab === "insights" && !isTabLocked("insights") && (
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -689,7 +752,22 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
         )}
 
         {/* === GRAPH TAB === */}
-        {tab === "graph" && (
+        {tab === "graph" && isTabLocked("graph") && (
+          <div className="flex flex-col items-center justify-center h-full text-muted">
+            <Lock size={48} className="text-accent/20 mb-3" />
+            <p className="text-sm font-medium text-foreground">Knowledge Graph</p>
+            <p className="text-xs mt-1">Available on Pro plan</p>
+            <a
+              href="https://novyx.ai/pricing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 px-4 py-2 bg-accent/15 text-accent rounded-md text-xs hover:bg-accent/25 transition-colors"
+            >
+              Upgrade to Pro →
+            </a>
+          </div>
+        )}
+        {tab === "graph" && !isTabLocked("graph") && (
           <div className="w-full h-full">
             {graphLoading ? (
               <div className="flex items-center justify-center h-full">
@@ -780,7 +858,22 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
           </div>
         )}
         {/* === REPLAY TAB === */}
-        {tab === "replay" && (
+        {tab === "replay" && isTabLocked("replay") && (
+          <div className="flex flex-col items-center justify-center h-full text-muted p-4">
+            <Lock size={48} className="text-accent/20 mb-3" />
+            <p className="text-sm font-medium text-foreground">Memory Replay</p>
+            <p className="text-xs mt-1">Available on Pro plan</p>
+            <a
+              href="https://novyx.ai/pricing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 px-4 py-2 bg-accent/15 text-accent rounded-md text-xs hover:bg-accent/25 transition-colors"
+            >
+              Upgrade to Pro →
+            </a>
+          </div>
+        )}
+        {tab === "replay" && !isTabLocked("replay") && (
           <div className="max-w-3xl mx-auto">
             {/* Drift summary card */}
             {driftLoading ? (
