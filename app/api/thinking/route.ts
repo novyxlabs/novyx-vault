@@ -5,10 +5,13 @@ import {
   getMemoryDrift,
 } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 
 export async function GET(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    const nk = apiKey ?? undefined;
     const { searchParams } = req.nextUrl;
     const topic = searchParams.get("topic");
     const days = parseInt(searchParams.get("days") || "30", 10);
@@ -26,9 +29,9 @@ export async function GET(req: NextRequest) {
     const fromISO = from.toISOString();
 
     const [memoriesResult, timelineResult, driftResult] = await Promise.all([
-      listMemories(topic.trim(), 50, 0, ctx.userId),
-      getReplayTimeline(100),
-      getMemoryDrift(fromISO, toISO),
+      listMemories(topic.trim(), 50, 0, ctx.userId, nk),
+      getReplayTimeline(100, nk),
+      getMemoryDrift(fromISO, toISO, nk),
     ]);
 
     // Filter memories to those within the requested timeframe

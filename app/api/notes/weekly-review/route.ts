@@ -6,6 +6,7 @@ import {
 } from "@/lib/memory";
 import { getStorage } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
+import { getUserNovyxKey } from "@/lib/novyx";
 import OpenAI from "openai";
 
 const TASK_REGEX = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/;
@@ -14,6 +15,8 @@ const WIKILINK_RE = /\[\[([^\]]+)\]\]/g;
 export async function GET() {
   try {
   const ctx = await getStorageContext();
+  const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+  const nk = apiKey ?? undefined;
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 86400000);
   const weekAgoISO = weekAgo.toISOString();
@@ -23,9 +26,9 @@ export async function GET() {
   const storage = getStorage(ctx.userId, ctx.cookieHeader);
   const [rawNotes, insights, drift, memData] = await Promise.all([
     storage.walkAllNotes(),
-    getCortexInsights(5),
-    getMemoryDrift(weekAgoISO, nowISO),
-    listMemories(undefined, 10, 0, ctx.userId),
+    getCortexInsights(5, nk),
+    getMemoryDrift(weekAgoISO, nowISO, nk),
+    listMemories(undefined, 10, 0, ctx.userId, nk),
   ]);
 
   // Add wordCount to notes
