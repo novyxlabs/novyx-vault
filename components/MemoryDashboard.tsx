@@ -1,0 +1,933 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield } from "lucide-react";
+import MemoryGraph from "./MemoryGraph";
+
+interface Memory {
+  uuid: string;
+  observation: string;
+  tags: string[];
+  importance: number;
+  confidence: number;
+  created_at: string;
+}
+
+interface Insight {
+  uuid: string;
+  observation: string;
+  tags: string[];
+  importance: number;
+  created_at: string;
+}
+
+interface ContextNow {
+  recent: Memory[];
+  recentCount: number;
+  upcoming: Memory[];
+  upcomingCount: number;
+  lastSessionAt: string | null;
+}
+
+interface KGNode {
+  id: string;
+  name: string;
+  type?: string;
+  tripleCount: number;
+}
+
+interface KGEdge {
+  source: string;
+  target: string;
+  predicate: string;
+  confidence: number;
+}
+
+interface MemoryDashboardProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+type Tab = "memories" | "timeline" | "insights" | "context" | "graph" | "replay" | "audit";
+
+interface ReplayEntry {
+  timestamp: string;
+  operation: string;
+  memory_id?: string;
+  observation_preview?: string;
+  importance?: number;
+}
+
+interface DriftAnalysis {
+  memoryCountFrom: number;
+  memoryCountTo: number;
+  memoryCountDelta: number;
+  avgImportanceFrom: number;
+  avgImportanceTo: number;
+  avgImportanceDelta: number;
+  tagShifts: { tag: string; countFrom: number; countTo: number; delta: number }[];
+  topNewTopics: string[];
+  topLostTopics: string[];
+}
+
+interface AuditEntry {
+  timestamp: string;
+  operation: string;
+  artifact_id?: string;
+}
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = now - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return d.toLocaleDateString("en-US", { weekday: "long" });
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
+}
+
+function groupByDay(memories: Memory[]): { date: string; memories: Memory[] }[] {
+  const groups: Record<string, Memory[]> = {};
+  for (const mem of memories) {
+    const key = new Date(mem.created_at).toLocaleDateString("en-US");
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(mem);
+  }
+  return Object.entries(groups)
+    .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+    .map(([, mems]) => ({
+      date: formatDate(mems[0].created_at),
+      memories: mems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    }));
+}
+
+function importanceLevel(importance: number): { label: string; color: string } {
+  if (importance >= 0.7) return { label: "high", color: "bg-amber-400" };
+  if (importance >= 0.4) return { label: "med", color: "bg-accent" };
+  return { label: "low", color: "bg-muted" };
+}
+
+export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProps) {
+  const [tab, setTab] = useState<Tab>("memories");
+
+  // Memories state
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Usage stats
+  const [usage, setUsage] = useState<Record<string, unknown> | null>(null);
+
+  // Insights state
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [isRunningCortex, setIsRunningCortex] = useState(false);
+  const [cortexResult, setCortexResult] = useState<string | null>(null);
+
+  // Context state
+  const [context, setContext] = useState<ContextNow | null>(null);
+  const [contextLoading, setContextLoading] = useState(false);
+
+  // Graph state
+  const [graphNodes, setGraphNodes] = useState<KGNode[]>([]);
+  const [graphEdges, setGraphEdges] = useState<KGEdge[]>([]);
+  const [graphLoading, setGraphLoading] = useState(false);
+
+  // Timeline state
+  const [timelineMemories, setTimelineMemories] = useState<Memory[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+
+  // Track whether tabs have been fetched (prevents infinite re-fetch loops)
+  const [insightsFetched, setInsightsFetched] = useState(false);
+  const [contextFetched, setContextFetched] = useState(false);
+  const [graphFetched, setGraphFetched] = useState(false);
+  const [timelineFetched, setTimelineFetched] = useState(false);
+  const [replayFetched, setReplayFetched] = useState(false);
+  const [auditFetched, setAuditFetched] = useState(false);
+
+  // Replay state
+  const [replayEntries, setReplayEntries] = useState<ReplayEntry[]>([]);
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [drift, setDrift] = useState<DriftAnalysis | null>(null);
+  const [driftLoading, setDriftLoading] = useState(false);
+
+  // Audit state
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  const fetchMemories = useCallback(async (query?: string) => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (query?.trim()) params.set("q", query.trim());
+      params.set("limit", "50");
+      const res = await fetch(`/api/memory?${params}`);
+      const data = await res.json();
+      setMemories(data.memories || []);
+      setTotal(data.total || 0);
+    } catch {
+      setMemories([]);
+      setTotal(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchInsights = useCallback(async () => {
+    setInsightsLoading(true);
+    try {
+      const res = await fetch("/api/memory/insights");
+      const data = await res.json();
+      setInsights(data.insights || []);
+    } catch {
+      setInsights([]);
+    } finally {
+      setInsightsLoading(false);
+    }
+  }, []);
+
+  const fetchContext = useCallback(async () => {
+    setContextLoading(true);
+    try {
+      const res = await fetch("/api/memory/context");
+      const data = await res.json();
+      setContext(data);
+    } catch {
+      setContext(null);
+    } finally {
+      setContextLoading(false);
+    }
+  }, []);
+
+  const fetchGraph = useCallback(async () => {
+    setGraphLoading(true);
+    try {
+      const res = await fetch("/api/memory/graph");
+      const data = await res.json();
+      setGraphNodes(data.nodes || []);
+      setGraphEdges(data.edges || []);
+    } catch {
+      setGraphNodes([]);
+      setGraphEdges([]);
+    } finally {
+      setGraphLoading(false);
+    }
+  }, []);
+
+  const fetchTimeline = useCallback(async () => {
+    setTimelineLoading(true);
+    try {
+      const res = await fetch("/api/memory?limit=200");
+      const data = await res.json();
+      setTimelineMemories(data.memories || []);
+    } catch {
+      setTimelineMemories([]);
+    } finally {
+      setTimelineLoading(false);
+    }
+  }, []);
+
+  const fetchReplay = useCallback(async () => {
+    setReplayLoading(true);
+    setDriftLoading(true);
+    try {
+      const res = await fetch("/api/memory/replay?limit=100");
+      const data = await res.json();
+      setReplayEntries(data.entries || []);
+    } catch {
+      setReplayEntries([]);
+    } finally {
+      setReplayLoading(false);
+    }
+    // Fetch drift: last 7 days
+    try {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 86400000);
+      const params = new URLSearchParams({
+        type: "drift",
+        from: weekAgo.toISOString(),
+        to: now.toISOString(),
+      });
+      const res = await fetch(`/api/memory/replay?${params}`);
+      const data = await res.json();
+      setDrift(data.drift || null);
+    } catch {
+      setDrift(null);
+    } finally {
+      setDriftLoading(false);
+    }
+  }, []);
+
+  const fetchAudit = useCallback(async () => {
+    setAuditLoading(true);
+    try {
+      const res = await fetch("/api/memory/audit?limit=50");
+      const data = await res.json();
+      setAuditEntries(data.entries || []);
+    } catch {
+      setAuditEntries([]);
+    } finally {
+      setAuditLoading(false);
+    }
+  }, []);
+
+  const handleRunCortex = async () => {
+    setIsRunningCortex(true);
+    setCortexResult(null);
+    try {
+      const res = await fetch("/api/memory/insights", { method: "POST" });
+      const data = await res.json();
+      if (data.insights_generated !== undefined) {
+        setCortexResult(
+          `Consolidated ${data.consolidated}, boosted ${data.boosted}, decayed ${data.decayed}, ${data.insights_generated} new insights`
+        );
+        fetchInsights();
+      } else {
+        setCortexResult("Cortex run complete");
+      }
+    } catch {
+      setCortexResult("Failed to run Cortex");
+    } finally {
+      setIsRunningCortex(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setSearchQuery("");
+      setTab("memories");
+      setCortexResult(null);
+      setInsightsFetched(false);
+      setContextFetched(false);
+      setGraphFetched(false);
+      setTimelineFetched(false);
+      setReplayFetched(false);
+      setAuditFetched(false);
+      fetchMemories();
+      fetch("/api/memory/usage").then(r => r.json()).then(d => setUsage(d.usage || null)).catch(() => {});
+      setTimeout(() => searchRef.current?.focus(), 100);
+    }
+  }, [isOpen, fetchMemories]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (tab === "insights" && !insightsFetched && !insightsLoading) {
+      setInsightsFetched(true);
+      fetchInsights();
+    }
+    if (tab === "context" && !contextFetched && !contextLoading) {
+      setContextFetched(true);
+      fetchContext();
+    }
+    if (tab === "graph" && !graphFetched && !graphLoading) {
+      setGraphFetched(true);
+      fetchGraph();
+    }
+    if (tab === "timeline" && !timelineFetched && !timelineLoading) {
+      setTimelineFetched(true);
+      fetchTimeline();
+    }
+    if (tab === "replay" && !replayFetched && !replayLoading) {
+      setReplayFetched(true);
+      fetchReplay();
+    }
+    if (tab === "audit" && !auditFetched && !auditLoading) {
+      setAuditFetched(true);
+      fetchAudit();
+    }
+  }, [tab, isOpen, insightsFetched, insightsLoading, contextFetched, contextLoading, graphFetched, graphLoading, timelineFetched, timelineLoading, replayFetched, replayLoading, auditFetched, auditLoading, fetchInsights, fetchContext, fetchGraph, fetchTimeline, fetchReplay, fetchAudit]);
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchMemories(value);
+    }, 300);
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch("/api/memory", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        setMemories((prev) => prev.filter((m) => m.uuid !== id));
+        setTotal((prev) => prev - 1);
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "memories", label: "Memories", icon: <Brain size={14} /> },
+    { id: "timeline", label: "Timeline", icon: <CalendarDays size={14} /> },
+    { id: "insights", label: "Insights", icon: <Sparkles size={14} /> },
+    { id: "context", label: "Right Now", icon: <Clock size={14} /> },
+    { id: "graph", label: "Graph", icon: <Share2 size={14} /> },
+    { id: "replay", label: "Replay", icon: <History size={14} /> },
+    { id: "audit", label: "Audit", icon: <Shield size={14} /> },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background/95 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border">
+        <div className="flex items-center gap-2">
+          <Brain size={16} className="text-accent" />
+          <span className="text-sm font-medium">Memory</span>
+          {total > 0 && (
+            <span className="text-xs text-muted bg-muted-bg px-2 py-0.5 rounded-full">
+              {total}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {usage && (
+            <div className="flex items-center gap-3 text-[10px] text-muted">
+              {typeof usage.memories_count === "number" && (
+                <span>{(usage.memories_count as number).toLocaleString()} memories</span>
+              )}
+              {typeof usage.api_calls_used === "number" && typeof usage.api_calls_limit === "number" && (
+                <span>{(usage.api_calls_used as number).toLocaleString()}/{(usage.api_calls_limit as number).toLocaleString()} API calls</span>
+              )}
+              {typeof usage.plan === "string" && (
+                <span className="px-1.5 py-0.5 rounded bg-accent/10 text-accent">{usage.plan as string}</span>
+              )}
+            </div>
+          )}
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded text-muted hover:text-foreground transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="px-4 py-2 border-b border-sidebar-border flex gap-1 overflow-x-auto scrollbar-none">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors ${
+              tab === t.id
+                ? "bg-accent/15 text-accent"
+                : "text-muted hover:text-foreground hover:bg-muted-bg"
+            }`}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Search (memories tab only) */}
+      {tab === "memories" && (
+        <div className="px-4 py-3 border-b border-sidebar-border">
+          <div className="relative max-w-xl mx-auto">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search memories semantically..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full bg-card-bg border border-sidebar-border rounded-lg py-2 pl-9 pr-3 text-sm text-foreground placeholder-muted outline-none focus:border-accent/50"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade nudge */}
+      {total >= 4000 && tab === "memories" && (
+        <div className="mx-4 mt-3 px-4 py-2.5 bg-accent/10 border border-accent/20 rounded-lg">
+          <p className="text-xs text-accent">
+            You have {total.toLocaleString()} memories — approaching the free tier limit.
+            Upgrade for unlimited memory.
+          </p>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className={`flex-1 ${tab === "graph" ? "overflow-hidden" : "overflow-y-auto p-4"}`}>
+        {/* === MEMORIES TAB === */}
+        {tab === "memories" && (
+          <>
+            {isLoading && memories.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : memories.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted">
+                <Brain size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">
+                  {searchQuery ? "No memories match your search." : "No memories yet."}
+                </p>
+                {!searchQuery && (
+                  <p className="text-xs mt-1">Chat with the AI to start building memory.</p>
+                )}
+              </div>
+            ) : (
+              <div className="max-w-3xl mx-auto space-y-2">
+                {memories.map((mem) => {
+                  const imp = importanceLevel(mem.importance);
+                  return (
+                    <div
+                      key={mem.uuid}
+                      className="group bg-card-bg border border-sidebar-border rounded-lg px-4 py-3 hover:border-accent/20 transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${imp.color}`} title={`Importance: ${imp.label}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <span className="text-xs text-muted">{timeAgo(mem.created_at)}</span>
+                            {mem.tags.length > 0 && (
+                              <div className="flex gap-1">
+                                {mem.tags.slice(0, 3).map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent/70"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDelete(mem.uuid)}
+                          disabled={deletingId === mem.uuid}
+                          className="p-1.5 rounded text-muted opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-400/10 transition-all shrink-0"
+                          title="Delete memory"
+                        >
+                          {deletingId === mem.uuid ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* === TIMELINE TAB === */}
+        {tab === "timeline" && (
+          <div className="max-w-3xl mx-auto">
+            {timelineLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : timelineMemories.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted">
+                <CalendarDays size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">No memories yet.</p>
+                <p className="text-xs mt-1">Your memory timeline will appear here as you chat.</p>
+              </div>
+            ) : (
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-[15px] top-6 bottom-0 w-px bg-sidebar-border" />
+
+                {groupByDay(timelineMemories).map((group) => (
+                  <div key={group.date} className="mb-6">
+                    {/* Day header */}
+                    <div className="flex items-center gap-3 mb-3 relative">
+                      <div className="w-[31px] flex justify-center shrink-0">
+                        <div className="w-2.5 h-2.5 rounded-full bg-accent border-2 border-background z-10" />
+                      </div>
+                      <span className="text-xs font-medium text-accent">{group.date}</span>
+                      <span className="text-xs text-muted">({group.memories.length})</span>
+                    </div>
+
+                    {/* Day memories */}
+                    <div className="space-y-1.5 ml-[31px] pl-4 border-l border-transparent">
+                      {group.memories.map((mem) => {
+                        const time = new Date(mem.created_at).toLocaleTimeString("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        });
+                        return (
+                          <div
+                            key={mem.uuid}
+                            className="bg-card-bg border border-sidebar-border rounded-lg px-3 py-2.5 hover:border-accent/20 transition-colors"
+                          >
+                            <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-[10px] text-muted">{time}</span>
+                              {mem.tags.slice(0, 2).map((tag) => (
+                                <span key={tag} className="text-[10px] px-1 py-0.5 rounded bg-accent/10 text-accent/60">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === INSIGHTS TAB === */}
+        {tab === "insights" && (
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">Cortex Insights</h3>
+                <p className="text-xs text-muted mt-0.5">Patterns discovered across your conversations</p>
+              </div>
+              <button
+                onClick={handleRunCortex}
+                disabled={isRunningCortex}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/15 text-accent rounded-md text-xs hover:bg-accent/25 transition-colors disabled:opacity-40"
+              >
+                {isRunningCortex ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Zap size={12} />
+                )}
+                Run Cortex
+              </button>
+            </div>
+
+            {cortexResult && (
+              <div className="mb-4 px-3 py-2 bg-accent/10 border border-accent/20 rounded-lg text-xs text-accent">
+                {cortexResult}
+              </div>
+            )}
+
+            {insightsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : insights.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted">
+                <Sparkles size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">No insights yet.</p>
+                <p className="text-xs mt-1">Click &quot;Run Cortex&quot; to analyze your memories and discover patterns.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {insights.map((insight) => (
+                  <div
+                    key={insight.uuid}
+                    className="bg-card-bg border border-sidebar-border rounded-lg px-4 py-3 hover:border-accent/20 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Sparkles size={14} className="text-amber-400 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground leading-relaxed">{insight.observation}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-xs text-muted">{timeAgo(insight.created_at)}</span>
+                          {insight.tags.length > 0 && (
+                            <div className="flex gap-1">
+                              {insight.tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="text-xs px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400/70"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === GRAPH TAB === */}
+        {tab === "graph" && (
+          <div className="w-full h-full">
+            {graphLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : graphNodes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted p-4">
+                <Share2 size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">No knowledge graph yet.</p>
+                <p className="text-xs mt-1">As you chat, entities and relationships will appear here.</p>
+              </div>
+            ) : (
+              <MemoryGraph nodes={graphNodes} edges={graphEdges} />
+            )}
+          </div>
+        )}
+
+        {/* === CONTEXT TAB === */}
+        {tab === "context" && (
+          <div className="max-w-3xl mx-auto">
+            {contextLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : !context ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted">
+                <Clock size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">No context available.</p>
+                <p className="text-xs mt-1">Start chatting to build up your memory context.</p>
+              </div>
+            ) : (
+              <>
+                {context.lastSessionAt && (
+                  <p className="text-xs text-muted mb-4">
+                    Last session: {timeAgo(context.lastSessionAt)}
+                  </p>
+                )}
+
+                {context.recent.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                      <Clock size={14} className="text-accent" />
+                      Recent ({context.recentCount})
+                    </h3>
+                    <div className="space-y-2">
+                      {context.recent.map((mem) => (
+                        <div
+                          key={mem.uuid}
+                          className="bg-card-bg border border-sidebar-border rounded-lg px-4 py-3"
+                        >
+                          <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
+                          <span className="text-xs text-muted mt-1 block">{timeAgo(mem.created_at)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {context.upcoming.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                      <Zap size={14} className="text-amber-400" />
+                      Upcoming ({context.upcomingCount})
+                    </h3>
+                    <div className="space-y-2">
+                      {context.upcoming.map((mem) => (
+                        <div
+                          key={mem.uuid}
+                          className="bg-card-bg border border-sidebar-border rounded-lg px-4 py-3"
+                        >
+                          <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
+                          <span className="text-xs text-muted mt-1 block">{timeAgo(mem.created_at)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {context.recent.length === 0 && context.upcoming.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted">
+                    <Clock size={48} className="text-accent/20 mb-3" />
+                    <p className="text-sm">No recent activity.</p>
+                    <p className="text-xs mt-1">Chat with the AI to build context.</p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {/* === REPLAY TAB === */}
+        {tab === "replay" && (
+          <div className="max-w-3xl mx-auto">
+            {/* Drift summary card */}
+            {driftLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 size={20} className="text-accent animate-spin" />
+              </div>
+            ) : drift && (
+              <div className="bg-card-bg border border-sidebar-border rounded-lg p-4 mb-6">
+                <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                  <History size={14} className="text-accent" />
+                  7-Day Drift Analysis
+                </h3>
+                <div className="grid grid-cols-3 gap-4 mb-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted">Memories</p>
+                    <p className="text-lg font-medium text-foreground">{drift.memoryCountTo}</p>
+                    <p className={`text-xs ${drift.memoryCountDelta >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {drift.memoryCountDelta >= 0 ? "+" : ""}{drift.memoryCountDelta} this week
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted">Avg Importance</p>
+                    <p className="text-lg font-medium text-foreground">{(drift.avgImportanceTo * 100).toFixed(0)}%</p>
+                    <p className={`text-xs ${drift.avgImportanceDelta >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      {drift.avgImportanceDelta >= 0 ? "+" : ""}{(drift.avgImportanceDelta * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted">Tag Shifts</p>
+                    <p className="text-lg font-medium text-foreground">{drift.tagShifts.length}</p>
+                  </div>
+                </div>
+
+                {(drift.topNewTopics.length > 0 || drift.topLostTopics.length > 0) && (
+                  <div className="flex gap-4 mt-3 pt-3 border-t border-sidebar-border">
+                    {drift.topNewTopics.length > 0 && (
+                      <div className="flex-1">
+                        <p className="text-[10px] uppercase tracking-wider text-muted mb-1">New Topics</p>
+                        <div className="flex flex-wrap gap-1">
+                          {drift.topNewTopics.map((t) => (
+                            <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {drift.topLostTopics.length > 0 && (
+                      <div className="flex-1">
+                        <p className="text-[10px] uppercase tracking-wider text-muted mb-1">Fading Topics</p>
+                        <div className="flex flex-wrap gap-1">
+                          {drift.topLostTopics.map((t) => (
+                            <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-red-400/10 text-red-400">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Replay timeline */}
+            <h3 className="text-sm font-medium text-foreground mb-3">Operation Log</h3>
+            {replayLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : replayEntries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted">
+                <History size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">No replay data yet.</p>
+                <p className="text-xs mt-1">Memory operations will be tracked here.</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {replayEntries.map((entry, i) => {
+                  const opColor = entry.operation === "create" ? "text-green-400"
+                    : entry.operation === "delete" ? "text-red-400"
+                    : entry.operation === "update" ? "text-amber-400"
+                    : "text-muted";
+                  return (
+                    <div key={`${entry.timestamp}-${i}`} className="flex items-start gap-3 py-2 px-3 rounded hover:bg-card-bg transition-colors">
+                      <span className={`text-[10px] font-mono uppercase tracking-wider mt-0.5 w-12 shrink-0 ${opColor}`}>
+                        {entry.operation.slice(0, 6)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        {entry.observation_preview && (
+                          <p className="text-sm text-foreground/80 truncate">{entry.observation_preview}</p>
+                        )}
+                        <span className="text-[10px] text-muted">{timeAgo(entry.timestamp)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === AUDIT TAB === */}
+        {tab === "audit" && (
+          <div className="max-w-3xl mx-auto">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Shield size={14} className="text-accent" />
+                Audit Trail
+              </h3>
+              <p className="text-xs text-muted mt-0.5">Cryptographic log of all memory operations</p>
+            </div>
+
+            {auditLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : auditEntries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted">
+                <Shield size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">No audit entries yet.</p>
+                <p className="text-xs mt-1">All memory operations are logged for transparency.</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {auditEntries.map((entry, i) => {
+                  const opColor = entry.operation === "remember" || entry.operation === "create" ? "text-green-400"
+                    : entry.operation === "forget" || entry.operation === "delete" ? "text-red-400"
+                    : entry.operation === "cortex_run" ? "text-amber-400"
+                    : "text-blue-400";
+                  return (
+                    <div key={`${entry.timestamp}-${i}`} className="flex items-center gap-3 py-2 px-3 rounded bg-card-bg border border-sidebar-border">
+                      <span className={`text-[10px] font-mono uppercase tracking-wider w-16 shrink-0 ${opColor}`}>
+                        {entry.operation}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        {entry.artifact_id && (
+                          <span className="text-[10px] font-mono text-muted/60 truncate block">
+                            {entry.artifact_id.slice(0, 12)}...
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted shrink-0">{timeAgo(entry.timestamp)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

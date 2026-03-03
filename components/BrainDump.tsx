@@ -1,0 +1,339 @@
+"use client";
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Brain, Sparkles, Save, ArrowLeft, Loader2, X, FileText, FolderOpen } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { loadSettings, getActiveProvider } from "@/lib/providers";
+
+interface BrainDumpProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onNoteSaved: (path: string) => void;
+  notes: { name: string; path: string }[];
+}
+
+type Phase = "input" | "processing" | "preview";
+
+export default function BrainDump({ isOpen, onClose, onNoteSaved, notes }: BrainDumpProps) {
+  const [phase, setPhase] = useState<Phase>("input");
+  const [rawText, setRawText] = useState("");
+  const [title, setTitle] = useState("");
+  const [folder, setFolder] = useState("/");
+  const [structuredContent, setStructuredContent] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setPhase("input");
+      setRawText("");
+      setTitle("");
+      setFolder("/");
+      setStructuredContent("");
+      setError(null);
+      setIsSaving(false);
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+  }, [isOpen]);
+
+  // Handle escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Get AI provider
+  const getProvider = useCallback(() => {
+    const settings = loadSettings();
+    return getActiveProvider(settings);
+  }, []);
+
+  const provider = getProvider();
+
+  // Extract tags from the structured content for display
+  const extractedTags = structuredContent
+    .match(/#[a-z][a-z0-9-]*/g)
+    ?.filter((tag, i, arr) => arr.indexOf(tag) === i) || [];
+
+  const handleStructure = async () => {
+    if (!provider || rawText.trim().length < 50) return;
+
+    setPhase("processing");
+    setError(null);
+
+    try {
+      const existingNotes = notes.map((n) => n.name);
+
+      const res = await fetch("/api/notes/brain-dump", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawText: rawText.trim(),
+          provider: {
+            baseURL: provider.baseURL,
+            apiKey: provider.apiKey,
+            model: provider.model,
+          },
+          existingNotes,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || `Error ${res.status}`);
+        setPhase("input");
+        return;
+      }
+
+      setTitle(data.title);
+      setStructuredContent(data.content);
+      setPhase("preview");
+    } catch (err) {
+      setError((err as Error).message || "Failed to connect to AI");
+      setPhase("input");
+    }
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !structuredContent) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Build the full note content with title as H1
+      const fullContent = `# ${title.trim()}\n\n${structuredContent}`;
+
+      // Build the path
+      const sanitizedTitle = title.trim().replace(/[/\\:*?"<>|]/g, "");
+      const folderPath = folder.trim().replace(/\/+$/, "").replace(/^\/+/, "");
+      const notePath = folderPath
+        ? `${folderPath}/${sanitizedTitle}.md`
+        : `${sanitizedTitle}.md`;
+
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: notePath,
+          content: fullContent,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || `Failed to save note`);
+        setIsSaving(false);
+        return;
+      }
+
+      onNoteSaved(notePath);
+      onClose();
+    } catch (err) {
+      setError((err as Error).message || "Failed to save note");
+      setIsSaving(false);
+    }
+  };
+
+  const handleBackToEdit = () => {
+    setPhase("input");
+    setError(null);
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-sidebar-bg border border-sidebar-border rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-sidebar-border">
+          <div className="flex items-center gap-2">
+            <Brain size={16} className="text-purple-400" />
+            <h2 className="text-sm font-medium">Brain Dump</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded text-muted hover:text-foreground transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="p-5 flex flex-col gap-4 overflow-y-auto flex-1">
+          {/* Phase 1: Input */}
+          {phase === "input" && (
+            <div className="ghost-fade-in flex flex-col gap-4">
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  value={rawText}
+                  onChange={(e) => setRawText(e.target.value)}
+                  placeholder="Just start typing. Don't think about structure &#8212; dump everything on your mind..."
+                  className="w-full min-h-[200px] max-h-[50vh] bg-card-bg border border-sidebar-border rounded-lg px-4 py-3 text-sm text-foreground placeholder-muted outline-none focus:border-purple-500/50 resize-y leading-relaxed"
+                />
+                <span className="absolute bottom-3 right-3 text-[11px] text-muted tabular-nums">
+                  {rawText.length} chars
+                </span>
+              </div>
+
+              {!provider && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted-bg/50 border border-sidebar-border rounded-lg">
+                  <Sparkles size={14} className="text-muted shrink-0" />
+                  <p className="text-xs text-muted">
+                    Configure an AI provider in Settings to use Brain Dump
+                  </p>
+                </div>
+              )}
+
+              {error && (
+                <div className="px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] text-muted">
+                  <Sparkles size={10} className="inline mr-1 relative -top-px" />
+                  AI will organize your thoughts into a structured note
+                </p>
+                <button
+                  onClick={handleStructure}
+                  disabled={rawText.trim().length < 50 || !provider}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Sparkles size={14} />
+                  Structure with AI
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Phase 2: Processing */}
+          {phase === "processing" && (
+            <div className="ghost-fade-in flex flex-col items-center justify-center py-16 gap-4">
+              <div className="relative">
+                <Brain size={40} className="text-purple-400 animate-pulse" />
+              </div>
+              <p className="text-sm text-muted">Organizing your thoughts...</p>
+            </div>
+          )}
+
+          {/* Phase 3: Preview & Save */}
+          {phase === "preview" && (
+            <div className="ghost-fade-in flex flex-col gap-4">
+              {/* Title input */}
+              <div>
+                <label className="text-xs text-muted block mb-1.5">Title</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-purple-500/50"
+                />
+              </div>
+
+              {/* Folder input */}
+              <div>
+                <label className="text-xs text-muted flex items-center gap-1 mb-1.5">
+                  <FolderOpen size={11} />
+                  Folder
+                </label>
+                <input
+                  type="text"
+                  value={folder}
+                  onChange={(e) => setFolder(e.target.value)}
+                  placeholder="/"
+                  className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-purple-500/50 font-mono text-xs"
+                />
+              </div>
+
+              {/* Tags */}
+              {extractedTags.length > 0 && (
+                <div>
+                  <label className="text-xs text-muted block mb-1.5">Tags</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {extractedTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-500/15 text-purple-300 border border-purple-500/20"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Markdown preview */}
+              <div>
+                <label className="text-xs text-muted flex items-center gap-1 mb-1.5">
+                  <FileText size={11} />
+                  Preview
+                </label>
+                <div className="bg-card-bg border border-sidebar-border rounded-lg p-4 max-h-[35vh] overflow-y-auto">
+                  <div className="markdown-preview text-sm">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {structuredContent}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">
+                  {error}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBackToEdit}
+                  className="flex-1 py-2 bg-muted-bg text-foreground rounded-lg text-sm hover:bg-muted-bg/80 transition-colors flex items-center justify-center gap-2"
+                >
+                  <ArrowLeft size={14} />
+                  Back to Edit
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={!title.trim() || isSaving}
+                  className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      Save to Vault
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,95 @@
+import { NextResponse } from "next/server";
+import {
+  getContextNow,
+  getCortexInsights,
+  getMemoryDrift,
+  listMemories,
+} from "@/lib/memory";
+import { getStorage } from "@/lib/storage";
+import { getStorageContext } from "@/lib/auth";
+
+const TASK_REGEX = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/;
+
+interface TaskItem {
+  text: string;
+  note: string;
+}
+
+async function scanPendingTasks(userId?: string, cookieHeader?: string): Promise<{
+  taskCount: number;
+  tasksDue: TaskItem[];
+  noteCount: number;
+}> {
+  const storage = getStorage(userId, cookieHeader);
+  const notes = await storage.walkAllNotes();
+  const pendingTasks: TaskItem[] = [];
+
+  for (const note of notes) {
+    const lines = note.content.split("\n");
+    for (const line of lines) {
+      const match = line.match(TASK_REGEX);
+      if (match && match[2] === " ") {
+        pendingTasks.push({
+          text: match[3].trim(),
+          note: note.relPath,
+        });
+      }
+    }
+  }
+
+  return {
+    taskCount: pendingTasks.length,
+    tasksDue: pendingTasks.slice(0, 3),
+    noteCount: notes.length,
+  };
+}
+
+export async function GET() {
+  try {
+  const ctx = await getStorageContext();
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
+  const nowISO = now.toISOString();
+
+  // Fetch all data in parallel
+  const [context, insights, drift, recentMems, taskData] = await Promise.all([
+    getContextNow(),
+    getCortexInsights(5),
+    getMemoryDrift(weekAgo, nowISO),
+    listMemories(undefined, 10, 0, ctx.userId),
+    scanPendingTasks(ctx.userId, ctx.cookieHeader),
+  ]);
+
+  return NextResponse.json({
+    lastSession: context?.lastSessionAt || null,
+    memoryCount: recentMems.total,
+    noteCount: taskData.noteCount,
+    recentMemories: (context?.recent || []).slice(0, 5).map((m) => ({
+      observation: m.observation,
+      importance: m.importance,
+      tags: m.tags,
+      created_at: m.created_at,
+    })),
+    insights: (insights.insights || []).slice(0, 3).map((i) => ({
+      observation: i.observation,
+      tags: i.tags,
+      importance: i.importance,
+    })),
+    drift: drift
+      ? {
+          newTopics: drift.topNewTopics.slice(0, 5),
+          lostTopics: drift.topLostTopics.slice(0, 3),
+          memoryDelta: drift.memoryCountDelta,
+          importanceDelta: drift.avgImportanceDelta,
+          tagShifts: drift.tagShifts.slice(0, 5),
+        }
+      : null,
+    pendingTasks: taskData.taskCount,
+    tasksDue: taskData.tasksDue,
+  });
+  } catch (e) {
+    if (e instanceof Response) return e;
+    const message = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

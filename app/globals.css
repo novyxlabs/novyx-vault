@@ -1,26 +1,425 @@
 @import "tailwindcss";
 
-:root {
+:root,
+[data-theme="dark"] {
+  --background: #0f0f0f;
+  --foreground: #e4e4e7;
+  --sidebar-bg: #161618;
+  --sidebar-border: #27272a;
+  --card-bg: #1c1c1f;
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-rgb: 139, 92, 246;
+  --muted: #71717a;
+  --muted-bg: #27272a;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #18181b;
+  --sidebar-bg: #f4f4f5;
+  --sidebar-border: #e4e4e7;
+  --card-bg: #fafafa;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-rgb: 124, 58, 237;
+  --muted: #71717a;
+  --muted-bg: #e4e4e7;
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-card-bg: var(--card-bg);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-muted: var(--muted);
+  --color-muted-bg: var(--muted-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-bg);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* CodeMirror overrides */
+.cm-editor {
+  height: 100%;
+  font-size: 15px;
+  background: transparent !important;
+}
+
+.cm-editor .cm-gutters {
+  background: transparent !important;
+  border: none !important;
+  color: var(--muted);
+}
+
+.cm-editor .cm-content {
+  padding: 16px 0;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.cm-editor .cm-line {
+  padding: 0 16px;
+}
+
+.cm-editor .cm-activeLine {
+  background: rgba(var(--accent-rgb), 0.05) !important;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: transparent !important;
+}
+
+.cm-editor .cm-selectionBackground {
+  background: rgba(var(--accent-rgb), 0.2) !important;
+}
+
+.cm-editor.cm-focused {
+  outline: none !important;
+}
+
+.cm-editor .cm-cursor {
+  border-left-color: var(--accent) !important;
+}
+
+/* Light theme: override CodeMirror dark theme */
+[data-theme="light"] .cm-editor .cm-content {
+  caret-color: var(--accent);
+}
+
+[data-theme="light"] .cm-editor {
+  color: var(--foreground);
+}
+
+[data-theme="light"] .cm-editor .cm-activeLine {
+  background: rgba(var(--accent-rgb), 0.06) !important;
+}
+
+[data-theme="light"] .cm-editor .cm-selectionBackground {
+  background: rgba(var(--accent-rgb), 0.15) !important;
+}
+
+[data-theme="light"] .ͼ1 .cm-line,
+[data-theme="light"] .ͼ1,
+[data-theme="light"] .cm-editor .cm-line {
+  color: var(--foreground) !important;
+  background: transparent !important;
+}
+
+[data-theme="light"] .cm-editor .cm-gutters {
+  color: #a1a1aa !important;
+}
+
+[data-theme="light"] .cm-editor .cm-placeholder {
+  color: var(--muted) !important;
+}
+
+/* Markdown preview styling */
+.markdown-preview {
+  line-height: 1.75;
+  color: var(--foreground);
+}
+
+.markdown-preview h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 0.67em 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.markdown-preview h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.83em 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.markdown-preview h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 1em 0;
+}
+
+.markdown-preview h4, .markdown-preview h5, .markdown-preview h6 {
+  font-weight: 600;
+  margin: 1em 0;
+}
+
+.markdown-preview p {
+  margin: 1em 0;
+}
+
+.markdown-preview a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.markdown-preview code {
+  background: var(--muted-bg);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.markdown-preview pre {
+  background: var(--card-bg);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875em;
+}
+
+.markdown-preview blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+  color: var(--muted);
+  margin: 1em 0;
+}
+
+.markdown-preview ul, .markdown-preview ol {
+  padding-left: 2em;
+  margin: 1em 0;
+}
+
+.markdown-preview li {
+  margin: 0.25em 0;
+}
+
+.markdown-preview ul li {
+  list-style-type: disc;
+}
+
+.markdown-preview ol li {
+  list-style-type: decimal;
+}
+
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid var(--sidebar-border);
+  margin: 2em 0;
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.markdown-preview th, .markdown-preview td {
+  border: 1px solid var(--sidebar-border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background: var(--card-bg);
+  font-weight: 600;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.markdown-preview input[type="checkbox"] {
+  margin-right: 8px;
+  accent-color: var(--accent);
+}
+
+/* Drag and drop styles */
+.drag-over-folder {
+  background: rgba(var(--accent-rgb), 0.15) !important;
+  outline: 1.5px dashed var(--accent);
+  outline-offset: -1.5px;
+  border-radius: 6px;
+}
+
+.drag-over-root {
+  background: rgba(var(--accent-rgb), 0.06);
+  border-radius: 6px;
+}
+
+.dragging {
+  opacity: 0.4;
+}
+
+/* Tag styles in CodeMirror editor */
+.cm-tag {
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* Tag styles in markdown preview */
+.markdown-preview .note-tag {
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.875em;
+  cursor: default;
+}
+
+/* Wiki-link styles in CodeMirror editor */
+.cm-wikilink {
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* Wiki-link styles in markdown preview */
+.markdown-preview .wiki-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent);
+  cursor: pointer;
+}
+
+.markdown-preview .wiki-link:hover {
+  background: rgba(var(--accent-rgb), 0.15);
+  border-radius: 2px;
+}
+
+/* Search highlight */
+.search-highlight {
+  background: rgba(var(--accent-rgb), 0.3);
+  color: var(--foreground);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Chat markdown (smaller sizing) */
+.chat-markdown {
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+.chat-markdown p {
+  margin: 0.5em 0;
+}
+
+.chat-markdown p:first-child {
+  margin-top: 0;
+}
+
+.chat-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-markdown pre {
+  font-size: 0.8125rem;
+  margin: 0.5em 0;
+  padding: 8px 12px;
+}
+
+.chat-markdown ul, .chat-markdown ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .cm-editor .cm-content {
+    padding: 12px 0;
+  }
+
+  .cm-editor .cm-line {
+    padding: 0 12px;
+  }
+}
+
+/* Ghost connections */
+@keyframes ghostFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ghost-fade-in {
+  animation: ghostFadeIn 0.3s ease-out both;
+}
+
+.file-drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--accent-rgb), 0.08);
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* Ghost Notifications */
+@keyframes ghostNotifySlideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ghostNotifySlideOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(20px); }
+}
+
+@keyframes ghostNotifyPulse {
+  0%, 100% { border-color: rgba(168, 85, 247, 0.2); }
+  50% { border-color: rgba(168, 85, 247, 0.4); }
+}
+
+.ghost-notify-slide-in {
+  animation: ghostNotifySlideIn 0.3s ease-out both;
+}
+
+.ghost-notify-slide-out {
+  animation: ghostNotifySlideOut 0.3s ease-in both;
+}
+
+.ghost-notify-pulse {
+  animation: ghostNotifyPulse 3s ease-in-out infinite;
+}
+
+.ghost-notify-glow {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3);
 }

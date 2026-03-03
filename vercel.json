@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/chat/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/notes/weekly-review/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/notes/brain-dump/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/notes/clip-remix/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/notes/slash-ai/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/notes/connections/explain/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/thinking/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}

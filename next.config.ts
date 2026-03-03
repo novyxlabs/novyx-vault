@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  devIndicators: false,
+  ...(process.env.TAURI === "1" && { output: "standalone" }),
 };
 
 export default nextConfig;
