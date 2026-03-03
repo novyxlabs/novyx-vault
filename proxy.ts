@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Desktop mode — no auth needed
   if (process.env.STORAGE_MODE !== "supabase") {
     return NextResponse.next();
