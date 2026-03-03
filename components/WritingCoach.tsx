@@ -105,7 +105,26 @@ export default function WritingCoach({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Writing Coach"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Tab") {
+          const modal = e.currentTarget;
+          const focusable = modal.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey) {
+            if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+          } else {
+            if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+          }
+        }
+      }}
     >
       <div className="fixed inset-0 bg-black/60" />
       <div

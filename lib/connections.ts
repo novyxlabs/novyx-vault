@@ -1,8 +1,7 @@
 import path from "path";
 import { readNote, type StorageContext } from "./notes";
-import { getStorage } from "./storage";
 import { recallMemories } from "./memory";
-import { searchNotes } from "./search";
+import { searchNotes, getCachedNotes } from "./search";
 
 export interface GhostConnection {
   notePath: string;
@@ -220,8 +219,7 @@ async function findTagConnections(
 ): Promise<GhostConnection[]> {
   if (sourceTags.length === 0) return [];
 
-  const storage = getStorage(ctx?.userId, ctx?.cookieHeader);
-  const notes = await storage.walkAllNotes();
+  const notes = await getCachedNotes(ctx);
   const connections: GhostConnection[] = [];
   const tagSet = new Set(sourceTags);
 

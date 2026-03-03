@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
+import { getStorageContext } from "@/lib/auth";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface SlashAIRequest {
   command: string;
@@ -50,6 +53,10 @@ const COMMAND_PROMPTS: Record<string, string> = {
 const VALID_COMMANDS = Object.keys(COMMAND_PROMPTS);
 
 export async function POST(req: NextRequest) {
+  try {
+  const ctx = await getStorageContext();
+  const rl = await checkRateLimit(getRateLimitKey("slash-ai", ctx.userId, req), RATE_LIMITS.ai);
+  if (!rl.allowed) return rateLimitResponse(rl.resetMs);
   const { command, context, noteTitle, provider } = (await req.json()) as SlashAIRequest;
 
   if (!command || !VALID_COMMANDS.includes(command)) {
@@ -77,6 +84,14 @@ export async function POST(req: NextRequest) {
   if (!isLocal && !provider.apiKey) {
     return new Response(
       JSON.stringify({ error: "No API key configured" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const urlError = validateProviderBaseURL(provider.baseURL);
+  if (urlError) {
+    return new Response(
+      JSON.stringify({ error: urlError }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -188,7 +203,15 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI request failed";
+    console.error("[Slash AI] Error:", err instanceof Error ? err.message : err);
+    return new Response(
+      JSON.stringify({ error: "AI request failed" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+  } catch (e) {
+    if (e instanceof Response) return e;
+    const message = e instanceof Error ? e.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { "Content-Type": "application/json" } }

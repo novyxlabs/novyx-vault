@@ -57,9 +57,24 @@ interface SearchFilters {
   tag?: string;
 }
 
-export async function searchNotes(query: string, maxResults = 20, filters?: SearchFilters, ctx?: StorageContext): Promise<SearchResult[]> {
+// Per-request cache: avoids repeated walkAllNotes calls within the same tick.
+// Keyed by userId (or "local"), auto-expires after 5 seconds.
+let _cachedNotes: { key: string; notes: Awaited<ReturnType<ReturnType<typeof getStorage>["walkAllNotes"]>>; expiresAt: number } | null = null;
+
+export async function getCachedNotes(ctx?: StorageContext) {
+  const key = ctx?.userId || "local";
+  const now = Date.now();
+  if (_cachedNotes && _cachedNotes.key === key && _cachedNotes.expiresAt > now) {
+    return _cachedNotes.notes;
+  }
   const storage = getStorage(ctx?.userId, ctx?.cookieHeader);
   const notes = await storage.walkAllNotes();
+  _cachedNotes = { key, notes, expiresAt: now + 5000 };
+  return notes;
+}
+
+export async function searchNotes(query: string, maxResults = 20, filters?: SearchFilters, ctx?: StorageContext): Promise<SearchResult[]> {
+  const notes = await getCachedNotes(ctx);
   const results: SearchResult[] = [];
   const lowerQuery = query.toLowerCase();
 

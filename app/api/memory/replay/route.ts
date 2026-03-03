@@ -1,12 +1,14 @@
 import { NextRequest } from "next/server";
 import { getReplayTimeline, getMemoryDrift } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
-import { getUserNovyxKey } from "@/lib/novyx";
+import { getUserNovyxKey, requireFeature } from "@/lib/novyx";
 
 export async function GET(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
     const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    const gated = await requireFeature(apiKey, "replay");
+    if (gated) return gated;
     const { searchParams } = req.nextUrl;
     const type = searchParams.get("type") || "timeline";
 

@@ -1,11 +1,13 @@
 import { getKnowledgeGraph } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
-import { getUserNovyxKey } from "@/lib/novyx";
+import { getUserNovyxKey, requireFeature } from "@/lib/novyx";
 
 export async function GET() {
   try {
     const ctx = await getStorageContext();
     const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    const gated = await requireFeature(apiKey, "graph");
+    if (gated) return gated;
     const result = await getKnowledgeGraph(apiKey ?? undefined);
     return Response.json(result);
   } catch (e) {

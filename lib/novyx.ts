@@ -1,4 +1,5 @@
 import { Novyx } from "novyx";
+import { createHmac } from "crypto";
 import { isCloudMode } from "./auth";
 import { createServiceSupabase, createServerSupabase } from "./supabase";
 
@@ -45,8 +46,8 @@ export async function getUserNovyxKey(
     // fall through
   }
 
-  // Fallback to shared env var if user has no key yet
-  return process.env.NOVYX_MEMORY_API_KEY || null;
+  // No fallback in cloud mode — each user must have their own key
+  return null;
 }
 
 /**
@@ -62,19 +63,31 @@ export function getNovyxForKey(apiKey: string | null | undefined): Novyx | null 
 
 const PROVISION_URL = "https://novyx-ram-api.fly.dev/v1/provision";
 
+/**
+ * Generate a time-bound HMAC-signed admin token for Novyx provisioning.
+ * Tokens expire after 5 minutes on the server side.
+ */
+function generateAdminToken(adminKey: string): string {
+  const ts = String(Math.floor(Date.now() / 1000));
+  const sig = createHmac("sha256", adminKey).update(ts).digest("hex");
+  return `admin_${ts}_${sig}`;
+}
+
 export async function provisionNovyxKey(
   email: string
 ): Promise<{ api_key: string; tenant_id: string; tier: string }> {
-  const adminToken = process.env.NOVYX_ADMIN_TOKEN;
-  if (!adminToken) {
-    throw new Error("NOVYX_ADMIN_TOKEN not configured");
+  const adminKey = process.env.NOVYX_ADMIN_KEY;
+  if (!adminKey) {
+    throw new Error("NOVYX_ADMIN_KEY not configured");
   }
+
+  const token = generateAdminToken(adminKey);
 
   const res = await fetch(PROVISION_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Admin-Token": adminToken,
+      "X-Admin-Token": token,
     },
     body: JSON.stringify({ email, source: "noctivault" }),
   });
@@ -85,6 +98,50 @@ export async function provisionNovyxKey(
   }
 
   return res.json();
+}
+
+/**
+ * Provision a Novyx key with one retry on failure.
+ * Returns the provisioned key result, or throws on both attempts failing.
+ */
+export async function provisionNovyxKeyWithRetry(
+  email: string
+): Promise<{ api_key: string; tenant_id: string; tier: string }> {
+  try {
+    return await provisionNovyxKey(email);
+  } catch (firstError) {
+    // Wait 1 second, then retry once
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      return await provisionNovyxKey(email);
+    } catch (retryError) {
+      throw retryError;
+    }
+  }
+}
+
+/**
+ * Ensure a user has a Novyx key. If not, attempt provisioning.
+ * Returns the API key (existing or newly provisioned), or null on failure.
+ */
+export async function ensureNovyxKey(
+  userId: string,
+  email: string,
+  cookieHeader?: string
+): Promise<string | null> {
+  // Check if key already exists
+  const existing = await getUserNovyxKey(userId, cookieHeader);
+  if (existing) return existing;
+
+  // Attempt provisioning
+  try {
+    const result = await provisionNovyxKeyWithRetry(email);
+    await storeNovyxKey(userId, result.api_key);
+    return result.api_key;
+  } catch (err) {
+    console.error("Fallback Novyx provisioning failed:", err);
+    return null;
+  }
 }
 
 /**
@@ -103,6 +160,23 @@ export async function storeNovyxKey(
   if (error) {
     throw new Error(`Failed to store Novyx key: ${error.message}`);
   }
+}
+
+/**
+ * Server-side feature gate check. Returns a 403 Response if the feature
+ * is locked for this user's tier, or null if access is allowed.
+ */
+export async function requireFeature(
+  apiKey: string | null | undefined,
+  feature: keyof FeatureGating["features"]
+): Promise<Response | null> {
+  if (!apiKey) return null; // No key = desktop mode, allow everything
+  const gating = await getFeatureGating(apiKey);
+  if (gating.features[feature]) return null; // Feature enabled
+  return new Response(
+    JSON.stringify({ error: `This feature requires a Pro plan (${feature})` }),
+    { status: 403, headers: { "Content-Type": "application/json" } }
+  );
 }
 
 // --- Feature gating ---

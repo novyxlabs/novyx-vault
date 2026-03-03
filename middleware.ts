@@ -7,10 +7,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip auth for login page, static assets, and auth callback
+  // Skip auth for public pages, static assets, and auth routes
   const { pathname } = request.nextUrl;
   if (
     pathname.startsWith("/login") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/verify-email") ||
+    pathname.startsWith("/auth/confirm") ||
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/privacy") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
     pathname.includes(".")
@@ -46,8 +52,26 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
+    // Let the root page handle unauthenticated users (shows landing page)
+    if (pathname === "/") {
+      return response;
+    }
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Email verification: redirect unconfirmed email users to /verify-email
+  // OAuth users skip this check (provider already verified their email)
+  if (
+    !user.email_confirmed_at &&
+    !pathname.startsWith("/verify-email")
+  ) {
+    const providers = user.app_metadata?.providers as string[] | undefined;
+    const isOAuthUser = providers?.some((p: string) => p !== "email") ?? false;
+    if (!isOAuthUser) {
+      const verifyUrl = new URL("/verify-email", request.url);
+      return NextResponse.redirect(verifyUrl);
+    }
   }
 
   return response;

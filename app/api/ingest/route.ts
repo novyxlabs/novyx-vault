@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchUrlMetadata, formatAsMarkdown, summarizeWithAI } from "@/lib/ingest";
+import { getStorageContext } from "@/lib/auth";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface IngestRequest {
   url: string;
@@ -12,6 +15,10 @@ interface IngestRequest {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+  const ctx = await getStorageContext();
+  const rl = await checkRateLimit(getRateLimitKey("ingest", ctx.userId, req), RATE_LIMITS.ai);
+  if (!rl.allowed) return rateLimitResponse(rl.resetMs);
   const body = (await req.json()) as IngestRequest;
   const { url, summarize, provider } = body;
 
@@ -26,7 +33,7 @@ export async function POST(req: NextRequest) {
     const result = await fetchUrlMetadata(url);
 
     let summary: string | undefined;
-    if (summarize && provider?.apiKey && provider?.model) {
+    if (summarize && provider?.apiKey && provider?.model && !validateProviderBaseURL(provider.baseURL)) {
       const textToSummarize = result.articleText || result.description || "";
       if (textToSummarize.length > 50) {
         try {
@@ -55,6 +62,11 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to fetch URL";
     console.error("[Ingest] Error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+  } catch (e) {
+    if (e instanceof Response) return e;
+    const message = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

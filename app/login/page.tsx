@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 
 export default function LoginPage() {
@@ -15,6 +15,18 @@ export default function LoginPage() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlError = params.get("error");
+    if (urlError === "verification_failed") {
+      setError("Email verification failed or link expired. Please try again.");
+    }
+    const errorDesc = params.get("error_description");
+    if (errorDesc) {
+      setError(errorDesc);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,7 +49,14 @@ export default function LoginPage() {
           email,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message?.includes("already registered")) {
+            throw new Error(
+              "An account with this email already exists. Try signing in, or use the OAuth provider you originally signed up with."
+            );
+          }
+          throw error;
+        }
         setMessage("Check your email to confirm your account.");
       }
     } catch (err: unknown) {
@@ -50,7 +69,7 @@ export default function LoginPage() {
   async function handleOAuth(provider: "google" | "github") {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/` },
+      options: { redirectTo: `${window.location.origin}/api/auth/callback` },
     });
     if (error) setError(error.message);
   }
@@ -203,6 +222,21 @@ export default function LoginPage() {
             }}
           />
 
+          {mode === "login" && (
+            <div style={{ textAlign: "right", marginBottom: 12, marginTop: -8 }}>
+              <a
+                href="/forgot-password"
+                style={{
+                  fontSize: 12,
+                  color: "var(--accent, #6366f1)",
+                  textDecoration: "none",
+                }}
+              >
+                Forgot password?
+              </a>
+            </div>
+          )}
+
           {error && (
             <p style={{ color: "#ef4444", fontSize: 13, marginBottom: 12 }}>
               {error}
@@ -266,6 +300,26 @@ export default function LoginPage() {
             {mode === "login" ? "Sign up" : "Sign in"}
           </button>
         </p>
+
+        <div
+          style={{
+            marginTop: 20,
+            paddingTop: 16,
+            borderTop: "1px solid var(--border, #27272a)",
+            display: "flex",
+            justifyContent: "center",
+            gap: 16,
+            fontSize: 12,
+            color: "var(--text-secondary, #a1a1aa)",
+          }}
+        >
+          <a href="/terms" style={{ color: "inherit", textDecoration: "none" }}>
+            Terms
+          </a>
+          <a href="/privacy" style={{ color: "inherit", textDecoration: "none" }}>
+            Privacy
+          </a>
+        </div>
       </div>
     </div>
   );

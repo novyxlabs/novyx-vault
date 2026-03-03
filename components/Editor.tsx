@@ -60,6 +60,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
     left: number;
   }>({ open: false, from: 0, to: 0, top: 0, left: 0 });
   const selDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   onChangeRef.current = onChange;
 
@@ -364,7 +365,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
     if (!provider) {
       const warningMsg = "\u26A0 Configure an AI provider in Settings to use AI commands.";
       view.dispatch({ changes: { from: to, insert: "\n" + warningMsg } });
-      setTimeout(() => {
+      warningTimerRef.current = setTimeout(() => {
         const v = viewRef.current;
         if (!v) return;
         const docText = v.state.doc.toString();
@@ -401,8 +402,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
         const warningMsg = "\u26A0 Configure an AI provider in Settings to use AI commands.";
         const insertPos = view.state.selection.main.head;
         view.dispatch({ changes: { from: insertPos, insert: warningMsg } });
-        const warningEnd = insertPos + warningMsg.length;
-        setTimeout(() => {
+        warningTimerRef.current = setTimeout(() => {
           const v = viewRef.current;
           if (!v) return;
           const docText = v.state.doc.toString();
@@ -422,7 +422,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
         const noCtx = "\u26A0 Write some text first, then use AI commands.";
         const pos = view.state.selection.main.head;
         view.dispatch({ changes: { from: pos, insert: noCtx } });
-        setTimeout(() => {
+        warningTimerRef.current = setTimeout(() => {
           const v = viewRef.current;
           if (!v) return;
           const docText = v.state.doc.toString();
@@ -575,6 +575,8 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
     createEditor();
     return () => {
       viewRef.current?.destroy();
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      if (selDebounceRef.current) clearTimeout(selDebounceRef.current);
     };
   }, [createEditor]);
 

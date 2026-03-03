@@ -147,6 +147,63 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
   },
 ];
 
+// --- Server-side baseURL validation (SSRF prevention) ---
+
+const ALLOWED_HOSTS = new Set(
+  PROVIDER_PRESETS.map((p) => {
+    try {
+      return new URL(p.baseURL).hostname;
+    } catch {
+      return "";
+    }
+  }).filter(Boolean)
+);
+
+const PRIVATE_IP_RE =
+  /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.|169\.254\.)/;
+
+/**
+ * Validate that a provider baseURL is safe for server-side requests.
+ * Returns null if valid, or an error message string if blocked.
+ */
+export function validateProviderBaseURL(baseURL: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(baseURL);
+  } catch {
+    return "Invalid provider URL";
+  }
+
+  const host = parsed.hostname;
+
+  // Allow known local providers on localhost
+  if (host === "localhost" || host === "127.0.0.1") {
+    return null; // local providers are user-controlled
+  }
+
+  // Block private/internal IPs
+  if (PRIVATE_IP_RE.test(host) || host === "[::1]" || host === "::1" || host === "0.0.0.0") {
+    return "Private network addresses are not allowed";
+  }
+
+  // Block cloud metadata endpoints
+  if (host === "metadata.google.internal" || host === "169.254.169.254") {
+    return "Metadata endpoints are not allowed";
+  }
+
+  // Allow known provider hosts
+  if (ALLOWED_HOSTS.has(host)) {
+    return null;
+  }
+
+  // Allow any HTTPS host (custom OpenAI-compatible endpoints)
+  if (parsed.protocol === "https:") {
+    return null;
+  }
+
+  return "Only HTTPS URLs are allowed for remote providers";
+}
+
 const STORAGE_KEY = "noctivault-ai-settings";
 
 export function loadSettings(): AISettings {
@@ -192,13 +249,27 @@ const CLOUD_SETTINGS_KEYS = [
   "noctivault-sort",
 ] as const;
 
+/**
+ * Strip API keys from AI settings before syncing to cloud.
+ * Keys stay in localStorage only and never hit the server.
+ */
+function stripApiKeys(aiSettings: AISettings): AISettings {
+  return {
+    ...aiSettings,
+    providers: aiSettings.providers.map((p) => ({
+      ...p,
+      apiKey: "",
+    })),
+  };
+}
+
 /** Push current localStorage settings to cloud (fire-and-forget) */
 export async function syncSettingsToCloud(): Promise<void> {
   try {
     const settings: CloudSettings = {};
 
     const ai = localStorage.getItem("noctivault-ai-settings");
-    if (ai) settings.aiSettings = JSON.parse(ai);
+    if (ai) settings.aiSettings = stripApiKeys(JSON.parse(ai));
 
     const pinned = localStorage.getItem("noctivault-pinned");
     if (pinned) settings.pinnedNotes = JSON.parse(pinned);
@@ -231,9 +302,25 @@ export async function loadCloudSettings(): Promise<void> {
     const { settings } = (await res.json()) as { settings: CloudSettings | null };
     if (!settings) return;
 
-    // Only fill in keys that are missing locally
-    if (settings.aiSettings && !localStorage.getItem("noctivault-ai-settings")) {
-      localStorage.setItem("noctivault-ai-settings", JSON.stringify(settings.aiSettings));
+    // Merge cloud AI settings with local API keys
+    if (settings.aiSettings) {
+      const localRaw = localStorage.getItem("noctivault-ai-settings");
+      if (!localRaw) {
+        // No local settings — use cloud (keys will be empty, user re-enters)
+        localStorage.setItem("noctivault-ai-settings", JSON.stringify(settings.aiSettings));
+      } else {
+        // Merge: keep local API keys, adopt cloud provider config/model selections
+        const local: AISettings = JSON.parse(localRaw);
+        const localKeyMap = new Map(local.providers.map((p) => [p.id, p.apiKey]));
+        const merged: AISettings = {
+          ...settings.aiSettings,
+          providers: settings.aiSettings.providers.map((p) => ({
+            ...p,
+            apiKey: localKeyMap.get(p.id) || p.apiKey,
+          })),
+        };
+        localStorage.setItem("noctivault-ai-settings", JSON.stringify(merged));
+      }
     }
 
     if (settings.pinnedNotes && !localStorage.getItem("noctivault-pinned")) {

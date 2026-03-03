@@ -173,7 +173,7 @@ export default function MorningBriefing({
         <div className="flex items-center gap-3">
           <GreetingIcon size={20} className="text-amber-400" />
           <h2 className="text-lg font-semibold text-foreground">
-            {greeting}, Blake
+            {greeting}
           </h2>
         </div>
         {data?.lastSession && (

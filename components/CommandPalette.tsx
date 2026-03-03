@@ -110,13 +110,33 @@ export default function CommandPalette({ isOpen, onClose, onSelectNote }: Comman
         e.preventDefault();
         onClose();
         break;
+      case "Tab": {
+        const focusable = e.currentTarget.closest('[role="dialog"]')?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable || focusable.length === 0) break;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+        break;
+      }
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[8vh] md:pt-[15vh]" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[8vh] md:pt-[15vh]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search"
+      onClick={onClose}
+    >
       <div className="fixed inset-0 bg-black/60" />
       <div
         className="relative w-full max-w-xl mx-4 md:mx-0 bg-sidebar-bg border border-sidebar-border rounded-xl shadow-2xl overflow-hidden"

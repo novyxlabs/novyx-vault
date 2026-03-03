@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 import { getUserNovyxKey } from "@/lib/novyx";
 
 interface BrainDumpRequest {
@@ -49,6 +51,8 @@ function buildSystemPrompt(existingNotes: string[]): string {
 export async function POST(req: NextRequest) {
   let ctx;
   try { ctx = await getStorageContext(); } catch (e) { if (e instanceof Response) return e; throw e; }
+  const rl = await checkRateLimit(getRateLimitKey("brain-dump", ctx.userId, req), RATE_LIMITS.ai);
+  if (!rl.allowed) return rateLimitResponse(rl.resetMs);
   const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
 
   let body: BrainDumpRequest;
@@ -83,6 +87,14 @@ export async function POST(req: NextRequest) {
   if (!isLocal && !provider.apiKey) {
     return new Response(
       JSON.stringify({ error: "No API key configured for this provider" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const urlError = validateProviderBaseURL(provider.baseURL);
+  if (urlError) {
+    return new Response(
+      JSON.stringify({ error: urlError }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -200,14 +212,13 @@ export async function POST(req: NextRequest) {
         err.error
       );
       return new Response(
-        JSON.stringify({ error: `${err.status}: ${err.message}` }),
+        JSON.stringify({ error: `AI provider error (${err.status})` }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[Brain Dump API] Error:`, message);
+    console.error(`[Brain Dump API] Error:`, err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "AI request failed" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

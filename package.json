@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "tauri:dev": "tauri dev",
-    "tauri:build": "TAURI=1 tauri build"
+    "tauri:build": "TAURI=1 tauri build",
+    "test": "npx playwright test --project=functional",
+    "test:demo": "npx playwright test --project=demo"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.2",
@@ -19,6 +21,9 @@
     "@codemirror/view": "^6.39.15",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.3",
+    "@vercel/analytics": "^1.6.1",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "novyx": "^2.9.1",

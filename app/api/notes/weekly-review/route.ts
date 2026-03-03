@@ -8,6 +8,8 @@ import { getStorage } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 import OpenAI from "openai";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 const TASK_REGEX = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/;
 const WIKILINK_RE = /\[\[([^\]]+)\]\]/g;
@@ -151,6 +153,10 @@ export async function GET() {
 
 // POST: Generate AI-written weekly digest
 export async function POST(req: NextRequest) {
+  try {
+  const ctx = await getStorageContext();
+  const rl = await checkRateLimit(getRateLimitKey("weekly-review", ctx.userId, req), RATE_LIMITS.ai);
+  if (!rl.allowed) return rateLimitResponse(rl.resetMs);
   const { reviewData, provider } = await req.json();
 
   if (!provider?.model) {
@@ -166,6 +172,14 @@ export async function POST(req: NextRequest) {
   if (!isLocal && !provider.apiKey) {
     return new Response(
       JSON.stringify({ error: "No API key configured" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const urlError = validateProviderBaseURL(provider.baseURL);
+  if (urlError) {
+    return new Response(
+      JSON.stringify({ error: urlError }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -280,9 +294,16 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI request failed";
+    console.error("[Weekly Review] Error:", err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "AI request failed" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+  } catch (e) {
+    if (e instanceof Response) return e;
+    return new Response(
+      JSON.stringify({ error: "Weekly review generation failed" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

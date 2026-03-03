@@ -1,11 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { provisionNovyxKey, storeNovyxKey } from "@/lib/novyx";
+import { provisionNovyxKeyWithRetry, storeNovyxKey } from "@/lib/novyx";
 import { createServiceSupabase } from "@/lib/supabase";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const error = searchParams.get("error");
+  const errorDescription = searchParams.get("error_description");
+
+  // Handle OAuth errors (user denied access, provider error, etc.)
+  if (error) {
+    const loginUrl = new URL("/login", origin);
+    loginUrl.searchParams.set("error", error);
+    if (errorDescription) {
+      loginUrl.searchParams.set("error_description", errorDescription);
+    }
+    return NextResponse.redirect(loginUrl.toString());
+  }
 
   if (code) {
     let response = NextResponse.redirect(`${origin}/`);
@@ -27,7 +39,15 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { data } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error: exchangeError } =
+      await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError) {
+      const loginUrl = new URL("/login", origin);
+      loginUrl.searchParams.set("error", "auth_failed");
+      loginUrl.searchParams.set("error_description", exchangeError.message);
+      return NextResponse.redirect(loginUrl.toString());
+    }
 
     // Provision Novyx key for OAuth users (fire-and-forget)
     if (data.user?.email) {
@@ -39,9 +59,11 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (!profile?.novyx_api_key) {
-        provisionNovyxKey(data.user.email)
+        provisionNovyxKeyWithRetry(data.user.email)
           .then((result) => storeNovyxKey(data.user!.id, result.api_key))
-          .catch((err) => console.error("OAuth Novyx provisioning failed:", err));
+          .catch((err) =>
+            console.error("OAuth Novyx provisioning failed:", err)
+          );
       }
     }
 

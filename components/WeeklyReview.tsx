@@ -162,7 +162,29 @@ export default function WeeklyReview({ isOpen, onClose, onSelectNote }: WeeklyRe
   })();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Weekly Review"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Tab") {
+          const modal = e.currentTarget;
+          const focusable = modal.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey) {
+            if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+          } else {
+            if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+          }
+        }
+      }}
+    >
       <div
         className="bg-sidebar-bg border border-sidebar-border rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}

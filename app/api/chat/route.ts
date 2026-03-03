@@ -6,6 +6,8 @@ import type { NoteEntry } from "@/lib/notes";
 import { recallMemories, rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -152,6 +154,8 @@ function buildSystemPrompt(
 export async function POST(req: NextRequest) {
   try {
   const ctx = await getStorageContext();
+  const rl = await checkRateLimit(getRateLimitKey("chat", ctx.userId, req), RATE_LIMITS.ai);
+  if (!rl.allowed) return rateLimitResponse(rl.resetMs);
   const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
   const { messages, noteContext, provider } = (await req.json()) as ChatRequest;
 
@@ -167,6 +171,14 @@ export async function POST(req: NextRequest) {
   if (!isLocal && !provider.apiKey) {
     return new Response(
       JSON.stringify({ error: "No API key configured for this provider" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const urlError = validateProviderBaseURL(provider.baseURL);
+  if (urlError) {
+    return new Response(
+      JSON.stringify({ error: urlError }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -306,14 +318,13 @@ export async function POST(req: NextRequest) {
     if (err instanceof OpenAI.APIError) {
       console.error(`[Chat API] ${err.status} from ${provider.baseURL}:`, err.message, err.error);
       return new Response(
-        JSON.stringify({ error: `${err.status}: ${err.message}` }),
+        JSON.stringify({ error: `AI provider error (${err.status})` }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[Chat API] Error:`, message);
+    console.error(`[Chat API] Error:`, err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "AI request failed" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

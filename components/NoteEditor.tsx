@@ -27,8 +27,17 @@ interface NoteEditorProps {
 
 type ViewMode = "editor" | "preview" | "split";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function formatInline(text: string): string {
-  return text
+  return escapeHtml(text)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`(.+?)`/g, "<code>$1</code>")
@@ -57,6 +66,10 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
   const [isTocOpen, setIsTocOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const editorRef = useRef<EditorHandle>(null);
+  const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    return () => { timerRefs.current.forEach(clearTimeout); };
+  }, []);
   const noteName = notePath.split("/").pop()?.replace(/\.md$/, "") || "Untitled";
   const pathSegments = notePath.split("/");
   const stats = getStats(content);
@@ -113,7 +126,7 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
       });
       if (res.ok) {
         setRememberState("saved");
-        setTimeout(() => setRememberState("idle"), 2000);
+        timerRefs.current.push(setTimeout(() => setRememberState("idle"), 2000));
       } else {
         setRememberState("idle");
       }
@@ -233,7 +246,7 @@ ${htmlLines.join("\n")}
 
   const handlePasteUrl = (url: string) => {
     setPastedUrl(url);
-    setTimeout(() => setPastedUrl(null), 6000);
+    timerRefs.current.push(setTimeout(() => setPastedUrl(null), 6000));
   };
 
   const handleDragOver = (e: React.DragEvent) => {

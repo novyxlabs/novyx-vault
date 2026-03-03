@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getStorageContext } from "@/lib/auth";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ExplainRequest {
   sourceNote: string;
@@ -15,6 +18,10 @@ interface ExplainRequest {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+  const ctx = await getStorageContext();
+  const rl = await checkRateLimit(getRateLimitKey("explain", ctx.userId, req), RATE_LIMITS.ai);
+  if (!rl.allowed) return rateLimitResponse(rl.resetMs);
   const { sourceNote, sourceSnippet, targetNote, targetSnippet, connectionType, provider } =
     (await req.json()) as ExplainRequest;
 
@@ -25,6 +32,11 @@ export async function POST(req: NextRequest) {
   const isLocal =
     provider.baseURL.includes("localhost") || provider.baseURL.includes("127.0.0.1");
   if (!isLocal && !provider.apiKey) {
+    return NextResponse.json({ explanation: "" });
+  }
+
+  const urlError = validateProviderBaseURL(provider.baseURL);
+  if (urlError) {
     return NextResponse.json({ explanation: "" });
   }
 
@@ -68,6 +80,10 @@ ${targetSnippet}`,
     return NextResponse.json({ explanation });
   } catch (err) {
     console.error("Explain connection error:", err);
+    return NextResponse.json({ explanation: "" });
+  }
+  } catch (e) {
+    if (e instanceof Response) return e;
     return NextResponse.json({ explanation: "" });
   }
 }

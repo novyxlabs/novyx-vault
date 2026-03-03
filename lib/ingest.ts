@@ -67,7 +67,33 @@ function extractArticleText(html: string): string {
   return paragraphs.join("\n\n").substring(0, 3000);
 }
 
+const BLOCKED_HOST_RE =
+  /^(127\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|169\.254\.\d+\.\d+|0\.0\.0\.0|localhost|\[?::1\]?)$/i;
+
+const BLOCKED_HOSTS = new Set([
+  "metadata.google.internal",
+  "metadata.google",
+  "instance-data",
+]);
+
+function isBlockedUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr);
+    const host = parsed.hostname;
+    if (BLOCKED_HOST_RE.test(host)) return true;
+    if (BLOCKED_HOSTS.has(host)) return true;
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return true;
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 async function fetchHtml(url: string): Promise<string> {
+  if (isBlockedUrl(url)) {
+    throw new Error("URL targets a blocked address");
+  }
+
   const res = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (compatible; Noctivault/1.0)",
