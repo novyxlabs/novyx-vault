@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (code) {
-    let response = NextResponse.redirect(`${origin}/`);
+    const response = NextResponse.redirect(`${origin}/`);
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

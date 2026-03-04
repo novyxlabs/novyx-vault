@@ -46,7 +46,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* External script to prevent theme flash — allows removing 'unsafe-inline' from CSP script-src */}
+        {/* External script to prevent theme flash */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/theme-init.js" />
       </head>
       <body

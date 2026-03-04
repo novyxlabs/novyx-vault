@@ -257,7 +257,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
       changes: { from: insertFrom, to: insertTo, insert: placeholder },
     });
 
-    let aiInsertStart = insertFrom;
+    const aiInsertStart = insertFrom;
     let aiTextLength = placeholder.length;
     const controller = new AbortController();
     aiAbortRef.current = controller;

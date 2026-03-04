@@ -23,6 +23,7 @@ export default function WikiLinkMenu({ isOpen, filter, position, onSelect, onClo
       .then((r) => r.json())
       .then((data) => {
         const flat: { path: string; name: string }[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         function walk(entries: { path: string; name: string; isFolder: boolean; children?: any[] }[]) {
           for (const e of entries) {
             if (!e.isFolder) flat.push({ path: e.path, name: e.name });

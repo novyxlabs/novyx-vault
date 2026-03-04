@@ -28,7 +28,7 @@ function getStreakData(): { currentStreak: number; longestStreak: number; last30
 
     // Current streak (counting back from today or yesterday)
     let currentStreak = 0;
-    let d = new Date();
+    const d = new Date();
     if (!daySet.has(d.toISOString().slice(0, 10))) {
       d.setDate(d.getDate() - 1); // allow yesterday as current
     }
