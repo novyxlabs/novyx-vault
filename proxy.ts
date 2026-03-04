@@ -7,9 +7,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip auth for public pages, static assets, and auth routes
+  // Skip auth for API routes (they handle their own auth via getStorageContext),
+  // public pages, static assets, and OG image generation
   const { pathname } = request.nextUrl;
   if (
+    pathname.startsWith("/api/") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/reset-password") ||
@@ -18,7 +20,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/terms") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth") ||
+    pathname === "/opengraph-image" ||
     pathname.includes(".")
   ) {
     return NextResponse.next();
@@ -52,12 +54,10 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    // Let the root page handle unauthenticated users (shows landing page)
-    if (pathname === "/") {
-      return response;
-    }
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    // Root page handles unauthenticated users (shows landing page).
+    // All other unknown paths fall through to Next.js routing (renders 404).
+    // No redirect — the only authenticated page is "/" which has its own guard.
+    return response;
   }
 
   // Email verification: redirect unconfirmed email users to /verify-email

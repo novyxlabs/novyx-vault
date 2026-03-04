@@ -32,7 +32,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
-    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    let apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+
+    if (!apiKey && ctx.userId) {
+      const user = await getUser();
+      if (user?.email) {
+        apiKey = await ensureNovyxKey(ctx.userId, user.email, ctx.cookieHeader);
+      }
+    }
     const { observation } = await req.json();
     if (!observation || typeof observation !== "string" || !observation.trim()) {
       return Response.json({ error: "Missing observation text" }, { status: 400 });
@@ -49,7 +56,14 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
-    const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+    let apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
+
+    if (!apiKey && ctx.userId) {
+      const user = await getUser();
+      if (user?.email) {
+        apiKey = await ensureNovyxKey(ctx.userId, user.email, ctx.cookieHeader);
+      }
+    }
     const { id } = await req.json();
     if (!id) {
       return Response.json({ error: "Missing memory id" }, { status: 400 });

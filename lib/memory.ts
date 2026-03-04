@@ -28,7 +28,8 @@ export async function recallMemories(query: string, userId?: string, apiKey?: st
     const tags = userTag(userId);
     const results = await nx.recall(query, tags.length > 0 ? { tags } : undefined);
     return results.memories.map((m) => m.observation);
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] recallMemories failed:", e);
     return [];
   }
 }
@@ -48,8 +49,8 @@ export async function rememberExchange(
       context: aiResponse ? aiResponse.slice(0, 1000) : undefined,
       ...(tags.length > 0 && { tags }),
     });
-  } catch {
-    // fail silently — memory is optional
+  } catch (e) {
+    console.warn("[novyx] rememberExchange failed:", e);
   }
 }
 
@@ -101,7 +102,8 @@ export async function listMemories(
       })),
       total: results.total_count,
     };
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] listMemories failed:", e);
     return { memories: [], total: 0 };
   }
 }
@@ -111,7 +113,8 @@ export async function forgetMemory(id: string, apiKey?: string): Promise<boolean
   if (!nx) return false;
   try {
     return await nx.forget(id);
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] forgetMemory failed:", e);
     return false;
   }
 }
@@ -142,7 +145,8 @@ export async function getCortexInsights(
       })),
       total: results.total,
     };
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] getCortexInsights failed:", e);
     return { insights: [], total: 0 };
   }
 }
@@ -157,7 +161,8 @@ export async function runCortex(apiKey?: string): Promise<{
   if (!nx) return null;
   try {
     return await nx.cortexRun();
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] runCortex failed:", e);
     return null;
   }
 }
@@ -211,7 +216,8 @@ export async function getKnowledgeGraph(apiKey?: string): Promise<{
     }));
 
     return { nodes, edges };
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] getKnowledgeGraph failed:", e);
     return { nodes: [], edges: [] };
   }
 }
@@ -242,7 +248,8 @@ export async function getReplayTimeline(
       })),
       total: result.total_count,
     };
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] getReplayTimeline failed:", e);
     return { entries: [], total: 0 };
   }
 }
@@ -284,7 +291,8 @@ export async function getMemoryDrift(
       topNewTopics: result.top_new_topics,
       topLostTopics: result.top_lost_topics,
     };
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] getMemoryDrift failed:", e);
     return null;
   }
 }
@@ -310,7 +318,8 @@ export async function getAuditLog(
       artifact_id: e.artifact_id as string | undefined,
       details: e,
     }));
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] getAuditLog failed:", e);
     return [];
   }
 }
@@ -320,7 +329,8 @@ export async function getMemoryUsage(apiKey?: string): Promise<Record<string, un
   if (!nx) return null;
   try {
     return await nx.usage();
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] getMemoryUsage failed:", e);
     return null;
   }
 }
@@ -345,7 +355,8 @@ export async function getContextNow(apiKey?: string): Promise<ContextNow | null>
       upcomingCount: result.upcoming_count,
       lastSessionAt: result.last_session_at || null,
     };
-  } catch {
+  } catch (e) {
+    console.warn("[novyx] getContextNow failed:", e);
     return null;
   }
 }

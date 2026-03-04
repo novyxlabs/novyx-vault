@@ -1,4 +1,8 @@
 import { defineConfig } from "@playwright/test";
+import { config } from "dotenv";
+
+// Load .env.local so TEST_ANTHROPIC_API_KEY is available in tests
+config({ path: ".env.local" });
 
 export default defineConfig({
   testDir: "./tests",

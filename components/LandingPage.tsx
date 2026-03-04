@@ -116,7 +116,7 @@ export default function LandingPage() {
           />
           <DiffCard
             icon={<BarChart3 size={24} />}
-            title="Knowledge Graph"
+            title="Entity Extraction"
             description="Entities and relationships extracted from your notes build a growing semantic graph."
           />
         </div>

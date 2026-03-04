@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus, Trash2, Check, ChevronDown } from "lucide-react";
+import { X, Plus, Trash2, Check, ChevronDown, LogOut } from "lucide-react";
 import {
   PROVIDER_PRESETS,
   loadSettings,
@@ -269,7 +269,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-sidebar-border">
+        <div className="px-6 py-4 border-t border-sidebar-border space-y-3">
           <div className="relative">
             <button
               onClick={() => setShowPresets(!showPresets)}
@@ -311,6 +311,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
           </div>
+
+          {/* Sign Out (cloud mode only) */}
+          {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+            <button
+              onClick={async () => {
+                const { createClient } = await import("@supabase/supabase-js");
+                const supabase = createClient(
+                  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+                await supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors w-full"
+            >
+              <LogOut size={14} />
+              Sign Out
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -200,10 +200,7 @@ export async function POST(req: NextRequest) {
     // Save a memory of this brain dump (fire-and-forget)
     rememberExchange(rawText.slice(0, 500), parsed.title, ctx.userId, apiKey ?? undefined).catch(() => {});
 
-    return new Response(JSON.stringify(parsed), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json(parsed);
   } catch (err) {
     if (err instanceof OpenAI.APIError) {
       console.error(

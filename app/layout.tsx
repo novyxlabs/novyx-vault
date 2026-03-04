@@ -46,20 +46,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `
-          (function() {
-            var t = localStorage.getItem('noctivault-theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', t);
-            try {
-              var a = JSON.parse(localStorage.getItem('noctivault-accent') || '{}');
-              if (a.color) {
-                document.documentElement.style.setProperty('--accent', a.color);
-                document.documentElement.style.setProperty('--accent-hover', a.hover);
-                document.documentElement.style.setProperty('--accent-rgb', a.rgb);
-              }
-            } catch(e) {}
-          })();
-        `}} />
+        {/* External script to prevent theme flash — allows removing 'unsafe-inline' from CSP script-src */}
+        <script src="/theme-init.js" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

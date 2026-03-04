@@ -221,10 +221,7 @@ export async function POST(req: NextRequest) {
       apiKey ?? undefined
     ).catch(() => {});
 
-    return new Response(JSON.stringify(parsed), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json(parsed);
   } catch (err) {
     if (err instanceof OpenAI.APIError) {
       console.error(

@@ -188,7 +188,6 @@ export interface FeatureGating {
     cortex: boolean;
     replay: boolean;
     insights: boolean;
-    drift: boolean;
   };
   usage: {
     memories_count?: number;
@@ -227,7 +226,6 @@ export async function getFeatureGating(
         cortex: isPro,
         replay: isPro,
         insights: isPro,
-        drift: isPro,
       },
       usage: {
         memories_count: (usage as Record<string, unknown>).memories_count as number | undefined,
@@ -241,7 +239,7 @@ export async function getFeatureGating(
     // Default to free tier on error
     const fallback: FeatureGating = {
       tier: "free",
-      features: { graph: false, cortex: false, replay: false, insights: false, drift: false },
+      features: { graph: false, cortex: false, replay: false, insights: false },
       usage: {},
     };
     return fallback;

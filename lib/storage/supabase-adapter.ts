@@ -22,7 +22,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async listNotes(dirPath = ""): Promise<NoteEntry[]> {
-    // Get all non-trashed notes for this user
+    // Single query: fetch all non-trashed notes, then build tree in-memory
     const { data, error } = await this.supabase
       .from("notes")
       .select("id, path, name, is_folder, modified_at")
@@ -33,40 +33,57 @@ export class SupabaseAdapter implements StorageAdapter {
     if (error) throw new Error(error.message);
     if (!data) return [];
 
-    // Filter to entries whose parent matches dirPath
-    const normalizedDir = dirPath.replace(/^\/+|\/+$/g, "");
-    const directChildren = data.filter((row) => {
-      const parent = this.parentDir(row.path);
-      return parent === normalizedDir;
-    });
+    return this.buildTree(data, dirPath);
+  }
 
-    const result: NoteEntry[] = [];
-    for (const row of directChildren) {
-      if (row.is_folder) {
-        const children = await this.listNotes(row.path);
-        result.push({
-          name: row.name,
-          path: row.path,
-          isFolder: true,
-          children,
-          modifiedAt: row.modified_at,
-        });
-      } else {
-        result.push({
-          name: row.name,
-          path: row.path,
-          isFolder: false,
-          modifiedAt: row.modified_at,
-        });
+  /** Build a nested tree from a flat list of rows (no additional queries) */
+  private buildTree(
+    rows: { id: string; path: string; name: string; is_folder: boolean; modified_at: string }[],
+    dirPath: string
+  ): NoteEntry[] {
+    const normalizedDir = dirPath.replace(/^\/+|\/+$/g, "");
+
+    // Group rows by their parent directory
+    const childrenByParent = new Map<string, typeof rows>();
+    for (const row of rows) {
+      const parent = this.parentDir(row.path);
+      let list = childrenByParent.get(parent);
+      if (!list) {
+        list = [];
+        childrenByParent.set(parent, list);
       }
+      list.push(row);
     }
 
-    result.sort((a, b) => {
-      if (a.isFolder !== b.isFolder) return a.isFolder ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
+    const build = (dir: string): NoteEntry[] => {
+      const directChildren = childrenByParent.get(dir) ?? [];
+      const result: NoteEntry[] = directChildren.map((row) => {
+        if (row.is_folder) {
+          return {
+            name: row.name,
+            path: row.path,
+            isFolder: true as const,
+            children: build(row.path),
+            modifiedAt: row.modified_at,
+          };
+        }
+        return {
+          name: row.name,
+          path: row.path,
+          isFolder: false as const,
+          modifiedAt: row.modified_at,
+        };
+      });
 
-    return result;
+      result.sort((a, b) => {
+        if (a.isFolder !== b.isFolder) return a.isFolder ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      return result;
+    };
+
+    return build(normalizedDir);
   }
 
   async readNote(notePath: string): Promise<string> {
