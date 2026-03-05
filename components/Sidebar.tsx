@@ -34,6 +34,7 @@ import {
   Scissors,
   Sparkles,
   CalendarRange,
+  History,
   Settings,
   LogOut,
   User,
@@ -75,6 +76,7 @@ interface SidebarProps {
   onOpenWritingCoach: () => void;
   onOpenClipRemix: () => void;
   onOpenWeeklyReview: () => void;
+  onOpenReflect: () => void;
   onOpenSettings: () => void;
   onSignOut?: () => void;
   onGoHome: () => void;
@@ -474,6 +476,7 @@ export default function Sidebar({
   onOpenWritingCoach,
   onOpenClipRemix,
   onOpenWeeklyReview,
+  onOpenReflect,
   onOpenSettings,
   onSignOut,
   onGoHome,
@@ -921,7 +924,15 @@ export default function Sidebar({
           {/* AI Suite */}
           <div className="px-2 pt-2.5 pb-1">
             <div className="text-[9px] uppercase tracking-[0.15em] text-accent/40 font-medium px-1 mb-1.5">AI Suite</div>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-5 gap-1">
+              <button
+                onClick={onOpenReflect}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-teal-400/70 hover:bg-teal-400/10 hover:text-teal-400 transition-all"
+                title="Reflect — chronological timeline of notes, memories & insights"
+              >
+                <History size={16} />
+                <span className="text-[9px] leading-none font-medium">Reflect</span>
+              </button>
               <button
                 onClick={onOpenBrainDump}
                 className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-400/70 hover:bg-purple-400/10 hover:text-purple-400 transition-all"

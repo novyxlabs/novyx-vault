@@ -23,6 +23,7 @@ import BrainDump from "@/components/BrainDump";
 import WritingCoach from "@/components/WritingCoach";
 import ClipRemix from "@/components/ClipRemix";
 import WeeklyReview from "@/components/WeeklyReview";
+import ReflectTimeline from "@/components/ReflectTimeline";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
 import ImportPrompt from "@/components/ImportPrompt";
@@ -63,6 +64,7 @@ export default function AppShell() {
   const [isWritingCoachOpen, setIsWritingCoachOpen] = useState(false);
   const [isClipRemixOpen, setIsClipRemixOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
+  const [isReflectOpen, setIsReflectOpen] = useState(false);
   const [recentNotes, setRecentNotes] = useState<string[]>([]);
   const [pinnedNotes, setPinnedNotes] = useState<string[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
@@ -644,6 +646,7 @@ export default function AppShell() {
         onOpenWritingCoach={() => setIsWritingCoachOpen(true)}
         onOpenClipRemix={() => setIsClipRemixOpen(true)}
         onOpenWeeklyReview={() => setIsWeeklyReviewOpen(true)}
+        onOpenReflect={() => setIsReflectOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
           const { createClient } = await import("@supabase/supabase-js");
@@ -664,7 +667,13 @@ export default function AppShell() {
       />
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex overflow-hidden">
-          {activeNote ? (
+          {isReflectOpen ? (
+            <ReflectTimeline
+              notes={notes}
+              onSelectNote={(path) => { setIsReflectOpen(false); handleSelectNote(path); }}
+              onClose={() => setIsReflectOpen(false)}
+            />
+          ) : activeNote ? (
             <NoteEditor
               notePath={activeNote}
               content={content}
@@ -696,6 +705,8 @@ export default function AppShell() {
                 onOpenClipRemix={() => setIsClipRemixOpen(true)}
                 onOpenWritingCoach={() => setIsWritingCoachOpen(true)}
                 onOpenSettings={() => setIsSettingsOpen(true)}
+                onOpenChat={() => setIsChatOpen(true)}
+                onOpenQuickCapture={() => setIsQuickCaptureOpen(true)}
               />
               {isEmptyDragOver && (
                 <div className="file-drop-overlay">
