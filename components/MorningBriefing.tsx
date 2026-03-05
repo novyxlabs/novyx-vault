@@ -279,7 +279,7 @@ export default function MorningBriefing({
             </p>
             {!insight && !briefing && (
               <p className="text-sm text-muted/60 mt-1 italic">
-                I'm here whenever you're ready.
+                I&apos;m here whenever you&apos;re ready.
               </p>
             )}
           </div>
