@@ -62,9 +62,11 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
   const [isDragOver, setIsDragOver] = useState(false);
   const [pastedUrl, setPastedUrl] = useState<string | null>(null);
   const [rememberState, setRememberState] = useState<"idle" | "saving" | "saved">("idle");
+  const [rememberToast, setRememberToast] = useState<string | null>(null);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isTocOpen, setIsTocOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorHandle>(null);
   const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
@@ -96,6 +98,18 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
   // Close info panel when switching notes
   useEffect(() => { setIsInfoOpen(false); }, [notePath]);
 
+  // Close info panel on outside click
+  useEffect(() => {
+    if (!isInfoOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setIsInfoOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [isInfoOpen]);
+
   const toggleFocusMode = useCallback(() => setIsFocusMode((prev) => !prev), []);
 
   useEffect(() => {
@@ -126,12 +140,18 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
       });
       if (res.ok) {
         setRememberState("saved");
+        setRememberToast("Note saved to memory");
         timerRefs.current.push(setTimeout(() => setRememberState("idle"), 2000));
+        timerRefs.current.push(setTimeout(() => setRememberToast(null), 3000));
       } else {
         setRememberState("idle");
+        setRememberToast("Failed to save to memory");
+        timerRefs.current.push(setTimeout(() => setRememberToast(null), 3000));
       }
     } catch {
       setRememberState("idle");
+      setRememberToast("Failed to save to memory");
+      timerRefs.current.push(setTimeout(() => setRememberToast(null), 3000));
     }
   };
 
@@ -416,20 +436,29 @@ ${htmlLines.join("\n")}
           >
             <Share2 size={14} />
           </button>
-          <button
-            onClick={handleRemember}
-            disabled={rememberState === "saving"}
-            className={`p-1.5 rounded transition-colors ${
-              rememberState === "saved"
-                ? "text-green-400"
-                : rememberState === "saving"
-                  ? "text-accent/50 animate-pulse"
-                  : "text-muted hover:text-foreground"
-            }`}
-            title="Remember this note"
-          >
-            {rememberState === "saved" ? <Check size={14} /> : <Brain size={14} />}
-          </button>
+          <div className="relative">
+            <button
+              onClick={handleRemember}
+              disabled={rememberState === "saving"}
+              className={`p-1.5 rounded transition-colors ${
+                rememberState === "saved"
+                  ? "text-green-400"
+                  : rememberState === "saving"
+                    ? "text-accent/50 animate-pulse"
+                    : "text-muted hover:text-foreground"
+              }`}
+              title="Remember this note"
+            >
+              {rememberState === "saved" ? <Check size={14} /> : <Brain size={14} />}
+            </button>
+            {rememberToast && (
+              <div className={`absolute top-full mt-1 right-0 z-30 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg border border-sidebar-border ${
+                rememberToast.startsWith("Failed") ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"
+              }`}>
+                {rememberToast}
+              </div>
+            )}
+          </div>
           {headings.length > 0 && (
             <button
               onClick={() => setIsTocOpen((prev) => !prev)}
@@ -441,7 +470,7 @@ ${htmlLines.join("\n")}
               <ListTree size={14} />
             </button>
           )}
-          <div className="relative">
+          <div className="relative" ref={infoRef}>
             <button
               onClick={() => setIsInfoOpen((prev) => !prev)}
               className={`p-1.5 rounded transition-colors hidden md:block ${

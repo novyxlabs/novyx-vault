@@ -644,6 +644,16 @@ export default function AppShell() {
         onOpenWritingCoach={() => setIsWritingCoachOpen(true)}
         onOpenClipRemix={() => setIsClipRemixOpen(true)}
         onOpenWeeklyReview={() => setIsWeeklyReviewOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
+          const { createClient } = await import("@supabase/supabase-js");
+          const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          );
+          await supabase.auth.signOut();
+          window.location.href = "/login";
+        } : undefined}
         onGoHome={() => { setActiveNote(null); setContent(""); }}
         recentNotes={recentNotes}
         onDuplicateNote={handleDuplicateNote}

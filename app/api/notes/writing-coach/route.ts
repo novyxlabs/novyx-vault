@@ -141,18 +141,21 @@ export async function GET() {
     const memoryTags = new Set<string>();
     for (const mem of memoriesResult.memories) {
       for (const tag of mem.tags) {
+        if (tag.startsWith("user:")) continue;
         memoryTags.add(tag.toLowerCase());
       }
     }
     // Include tags from cortex insights
     for (const insight of insightsResult.insights) {
       for (const tag of insight.tags) {
+        if (tag.startsWith("user:")) continue;
         memoryTags.add(tag.toLowerCase());
       }
     }
     // Also include drift new topics
     if (driftResult) {
       for (const topic of driftResult.topNewTopics) {
+        if (topic.startsWith("user:")) continue;
         memoryTags.add(topic.toLowerCase());
       }
     }

@@ -130,16 +130,16 @@ export async function GET() {
       totalMemories: memData.total,
       insights: (insights.insights || []).slice(0, 5).map((i) => ({
         observation: i.observation,
-        tags: i.tags,
+        tags: i.tags.filter((t: string) => !t.startsWith("user:")),
         importance: i.importance,
       })),
       drift: drift
         ? {
             memoryDelta: drift.memoryCountDelta,
             importanceDelta: drift.avgImportanceDelta,
-            newTopics: drift.topNewTopics.slice(0, 5),
-            lostTopics: drift.topLostTopics.slice(0, 3),
-            tagShifts: drift.tagShifts.slice(0, 5),
+            newTopics: drift.topNewTopics.filter((t: string) => !t.startsWith("user:")).slice(0, 5),
+            lostTopics: drift.topLostTopics.filter((t: string) => !t.startsWith("user:")).slice(0, 3),
+            tagShifts: drift.tagShifts.filter((s: { tag: string }) => !s.tag?.startsWith("user:")).slice(0, 5),
           }
         : null,
     },

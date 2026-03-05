@@ -34,6 +34,9 @@ import {
   Scissors,
   Sparkles,
   CalendarRange,
+  Settings,
+  LogOut,
+  User,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
@@ -72,6 +75,8 @@ interface SidebarProps {
   onOpenWritingCoach: () => void;
   onOpenClipRemix: () => void;
   onOpenWeeklyReview: () => void;
+  onOpenSettings: () => void;
+  onSignOut?: () => void;
   onGoHome: () => void;
   recentNotes: string[];
   onDuplicateNote: (path: string) => void;
@@ -469,6 +474,8 @@ export default function Sidebar({
   onOpenWritingCoach,
   onOpenClipRemix,
   onOpenWeeklyReview,
+  onOpenSettings,
+  onSignOut,
   onGoHome,
   recentNotes,
   onDuplicateNote,
@@ -489,6 +496,8 @@ export default function Sidebar({
   const [memoryCount, setMemoryCount] = useState<number | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [sortBy, setSortBy] = useState<string>("default");
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Hydrate from localStorage after mount to avoid SSR mismatch
@@ -518,6 +527,18 @@ export default function Sidebar({
       .then((data) => setTags(data.tags || []))
       .catch(() => {});
   }, [notes]);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [isUserMenuOpen]);
 
   // Debounced full-text search
   useEffect(() => {
@@ -1022,6 +1043,35 @@ export default function Sidebar({
                 {theme === "dark" ? <Sun size={13} /> : <Moon size={13} />}
               </button>
               <ThemePicker />
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen((p) => !p)}
+                  className={`p-1.5 rounded-md transition-all ${isUserMenuOpen ? "text-accent bg-accent/10" : "text-muted/40 hover:text-foreground"}`}
+                  title="Account"
+                >
+                  <User size={13} />
+                </button>
+                {isUserMenuOpen && (
+                  <div className="absolute bottom-full right-0 mb-1 w-40 bg-card-bg border border-sidebar-border rounded-lg shadow-xl overflow-hidden z-50">
+                    <button
+                      onClick={() => { setIsUserMenuOpen(false); onOpenSettings(); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-foreground hover:bg-muted-bg/50 transition-colors"
+                    >
+                      <Settings size={12} />
+                      Settings
+                    </button>
+                    {onSignOut && (
+                      <button
+                        onClick={() => { setIsUserMenuOpen(false); onSignOut(); }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-red-400/10 transition-colors border-t border-sidebar-border"
+                      >
+                        <LogOut size={12} />
+                        Sign Out
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

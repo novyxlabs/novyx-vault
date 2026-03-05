@@ -56,16 +56,16 @@ export async function GET(req: NextRequest) {
         observation: m.observation,
         importance: m.importance,
         created_at: m.created_at,
-        tags: m.tags,
+        tags: m.tags.filter((t: string) => !t.startsWith("user:")),
         score: m.score,
       })),
       drift: driftResult
         ? {
-            newTopics: driftResult.topNewTopics,
-            lostTopics: driftResult.topLostTopics,
+            newTopics: driftResult.topNewTopics.filter((t: string) => !t.startsWith("user:")),
+            lostTopics: driftResult.topLostTopics.filter((t: string) => !t.startsWith("user:")),
             memoryDelta: driftResult.memoryCountDelta,
             importanceDelta: driftResult.avgImportanceDelta,
-            tagShifts: driftResult.tagShifts,
+            tagShifts: driftResult.tagShifts.filter((s: { tag: string }) => !s.tag?.startsWith("user:")),
           }
         : null,
       timeline: timelineResult.entries.map((e) => ({

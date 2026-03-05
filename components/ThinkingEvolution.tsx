@@ -631,9 +631,9 @@ export default function ThinkingEvolution({
                                     >
                                       {mem.importance}/10
                                     </span>
-                                    {mem.tags.length > 0 && (
+                                    {mem.tags.filter((t: string) => !t.startsWith("user:")).length > 0 && (
                                       <div className="flex gap-1">
-                                        {mem.tags.slice(0, 3).map((tag) => (
+                                        {mem.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 3).map((tag: string) => (
                                           <span
                                             key={tag}
                                             className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent/70"
@@ -641,9 +641,9 @@ export default function ThinkingEvolution({
                                             {tag}
                                           </span>
                                         ))}
-                                        {mem.tags.length > 3 && (
+                                        {mem.tags.filter((t: string) => !t.startsWith("user:")).length > 3 && (
                                           <span className="text-[10px] text-muted">
-                                            +{mem.tags.length - 3}
+                                            +{mem.tags.filter((t: string) => !t.startsWith("user:")).length - 3}
                                           </span>
                                         )}
                                       </div>

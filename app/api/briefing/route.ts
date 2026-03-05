@@ -63,6 +63,8 @@ export async function GET() {
     scanPendingTasks(ctx.userId, ctx.cookieHeader),
   ]);
 
+  const filterUserTags = (tags: string[]) => tags.filter((t) => !t.startsWith("user:"));
+
   return NextResponse.json({
     lastSession: context?.lastSessionAt || null,
     memoryCount: recentMems.total,
@@ -70,21 +72,21 @@ export async function GET() {
     recentMemories: (context?.recent || []).slice(0, 5).map((m) => ({
       observation: m.observation,
       importance: m.importance,
-      tags: m.tags,
+      tags: filterUserTags(m.tags),
       created_at: m.created_at,
     })),
     insights: (insights.insights || []).slice(0, 3).map((i) => ({
       observation: i.observation,
-      tags: i.tags,
+      tags: filterUserTags(i.tags),
       importance: i.importance,
     })),
     drift: drift
       ? {
-          newTopics: drift.topNewTopics.slice(0, 5),
-          lostTopics: drift.topLostTopics.slice(0, 3),
+          newTopics: drift.topNewTopics.filter((t: string) => !t.startsWith("user:")).slice(0, 5),
+          lostTopics: drift.topLostTopics.filter((t: string) => !t.startsWith("user:")).slice(0, 3),
           memoryDelta: drift.memoryCountDelta,
           importanceDelta: drift.avgImportanceDelta,
-          tagShifts: drift.tagShifts.slice(0, 5),
+          tagShifts: drift.tagShifts.filter((s: { tag: string }) => !s.tag?.startsWith("user:")).slice(0, 5),
         }
       : null,
     pendingTasks: taskData.taskCount,

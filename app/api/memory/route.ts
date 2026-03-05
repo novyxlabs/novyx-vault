@@ -22,6 +22,10 @@ export async function GET(req: NextRequest) {
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
     const result = await listMemories(query, limit, offset, ctx.userId, apiKey ?? undefined);
+    result.memories = result.memories.map((m) => ({
+      ...m,
+      tags: m.tags.filter((t) => !t.startsWith("user:")),
+    }));
     return Response.json(result);
   } catch (e) {
     if (e instanceof Response) return e;
