@@ -652,7 +652,7 @@ export default function AppShell() {
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
           );
           await supabase.auth.signOut();
-          window.location.href = "/login";
+          window.location.href = "/";
         } : undefined}
         onGoHome={() => { setActiveNote(null); setContent(""); }}
         recentNotes={recentNotes}

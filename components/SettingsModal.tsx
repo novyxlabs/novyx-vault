@@ -438,7 +438,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
                 );
                 await supabase.auth.signOut();
-                window.location.href = "/login";
+                window.location.href = "/";
               }}
               className="flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors w-full"
             >
