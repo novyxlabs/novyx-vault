@@ -4,6 +4,11 @@ import {
   Brain, FileText, Network, GitBranch, History, Sparkles, BarChart3,
   Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight,
 } from "lucide-react";
+import {
+  MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
+  MemoryRollbackDemo, CortexInsightsDemo, BYOKDemo, LocalFirstDemo,
+  CloudSyncDemo, WritingToolsDemo, OpenSourceDemo,
+} from "@/components/FeatureDemos";
 
 export const metadata: Metadata = {
   title: "Features",
@@ -62,6 +67,7 @@ export default function FeaturesPage() {
               <li>AI context improves with every note you save to memory</li>
               <li>Per-user memory isolation in cloud mode &mdash; your memories are yours alone</li>
             </ul>
+            <MemoryDemo />
           </Feature>
 
           <Feature
@@ -85,6 +91,7 @@ export default function FeaturesPage() {
               <li>Automatic bidirectional backlinks</li>
               <li>Clickable links in both editor and preview modes</li>
             </ul>
+            <WikiLinkDemo />
           </Feature>
 
           <Feature
@@ -107,6 +114,7 @@ export default function FeaturesPage() {
               <li>Multiple discovery methods: semantic, keyword, tag, and entity matching</li>
               <li>Updates dynamically as you navigate between notes</li>
             </ul>
+            <GhostConnectionsDemo />
           </Feature>
 
           <Feature
@@ -129,6 +137,7 @@ export default function FeaturesPage() {
               <li>Color-coded by folder or tag</li>
               <li>Click to navigate, drag to rearrange</li>
             </ul>
+            <KnowledgeGraphDemo />
           </Feature>
 
           <Feature
@@ -151,6 +160,7 @@ export default function FeaturesPage() {
               <li>One-click rollback to any previous state</li>
               <li>Memory audit log for transparency</li>
             </ul>
+            <MemoryRollbackDemo />
           </Feature>
 
           <Feature
@@ -173,6 +183,7 @@ export default function FeaturesPage() {
               <li>Entity and relationship extraction (people, projects, concepts)</li>
               <li>Semantic graph that grows with every note</li>
             </ul>
+            <CortexInsightsDemo />
           </Feature>
 
           <Feature
@@ -187,6 +198,7 @@ export default function FeaturesPage() {
               never persisted.
             </p>
             <Providers />
+            <BYOKDemo />
           </Feature>
 
           <Feature
@@ -209,6 +221,7 @@ export default function FeaturesPage() {
               <li>Works completely offline</li>
               <li>Zero lock-in &mdash; your files are always yours</li>
             </ul>
+            <LocalFirstDemo />
           </Feature>
 
           <Feature
@@ -226,6 +239,7 @@ export default function FeaturesPage() {
               <li>Settings sync across devices (theme, pinned notes, AI providers)</li>
               <li>OAuth login with Google and GitHub</li>
             </ul>
+            <CloudSyncDemo />
           </Feature>
 
           <Feature
@@ -245,6 +259,7 @@ export default function FeaturesPage() {
               <li>Slash commands for inline AI assistance</li>
               <li>Weekly Review &mdash; AI-generated summary of your writing activity</li>
             </ul>
+            <WritingToolsDemo />
           </Feature>
 
           <Feature
@@ -263,6 +278,7 @@ export default function FeaturesPage() {
               <li>Desktop apps via Tauri (macOS, Windows, Linux)</li>
               <li>Built with Next.js, React, TypeScript, Tailwind CSS</li>
             </ul>
+            <OpenSourceDemo />
           </Feature>
         </div>
 

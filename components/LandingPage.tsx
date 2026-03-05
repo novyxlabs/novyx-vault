@@ -4,6 +4,7 @@ import {
   Brain, FileText, Wifi, WifiOff, Network, GitBranch, Github, ArrowRight,
   Sparkles, History, BarChart3, Key, Shield, Layers, Zap, BookOpen,
 } from "lucide-react";
+import HeroDemo from "./HeroDemo";
 
 export default function LandingPage() {
   return (
@@ -66,6 +67,9 @@ export default function LandingPage() {
               <Github size={18} />
               View on GitHub
             </a>
+          </div>
+          <div className="mt-16 px-2">
+            <HeroDemo />
           </div>
         </section>
 
@@ -292,9 +296,6 @@ export default function LandingPage() {
           <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-[var(--text-secondary,#a1a1aa)]">
             <a href="/features" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">
               Features
-            </a>
-            <a href="/blog" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">
-              Blog
             </a>
             <a href="/terms" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">
               Terms
