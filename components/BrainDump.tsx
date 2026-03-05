@@ -66,7 +66,7 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
     ?.filter((tag, i, arr) => arr.indexOf(tag) === i) || [];
 
   const handleStructure = async () => {
-    if (!provider || rawText.trim().length < 50) return;
+    if (!provider || rawText.trim().length < 20) return;
 
     setPhase("processing");
     setError(null);
@@ -211,6 +211,9 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
                 />
                 <span className="absolute bottom-3 right-3 text-[11px] text-muted tabular-nums">
                   {rawText.length} chars
+                  {rawText.length > 0 && rawText.trim().length < 20 && (
+                    <span className="text-amber-400 ml-1">(min 20)</span>
+                  )}
                 </span>
               </div>
 
@@ -244,7 +247,7 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
                 </p>
                 <button
                   onClick={handleStructure}
-                  disabled={rawText.trim().length < 50 || !provider}
+                  disabled={rawText.trim().length < 20 || !provider}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Sparkles size={14} />
