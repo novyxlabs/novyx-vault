@@ -29,7 +29,7 @@ export default function HeroDemo() {
   const [phase, setPhase] = useState(PHASE_TYPING);
   const [charIndex, setCharIndex] = useState(0);
   const [timelinePos, setTimelinePos] = useState(100);
-  const phaseStartRef = useRef(Date.now());
+  const phaseStartRef = useRef(0);
   const typingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const loopRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -37,20 +37,25 @@ export default function HeroDemo() {
     setPhase(PHASE_TYPING);
     setCharIndex(0);
     setTimelinePos(100);
-    phaseStartRef.current = Date.now();
+    phaseStartRef.current = performance.now();
+  }, []);
+
+  // Initialize on mount
+  useEffect(() => {
+    phaseStartRef.current = performance.now();
   }, []);
 
   // Phase controller
   useEffect(() => {
     loopRef.current = setInterval(() => {
-      const elapsed = Date.now() - phaseStartRef.current;
+      const elapsed = performance.now() - phaseStartRef.current;
       const limit = PHASE_TIMES[phase];
       if (elapsed >= limit) {
         const next = phase + 1;
         if (next > PHASE_RESET) {
           reset();
         } else {
-          phaseStartRef.current = Date.now();
+          phaseStartRef.current = performance.now();
           setPhase(next);
         }
       }

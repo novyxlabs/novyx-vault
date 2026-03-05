@@ -62,27 +62,7 @@ export default function WritingCoach({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  // Fetch data when modal opens, reset on close
-  useEffect(() => {
-    if (!isOpen) {
-      setData(null);
-      setError(false);
-      return;
-    }
-    fetchData();
-  }, [isOpen]);
-
-  // Escape key to close
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
-
-  function fetchData() {
+  const fetchData = () => {
     setLoading(true);
     setError(false);
     fetch("/api/notes/writing-coach")
@@ -98,7 +78,27 @@ export default function WritingCoach({
         setError(true);
         setLoading(false);
       });
-  }
+  };
+
+  // Fetch data when modal opens, reset on close
+  useEffect(() => {
+    if (!isOpen) {
+      setData(null);
+      setError(false);
+      return;
+    }
+    fetchData();
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Escape key to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
