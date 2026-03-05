@@ -65,8 +65,10 @@ export default function ChatSidebar({
           const prompts: string[] = [];
           if (ctx.recent && ctx.recent.length > 0) {
             const topMemory = ctx.recent[0].observation;
-            const preview = topMemory.length > 40 ? topMemory.slice(0, 40) + "..." : topMemory;
-            prompts.push(`Continue: "${preview}"`);
+            if (topMemory.length >= 15) {
+              const preview = topMemory.length > 40 ? topMemory.slice(0, 40) + "..." : topMemory;
+              prompts.push(`Continue: "${preview}"`);
+            }
           }
           prompts.push("What do you remember about me?");
           if (notePath) {

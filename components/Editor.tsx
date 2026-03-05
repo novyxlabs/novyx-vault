@@ -534,7 +534,38 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
               return true;
             },
           },
-          ...defaultKeymap,
+          {
+            key: "Enter",
+            run: (view: EditorView) => {
+              const { state } = view;
+              const { from } = state.selection.main;
+              const line = state.doc.lineAt(from);
+              const text = line.text;
+              // Match list items: optional indent + marker (-, *, +, or 1.)
+              const listMatch = text.match(/^(\s*)([-*+]|\d+[.)]) (\[[ xX]\] )?/);
+              if (!listMatch) return false;
+              const [fullMatch, indent, marker, checkbox] = listMatch;
+              const afterMarker = text.slice(fullMatch.length);
+              // If the list item is empty (just marker, no text), remove it
+              if (!afterMarker.trim()) {
+                view.dispatch({
+                  changes: { from: line.from, to: line.to, insert: "" },
+                });
+                return true;
+              }
+              // Continue list at the same indent level
+              const nextMarker = /^\d+[.)]/.test(marker)
+                ? `${parseInt(marker) + 1}${marker.slice(-1)}`
+                : marker;
+              const newLine = `\n${indent}${nextMarker} ${checkbox || ""}`;
+              view.dispatch({
+                changes: { from, insert: newLine },
+                selection: { anchor: from + newLine.length },
+              });
+              return true;
+            },
+          },
+          ...defaultKeymap.filter((k) => k.key !== "Enter"),
           ...historyKeymap,
         ]),
         cmPlaceholder("Start writing..."),

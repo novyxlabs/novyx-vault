@@ -296,7 +296,7 @@ export default function WritingCoach({
                         {/* Tags + Action row */}
                         <div className="flex items-center justify-between">
                           <div className="flex flex-wrap gap-1">
-                            {suggestion.tags.map((tag) => (
+                            {suggestion.tags.filter((t) => !t.startsWith("user:")).map((tag) => (
                               <span
                                 key={tag}
                                 className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400"

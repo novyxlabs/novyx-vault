@@ -89,7 +89,7 @@ export default function RelatedMemories({ notePath }: RelatedMemoriesProps) {
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] text-muted">{timeAgo(mem.created_at)}</span>
-                {mem.tags.slice(0, 2).map((tag) => (
+                {mem.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 2).map((tag: string) => (
                   <span key={tag} className="text-[10px] px-1 py-0.5 rounded bg-accent/10 text-accent/60">
                     {tag}
                   </span>

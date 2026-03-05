@@ -36,6 +36,7 @@ export default function GhostNotification({
   const [notification, setNotification] = useState<Notification | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
+  const [queueCount, setQueueCount] = useState(0);
 
   // Refs for tracking state across renders
   const lastCheckedContentLengthRef = useRef(0);
@@ -44,6 +45,7 @@ export default function GhostNotification({
   const dismissTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const lastNotePathRef = useRef(notePath);
+  const queueRef = useRef<Notification[]>([]);
 
   // Reset when note changes
   useEffect(() => {
@@ -53,6 +55,8 @@ export default function GhostNotification({
       setNotification(null);
       setIsVisible(false);
       setIsDismissing(false);
+      setQueueCount(0);
+      queueRef.current = [];
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = null;
@@ -76,11 +80,35 @@ export default function GhostNotification({
       setNotification(null);
       setIsVisible(false);
       setIsDismissing(false);
+      // Show next queued notification if any
+      if (queueRef.current.length > 0) {
+        const next = queueRef.current.shift()!;
+        setQueueCount(queueRef.current.length);
+        // Small delay before showing next
+        setTimeout(() => {
+          setNotification(next);
+          setIsVisible(true);
+          setIsDismissing(false);
+          lastNotifyTimeRef.current = Date.now();
+          dismissTimerRef.current = setTimeout(() => {
+            dismiss();
+          }, AUTO_DISMISS_MS);
+        }, 400);
+      }
     }, 300);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showNotification = useCallback(
     (n: Notification) => {
+      if (isVisible) {
+        // Queue it instead of dropping — but cap queue at 5
+        if (queueRef.current.length < 5) {
+          queueRef.current.push(n);
+          setQueueCount(queueRef.current.length);
+        }
+        return;
+      }
+
       setNotification(n);
       setIsVisible(true);
       setIsDismissing(false);
@@ -94,7 +122,7 @@ export default function GhostNotification({
         dismiss();
       }, AUTO_DISMISS_MS);
     },
-    [dismiss]
+    [dismiss, isVisible]
   );
 
   // Debounced content watcher
@@ -111,9 +139,6 @@ export default function GhostNotification({
     // Don't check if in cooldown
     const timeSinceLastNotify = Date.now() - lastNotifyTimeRef.current;
     if (timeSinceLastNotify < COOLDOWN_MS) return;
-
-    // Don't check if a notification is currently showing
-    if (isVisible) return;
 
     // Clear existing debounce timer
     if (debounceTimerRef.current) {
@@ -159,7 +184,7 @@ export default function GhostNotification({
         debounceTimerRef.current = null;
       }
     };
-  }, [content, notePath, isVisible, showNotification]);
+  }, [content, notePath, showNotification]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -195,6 +220,11 @@ export default function GhostNotification({
               <span className="text-xs font-semibold text-purple-400 uppercase tracking-wide">
                 Ghost found a connection
               </span>
+              {queueCount > 0 && (
+                <span className="text-[10px] font-bold text-white bg-purple-500 rounded-full w-4.5 h-4.5 flex items-center justify-center px-1.5 py-0.5 min-w-[18px]">
+                  +{queueCount}
+                </span>
+              )}
             </div>
             <button
               onClick={dismiss}

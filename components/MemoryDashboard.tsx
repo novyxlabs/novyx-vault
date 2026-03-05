@@ -589,7 +589,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                             <span className="text-xs text-muted">{timeAgo(mem.created_at)}</span>
                             {mem.tags.length > 0 && (
                               <div className="flex gap-1">
-                                {mem.tags.slice(0, 3).map((tag) => (
+                                {mem.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 3).map((tag: string) => (
                                   <span
                                     key={tag}
                                     className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent/70"
@@ -666,7 +666,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                             <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
                             <div className="flex items-center gap-2 mt-1.5">
                               <span className="text-[10px] text-muted">{time}</span>
-                              {mem.tags.slice(0, 2).map((tag) => (
+                              {mem.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 2).map((tag: string) => (
                                 <span key={tag} className="text-[10px] px-1 py-0.5 rounded bg-accent/10 text-accent/60">
                                   {tag}
                                 </span>
@@ -751,7 +751,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                           <span className="text-xs text-muted">{timeAgo(insight.created_at)}</span>
                           {insight.tags.length > 0 && (
                             <div className="flex gap-1">
-                              {insight.tags.slice(0, 3).map((tag) => (
+                              {insight.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 3).map((tag: string) => (
                                 <span
                                   key={tag}
                                   className="text-xs px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400/70"

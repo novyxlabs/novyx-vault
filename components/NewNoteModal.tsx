@@ -24,11 +24,13 @@ interface NewNoteModalProps {
 export default function NewNoteModal({ isOpen, folderPath, onClose, onCreate }: NewNoteModalProps) {
   const [name, setName] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<NoteTemplate>(NOTE_TEMPLATES[0]);
+  const [showError, setShowError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setName("");
+      setShowError(false);
       setSelectedTemplate(NOTE_TEMPLATES[0]);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -36,7 +38,11 @@ export default function NewNoteModal({ isOpen, folderPath, onClose, onCreate }: 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setShowError(true);
+      inputRef.current?.focus();
+      return;
+    }
     const path = folderPath ? `${folderPath}/${name.trim()}` : name.trim();
     const content = selectedTemplate.content(name.trim());
     onCreate(path, content);
@@ -66,9 +72,13 @@ export default function NewNoteModal({ isOpen, folderPath, onClose, onCreate }: 
             type="text"
             placeholder="Note name..."
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted outline-none focus:border-accent/50 mb-4"
+            onChange={(e) => { setName(e.target.value); if (e.target.value.trim()) setShowError(false); }}
+            className={`w-full bg-card-bg border rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted outline-none focus:border-accent/50 ${showError ? "border-red-500/50" : "border-sidebar-border"}`}
           />
+          {showError && (
+            <p className="text-xs text-red-400 mt-1">Please enter a note name</p>
+          )}
+          <div className="mb-4" />
 
           {/* Template selection */}
           <p className="text-xs text-muted mb-2">Template</p>

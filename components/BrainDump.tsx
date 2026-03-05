@@ -322,7 +322,7 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
                 <div className="bg-card-bg border border-sidebar-border rounded-lg p-4 max-h-[35vh] overflow-y-auto">
                   <div className="markdown-preview text-sm">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {structuredContent}
+                      {structuredContent.replace(/(?:^|\n)(?:#{0,6}\s*)?(?:#[a-z][a-z0-9-]*[\s,]*)+$/gm, "").replace(/ #[a-z][a-z0-9-]*/g, "").trim()}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -333,37 +333,39 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
                   {error}
                 </div>
               )}
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={handleBackToEdit}
-                  className="flex-1 py-2 bg-muted-bg text-foreground rounded-lg text-sm hover:bg-muted-bg/80 transition-colors flex items-center justify-center gap-2"
-                >
-                  <ArrowLeft size={14} />
-                  Back to Edit
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={!title.trim() || isSaving}
-                  className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={14} />
-                      Save to Vault
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           )}
         </div>
+
+        {/* Sticky action bar for preview phase */}
+        {phase === "preview" && (
+          <div className="px-5 py-3 border-t border-sidebar-border bg-sidebar-bg flex gap-2 shrink-0">
+            <button
+              onClick={handleBackToEdit}
+              className="flex-1 py-2 bg-muted-bg text-foreground rounded-lg text-sm hover:bg-muted-bg/80 transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={14} />
+              Back to Edit
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!title.trim() || isSaving}
+              className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  Save to Vault
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
