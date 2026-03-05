@@ -109,7 +109,7 @@ async function sleep(ms) {
     const nameInput = page.locator("input").last();
     if (await nameInput.isVisible()) {
       await nameInput.fill("");
-      await nameInput.type("Demo - Noctivault Features", { delay: SLOW });
+      await nameInput.type("Demo - Novyx Vault Features", { delay: SLOW });
       await nameInput.press("Enter");
       await sleep(PAUSE);
     }
@@ -124,7 +124,7 @@ async function sleep(ms) {
     await sleep(500);
 
     const demoContent = [
-      "# Noctivault",
+      "# Novyx Vault",
       "",
       "A **second brain** powered by [[Novyx Core]] memory.",
       "",
@@ -136,7 +136,7 @@ async function sleep(ms) {
       "- Wiki-links with [[backlinks]]",
       "- Split editor + live preview",
       "",
-      "#demo #noctivault #novyx",
+      "#demo #novyx-vault #novyx",
     ];
 
     for (const line of demoContent) {

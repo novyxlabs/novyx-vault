@@ -36,7 +36,7 @@ export default function NotFound() {
             textDecoration: "none",
           }}
         >
-          Back to Noctivault
+          Back to Novyx Vault
         </Link>
       </div>
     </div>

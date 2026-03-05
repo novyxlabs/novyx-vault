@@ -34,9 +34,9 @@ function genSilence(id, seconds) {
   console.log("Generating voiceover...");
 
   const scenes = [
-    { id: "01", vo: "Meet Noctivault. Your second brain, powered by Novyx AI memory.", wait: 4.0 },
+    { id: "01", vo: "Meet Novyx Vault. Your second brain, powered by Novyx AI memory.", wait: 4.0 },
     { id: "02", vo: "Notes are organized into folders. Research, Projects, Daily reviews.", wait: 4.5 },
-    { id: "03", vo: "Let's open the Noctivault project note. The split view shows your markdown on the left and a live preview on the right.", wait: 5.5 },
+    { id: "03", vo: "Let's open the Novyx Vault project note. The split view shows your markdown on the left and a live preview on the right.", wait: 5.5 },
     { id: "04", vo: "Watch the bottom of the screen. Ghost Connections are loading. These are notes that AI discovered are related, even without explicit links.", wait: 7.0 },
     { id: "05", vo: "Five connections found automatically. Each one has a colored badge showing how it was discovered — through shared tags, content similarity, or semantic meaning.", wait: 7.0 },
     { id: "06", vo: "Click a Ghost Connection, and it takes you directly to that note.", wait: 4.0 },
@@ -49,7 +49,7 @@ function genSilence(id, seconds) {
     { id: "13", vo: "Let's create a new note and watch Ghost Connections discover its relationships in real time.", wait: 4.0 },
     { id: "14", vo: "As we type about AI and memory, watch the connections appear automatically below.", wait: 12.0 },
     { id: "15", vo: "Ghost Connections already found related notes, without us linking anything. That's the power of Novyx.", wait: 6.0 },
-    { id: "16", vo: "Noctivault. Your knowledge, connected by AI. Powered by Novyx.", wait: 5.0 },
+    { id: "16", vo: "Novyx Vault. Your knowledge, connected by AI. Powered by Novyx.", wait: 5.0 },
   ];
 
   // Generate all VO
@@ -100,9 +100,9 @@ function genSilence(id, seconds) {
   }
   await sleep((clips[1].sceneTime - 1.8) * 1000);
 
-  // Scene 3: Open Noctivault note (5.5s)
-  console.log("  03: Open Noctivault note");
-  const noctNote = page.locator("text=Noctivault-Second-Brain").first();
+  // Scene 3: Open Novyx Vault note (5.5s)
+  console.log("  03: Open Novyx Vault note");
+  const noctNote = page.locator("text=Novyx-Vault-Second-Brain").first();
   if (await noctNote.isVisible()) await noctNote.click();
   await sleep(clips[2].sceneTime * 1000);
 
@@ -260,7 +260,7 @@ function genSilence(id, seconds) {
   await browser.close();
 
   console.log(`\nMerging video + narration...`);
-  const finalOutput = "/Users/blakeheron/Desktop/Noctivault-Demo.mp4";
+  const finalOutput = "/Users/blakeheron/Desktop/NovyxVault-Demo.mp4";
   execSync(
     `ffmpeg -y -i "${videoPath}" -i "${fullAudio}" ` +
     `-c:v libx264 -preset fast -crf 18 -pix_fmt yuv420p ` +

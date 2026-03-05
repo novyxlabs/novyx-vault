@@ -14,18 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Noctivault",
+  title: "Novyx Vault",
   description: "The only note app where AI gets smarter the longer you use it. Open-source, local-first knowledge base with persistent AI memory.",
-  metadataBase: new URL("https://noctivault.vercel.app"),
+  metadataBase: new URL("https://vault.novyxlabs.com"),
   openGraph: {
-    title: "Noctivault",
+    title: "Novyx Vault",
     description: "The only note app where AI gets smarter the longer you use it.",
-    siteName: "Noctivault",
+    siteName: "Novyx Vault",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Noctivault",
+    title: "Novyx Vault",
     description: "The only note app where AI gets smarter the longer you use it.",
   },
 };

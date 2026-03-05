@@ -7,10 +7,10 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[var(--bg-primary,#0a0a0b)] text-[var(--text-primary,#e4e4e7)] font-[var(--font-geist-sans),system-ui,sans-serif]">
       {/* Nav */}
       <nav className="flex items-center justify-between max-w-6xl mx-auto px-6 py-5">
-        <span className="text-xl font-bold tracking-tight">Noctivault</span>
+        <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
         <div className="flex items-center gap-4">
           <a
-            href="https://github.com/novyxlabs/noctivault"
+            href="https://github.com/novyxlabs/novyx-vault"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[var(--text-secondary,#a1a1aa)] hover:text-[var(--text-primary,#e4e4e7)] transition-colors"
@@ -33,7 +33,7 @@ export default function LandingPage() {
           <span className="text-[var(--accent,#6366f1)]">smarter</span> the longer you use it
         </h1>
         <p className="text-lg sm:text-xl text-[var(--text-secondary,#a1a1aa)] max-w-2xl mx-auto mb-10">
-          Noctivault is an open-source, local-first knowledge base with persistent AI memory.
+          Novyx Vault is an open-source, local-first knowledge base with persistent AI memory.
           Your notes stay on your machine. Your AI remembers everything.
         </p>
         <div className="flex items-center justify-center gap-4">
@@ -45,7 +45,7 @@ export default function LandingPage() {
             <ArrowRight size={18} />
           </a>
           <a
-            href="https://github.com/novyxlabs/noctivault"
+            href="https://github.com/novyxlabs/novyx-vault"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-[var(--border,#27272a)] text-[var(--text-secondary,#a1a1aa)] hover:text-[var(--text-primary,#e4e4e7)] hover:border-[var(--text-secondary,#a1a1aa)] transition-colors font-medium"
@@ -101,7 +101,7 @@ export default function LandingPage() {
           Powered by Novyx
         </h2>
         <p className="text-center text-[var(--text-secondary,#a1a1aa)] mb-12 max-w-2xl mx-auto">
-          AI memory that actually persists. Noctivault uses the Novyx SDK to give your AI assistant a real, evolving memory.
+          AI memory that actually persists. Novyx Vault uses the Novyx SDK to give your AI assistant a real, evolving memory.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <DiffCard
@@ -128,10 +128,10 @@ export default function LandingPage() {
           <Github size={32} className="mx-auto mb-4 text-[var(--text-secondary,#a1a1aa)]" />
           <h2 className="text-2xl font-bold mb-3">Open Source</h2>
           <p className="text-[var(--text-secondary,#a1a1aa)] mb-6 max-w-lg mx-auto">
-            Noctivault is fully open source. Inspect the code, contribute features, or self-host your own instance.
+            Novyx Vault is fully open source. Inspect the code, contribute features, or self-host your own instance.
           </p>
           <a
-            href="https://github.com/novyxlabs/noctivault"
+            href="https://github.com/novyxlabs/novyx-vault"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[var(--accent,#6366f1)] text-white font-semibold hover:opacity-90 transition-opacity"
@@ -170,7 +170,7 @@ export default function LandingPage() {
               Privacy
             </a>
             <a
-              href="https://github.com/novyxlabs/noctivault"
+              href="https://github.com/novyxlabs/novyx-vault"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors"

@@ -36,7 +36,7 @@ function genSilence(id, seconds) {
   console.log("Generating voiceover clips...");
 
   const narration = [
-    { id: "01", text: "This is Noctivault. A second brain powered by Novyx.", sceneTime: 3.5 },
+    { id: "01", text: "This is Novyx Vault. A second brain powered by Novyx.", sceneTime: 3.5 },
     { id: "02", text: "Your notes are organized in folders with full markdown support.", sceneTime: 3.5 },
     { id: "03", text: "Opening a note gives you a split view: code on the left, live preview on the right.", sceneTime: 4.0 },
     { id: "04", text: "Ghost Connections. Our AI automatically discovers hidden links between your notes, even without shared keywords.", sceneTime: 7.5 },
@@ -50,7 +50,7 @@ function genSilence(id, seconds) {
     { id: "12", text: "Preview mode for distraction-free reading.", sceneTime: 3.0 },
     { id: "13", text: "Focus mode strips everything away. Just you and your thoughts.", sceneTime: 4.5 },
     { id: "14", text: "Sort your notes by name, date modified, or keep the default order.", sceneTime: 3.0 },
-    { id: "15", text: "Noctivault. Your knowledge, connected by AI. Powered by Novyx.", sceneTime: 5.0 },
+    { id: "15", text: "Novyx Vault. Your knowledge, connected by AI. Powered by Novyx.", sceneTime: 5.0 },
   ];
 
   // Generate all VO clips and build timing
@@ -176,7 +176,7 @@ function genSilence(id, seconds) {
     const nameInput = page.locator("input").last();
     if (await nameInput.isVisible()) {
       await nameInput.fill("");
-      await nameInput.type("Noctivault Demo", { delay: 80 });
+      await nameInput.type("Novyx Vault Demo", { delay: 80 });
       await nameInput.press("Enter");
       await sleep(1500);
     }
@@ -189,7 +189,7 @@ function genSilence(id, seconds) {
     await editor.click();
     await sleep(300);
     const lines = [
-      "# Noctivault",
+      "# Novyx Vault",
       "",
       "A **second brain** powered by [[Novyx Core]] memory.",
       "",
@@ -200,7 +200,7 @@ function genSilence(id, seconds) {
       "- Full-text search",
       "- Wiki-links and backlinks",
       "",
-      "#demo #noctivault #novyx",
+      "#demo #novyx-vault #novyx",
     ];
     for (const line of lines) {
       await editor.pressSequentially(line, { delay: 25 });
@@ -260,7 +260,7 @@ function genSilence(id, seconds) {
   console.log("Merging video + narration...");
 
   // Merge video and audio
-  const finalOutput = join(OUT_DIR, "Noctivault-Demo.mp4");
+  const finalOutput = join(OUT_DIR, "NovyxVault-Demo.mp4");
   execSync(
     `ffmpeg -y -i "${videoPath}" -i "${fullAudio}" ` +
     `-c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p ` +
@@ -269,9 +269,9 @@ function genSilence(id, seconds) {
   );
 
   // Copy to desktop
-  execSync(`cp "${finalOutput}" /Users/blakeheron/Desktop/Noctivault-Demo.mp4`);
+  execSync(`cp "${finalOutput}" /Users/blakeheron/Desktop/NovyxVault-Demo.mp4`);
 
-  console.log(`\nDone! Video saved to Desktop: Noctivault-Demo.mp4`);
+  console.log(`\nDone! Video saved to Desktop: NovyxVault-Demo.mp4`);
 
   // Cleanup tmp
   execSync(`rm -rf "${TMP}"`);

@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
             textAlign: "center",
           }}
         >
-          Noctivault
+          Novyx Vault
         </h1>
         <p
           style={{

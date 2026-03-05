@@ -104,7 +104,7 @@ export default function LoginPage() {
             textAlign: "center",
           }}
         >
-          Noctivault
+          Novyx Vault
         </h1>
         <p
           style={{

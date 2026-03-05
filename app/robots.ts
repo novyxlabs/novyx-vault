@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/"],
     },
-    sitemap: "https://noctivault.vercel.app/sitemap.xml",
+    sitemap: "https://vault.novyxlabs.com/sitemap.xml",
   };
 }

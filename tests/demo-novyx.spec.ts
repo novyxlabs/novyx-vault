@@ -290,7 +290,7 @@ test("Novyx Demo — Memory Changes Everything", async ({ page }, testInfo) => {
   await overlay(
     page,
     "What if your AI <span style='color:" + INDIGO + "'>remembered</span> everything?",
-    "A Noctivault + Novyx demo",
+    "A Novyx Vault + Novyx demo",
     4000
   );
 

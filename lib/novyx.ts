@@ -89,7 +89,7 @@ export async function provisionNovyxKey(
       "Content-Type": "application/json",
       "X-Admin-Token": token,
     },
-    body: JSON.stringify({ email, source: "noctivault" }),
+    body: JSON.stringify({ email, source: "novyx-vault" }),
   });
 
   if (!res.ok) {

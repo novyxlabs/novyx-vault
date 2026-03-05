@@ -97,7 +97,7 @@ export async function GET() {
     return new NextResponse(new Uint8Array(zip), {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="noctivault-export.zip"`,
+        "Content-Disposition": `attachment; filename="novyx-vault-export.zip"`,
       },
     });
   } catch (err) {

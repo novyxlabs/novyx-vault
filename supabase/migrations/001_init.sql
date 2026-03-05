@@ -1,4 +1,4 @@
--- Noctivault Cloud Schema
+-- Novyx Vault Cloud Schema
 -- Run this in the Supabase SQL Editor to set up the database
 
 -- Profiles (extends Supabase auth.users)

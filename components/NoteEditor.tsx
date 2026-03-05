@@ -231,7 +231,7 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
 </head>
 <body>
 ${htmlLines.join("\n")}
-<div class="footer">Exported from Noctivault</div>
+<div class="footer">Exported from Novyx Vault</div>
 </body>
 </html>`;
 

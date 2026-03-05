@@ -2,6 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
+  // Redirect old domain to new domain
+  if (request.headers.get("host") === "noctivault.vercel.app") {
+    const url = new URL(request.url);
+    url.host = "vault.novyxlabs.com";
+    url.protocol = "https:";
+    return NextResponse.redirect(url, 301);
+  }
+
   // Desktop mode — no auth needed
   if (process.env.STORAGE_MODE !== "supabase") {
     return NextResponse.next();

@@ -15,7 +15,7 @@ export default function TermsPage() {
           href="/"
           style={{ color: "#6366f1", textDecoration: "none", fontSize: 14 }}
         >
-          &larr; Back to Noctivault
+          &larr; Back to Novyx Vault
         </Link>
 
         <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 24, marginBottom: 8 }}>
@@ -25,8 +25,8 @@ export default function TermsPage() {
           Last updated: March 2026
         </p>
 
-        <Section title="1. What Noctivault Is">
-          Noctivault is an open-source, AI-powered note-taking application built
+        <Section title="1. What Novyx Vault Is">
+          Novyx Vault is an open-source, AI-powered note-taking application built
           by Novyx Labs. You can use it locally on your own machine (desktop
           mode) or with a cloud account (cloud mode) for syncing and
           collaboration features.
@@ -47,7 +47,7 @@ export default function TermsPage() {
         </Section>
 
         <Section title="4. AI Features">
-          Noctivault connects to AI providers (OpenAI, Anthropic, and others)
+          Novyx Vault connects to AI providers (OpenAI, Anthropic, and others)
           using API keys you provide. Your API keys are stored in your browser
           only and are sent to our server solely to proxy requests to the AI
           provider. We do not store your AI provider API keys on our servers.
@@ -56,13 +56,13 @@ export default function TermsPage() {
         </Section>
 
         <Section title="5. Acceptable Use">
-          Don&apos;t use Noctivault to store or distribute illegal content, spam,
+          Don&apos;t use Novyx Vault to store or distribute illegal content, spam,
           malware, or anything that violates others&apos; rights. Don&apos;t
           attempt to access other users&apos; data or disrupt the service.
         </Section>
 
         <Section title="6. Availability">
-          We aim to keep Noctivault available but don&apos;t guarantee 100%
+          We aim to keep Novyx Vault available but don&apos;t guarantee 100%
           uptime. The service is provided &quot;as is&quot; without warranties.
           We may update, modify, or discontinue features with reasonable notice.
         </Section>
@@ -74,9 +74,9 @@ export default function TermsPage() {
         </Section>
 
         <Section title="8. Open Source">
-          Noctivault&apos;s source code is available on GitHub. The software is
+          Novyx Vault&apos;s source code is available on GitHub. The software is
           provided under its open-source license. These Terms of Service apply
-          to the hosted service at noctivault.vercel.app, not to self-hosted
+          to the hosted service at vault.novyxlabs.com, not to self-hosted
           instances.
         </Section>
 
@@ -88,7 +88,7 @@ export default function TermsPage() {
 
         <Section title="10. Contact">
           Questions? Reach us via{" "}
-          <a href="https://github.com/novyxlabs/noctivault/issues" style={{ color: "#6366f1" }}>
+          <a href="https://github.com/novyxlabs/novyx-vault/issues" style={{ color: "#6366f1" }}>
             GitHub Issues
           </a>{" "}
           or at the Novyx Labs website.

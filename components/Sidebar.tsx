@@ -632,7 +632,7 @@ export default function Sidebar({
               title="Home"
             >
               <Brain size={22} className="text-accent group-hover:scale-110 transition-transform" />
-              <h1 className="text-base font-semibold tracking-tight truncate">Noctivault</h1>
+              <h1 className="text-base font-semibold tracking-tight truncate">Novyx Vault</h1>
             </button>
             <button
               onClick={onOpenGraph}
@@ -997,7 +997,7 @@ export default function Sidebar({
                 onClick={() => {
                   const a = document.createElement("a");
                   a.href = "/api/notes/export";
-                  a.download = "Noctivault-export.zip";
+                  a.download = "NovyxVault-export.zip";
                   a.click();
                 }}
                 className="p-1.5 rounded-md text-muted/40 hover:text-green-400 hover:bg-green-400/10 transition-all"

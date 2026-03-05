@@ -69,7 +69,7 @@ export default function VerifyEmailPage() {
             marginBottom: 4,
           }}
         >
-          Noctivault
+          Novyx Vault
         </h1>
         <p
           style={{

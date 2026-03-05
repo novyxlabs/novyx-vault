@@ -593,7 +593,7 @@ export default function AppShell() {
             </button>
           )}
           <span className="text-sm font-medium truncate">
-            {activeNote ? activeNote.split("/").pop()?.replace(/\.md$/, "") : "Noctivault"}
+            {activeNote ? activeNote.split("/").pop()?.replace(/\.md$/, "") : "Novyx Vault"}
           </span>
         </div>
         <div className="flex items-center gap-0.5">

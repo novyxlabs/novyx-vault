@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Noctivault — AI-powered knowledge base with persistent memory";
+export const alt = "Novyx Vault — AI-powered knowledge base with persistent memory";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -43,7 +43,7 @@ export default function OGImage() {
               color: "#fff",
             }}
           >
-            N
+            V
           </div>
           <h1
             style={{
@@ -53,7 +53,7 @@ export default function OGImage() {
               margin: 0,
             }}
           >
-            Noctivault
+            Novyx Vault
           </h1>
           <p
             style={{

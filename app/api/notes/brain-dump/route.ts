@@ -18,7 +18,7 @@ interface BrainDumpRequest {
 
 function buildSystemPrompt(existingNotes: string[]): string {
   let prompt =
-    "You are a note-structuring assistant for a markdown knowledge base called Noctivault. " +
+    "You are a note-structuring assistant for a markdown knowledge base called Novyx Vault. " +
     "Your job is to take a raw, unstructured brain dump and transform it into a well-organized markdown note.\n\n" +
     "Instructions:\n" +
     "1. Analyze the raw brain dump carefully.\n" +

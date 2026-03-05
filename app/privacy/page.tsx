@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           href="/"
           style={{ color: "#6366f1", textDecoration: "none", fontSize: 14 }}
         >
-          &larr; Back to Noctivault
+          &larr; Back to Novyx Vault
         </Link>
 
         <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 24, marginBottom: 8 }}>
@@ -107,7 +107,7 @@ export default function PrivacyPage() {
 
         <Section title="Contact">
           Questions about your data? Reach us via{" "}
-          <a href="https://github.com/novyxlabs/noctivault/issues" style={{ color: "#6366f1" }}>
+          <a href="https://github.com/novyxlabs/novyx-vault/issues" style={{ color: "#6366f1" }}>
             GitHub Issues
           </a>{" "}
           or at the Novyx Labs website.

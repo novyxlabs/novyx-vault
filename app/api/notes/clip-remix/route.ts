@@ -20,7 +20,7 @@ interface ClipRemixRequest {
 
 function buildSystemPrompt(voiceSamples: string[], sourceUrl: string | null): string {
   let prompt =
-    "You are a voice-matching writing assistant for a markdown knowledge base called Noctivault. " +
+    "You are a voice-matching writing assistant for a markdown knowledge base called Novyx Vault. " +
     "Your job is to take externally clipped text and rewrite it in the user's personal voice.\n\n";
 
   if (voiceSamples.length > 0) {
