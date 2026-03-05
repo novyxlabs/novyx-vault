@@ -8,7 +8,7 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   return (
-    <div
+    <main
       style={{
         minHeight: "100vh",
         display: "flex",
@@ -45,6 +45,6 @@ export default function ErrorPage({
           Try again
         </button>
       </div>
-    </div>
+    </main>
   );
 }

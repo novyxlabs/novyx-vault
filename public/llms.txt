@@ -1,0 +1,39 @@
+# Novyx Vault
+
+> AI-powered personal knowledge base with persistent memory that learns your thinking patterns.
+
+Novyx Vault is a local-first note-taking app where AI gets smarter the longer you use it. Built by Novyx Labs.
+
+## What is Novyx Vault?
+
+Novyx Vault is an open-source personal knowledge management application that combines wiki-style note-linking with persistent AI memory powered by the Novyx SDK. Unlike other AI note apps, the AI in Novyx Vault remembers your notes, preferences, and thinking patterns across every session.
+
+## Key Features
+
+- Persistent AI Memory: AI remembers your notes, preferences, and thinking patterns across sessions
+- Wiki-Style Linking: Connect ideas with [[wiki-links]] and visualize your knowledge graph
+- Ghost Connections: AI automatically discovers hidden relationships between your notes
+- Knowledge Graph: Interactive force-directed graph visualization of your entire vault
+- Multi-Provider AI: Bring your own key — OpenAI, Anthropic, DeepSeek, Ollama, and 10+ providers
+- Local-First: Your data stays on your device or in your own Supabase instance
+- Memory Rollback: Travel back through your AI's memory timeline and restore previous states
+- Cortex Insights: AI generates emerging themes from your accumulated knowledge
+- Entity Extraction: People, projects, and concepts are extracted to build a semantic graph
+- Brain Dump: Convert raw thoughts into structured notes
+- Clip Remix: Rewrite external content in your personal voice
+- Cloud Sync: Optional Supabase-powered cross-device access with row-level security
+
+## Tech Stack
+
+- Next.js, React, TypeScript, Tailwind CSS
+- CodeMirror 6 editor
+- Novyx SDK for persistent AI memory
+- Supabase for cloud storage and authentication
+- Tauri for desktop apps (macOS, Windows, Linux)
+
+## Links
+
+- Homepage: https://vault.novyxlabs.com
+- Features: https://vault.novyxlabs.com/features
+- GitHub: https://github.com/novyxlabs
+- Novyx Labs: https://novyxlabs.com

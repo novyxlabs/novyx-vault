@@ -575,7 +575,7 @@ export default function AppShell() {
     />
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between px-3 py-2.5 border-b border-sidebar-border bg-sidebar-bg shrink-0">
+      <header className="md:hidden flex items-center justify-between px-3 py-2.5 border-b border-sidebar-border bg-sidebar-bg shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           {activeNote ? (
             <button
@@ -621,7 +621,7 @@ export default function AppShell() {
             </button>
           )}
         </div>
-      </div>
+      </header>
 
       <Sidebar
         notes={notes}

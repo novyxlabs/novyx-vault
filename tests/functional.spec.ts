@@ -32,7 +32,7 @@ test.describe("App loads", () => {
 
   test("page has correct title", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/Novyx Vault/);
+    await expect(page).toHaveTitle(/Novyx Vault/i);
   });
 
   test("security headers are present", async ({ page }) => {

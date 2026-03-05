@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Page Not Found",
+};
 
 export default function NotFound() {
   return (
-    <div
+    <main
       style={{
         minHeight: "100vh",
         display: "flex",
@@ -39,6 +44,6 @@ export default function NotFound() {
           Back to Novyx Vault
         </Link>
       </div>
-    </div>
+    </main>
   );
 }
