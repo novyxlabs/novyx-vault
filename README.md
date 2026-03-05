@@ -1,36 +1,186 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Novyx Vault
 
-## Getting Started
+**The only note app where AI gets smarter the longer you use it.**
 
-First, run the development server:
+Novyx Vault is an open-source, local-first personal knowledge base with AI memory that evolves alongside your thinking. Write in markdown, link ideas with wiki-style connections, and let AI surface relationships you never knew existed.
+
+Built on [Novyx Core](https://novyxlabs.com) for persistent AI memory.
+
+**[Try it free →](https://vault.novyxlabs.com)**
+
+---
+
+## Features
+
+- **Persistent AI Memory** — AI remembers your projects, preferences, and thinking patterns across every session. The more you use it, the smarter it gets.
+- **Memory Rollback & Timeline** — Travel back through your AI's memory. Undo accidental context, restore previous states, see exactly how your AI's understanding evolved.
+- **Ghost Connections** — AI discovers hidden relationships between your notes — even without shared keywords or explicit links.
+- **Knowledge Graph** — Interactive force-directed graph of your entire vault. See how your ideas connect and navigate visually.
+- **Cortex Insights** — AI surfaces emerging themes and patterns from your accumulated knowledge.
+- **Entity Extraction** — People, projects, and concepts are automatically extracted into a semantic knowledge graph.
+- **Wiki-Style Linking** — Connect ideas with `[[wiki-links]]` and automatic bidirectional backlinks.
+- **Bring Your Own AI** — Works with 13+ providers: OpenAI, Anthropic, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, Gemini, Cerebras, SambaNova, Moonshot, MiniMax.
+- **AI Writing Tools** — Brain Dump (raw thoughts → structured notes), Clip Remix (rewrite in your voice), slash commands, Weekly Review.
+- **Local-First** — Notes are plain markdown files on your machine. No lock-in, no proprietary formats.
+- **Cloud Sync** — Optional Supabase-powered cloud with row-level security for cross-device access.
+- **Desktop App** — Native desktop via Tauri (macOS, Windows, Linux).
+
+## Tech Stack
+
+Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · CodeMirror 6 · Novyx SDK · Supabase · Tauri v2
+
+---
+
+## Quick Start (Desktop Mode)
+
+Desktop mode stores notes as plain markdown files in `~/SecondBrain/`. No database, no account required.
+
+```bash
+git clone https://github.com/novyxlabs/novyx-vault.git
+cd novyx-vault
+npm install
+```
+
+Create `.env.local`:
+
+```env
+# Only required variable for desktop mode
+NOVYX_MEMORY_API_KEY=your_novyx_api_key
+```
+
+Get a free Novyx API key at [novyxlabs.com](https://novyxlabs.com).
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Desktop App (Tauri)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run tauri:dev    # development with hot reload
+npm run tauri:build  # production build (macOS, Windows, Linux)
+```
 
-## Learn More
+Requires [Rust](https://rustup.rs/) installed.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Cloud Deployment (Supabase)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Cloud mode uses Supabase for storage, auth, and cross-device sync.
 
-## Deploy on Vercel
+### 1. Set up Supabase
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create a project at [supabase.com](https://supabase.com). The required tables (`profiles`, `notes`, `note_versions`) use row-level security.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Environment Variables
+
+```env
+# Storage mode
+STORAGE_MODE=supabase
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Novyx AI Memory
+NOVYX_MEMORY_API_KEY=your_novyx_api_key
+NOVYX_ADMIN_KEY=your_novyx_admin_key
+
+# Rate Limiting (optional, recommended for production)
+UPSTASH_REDIS_REST_URL=your_redis_url
+UPSTASH_REDIS_REST_TOKEN=your_redis_token
+```
+
+### 3. Deploy to Vercel
+
+```bash
+npm run build
+```
+
+Or connect your GitHub repo to [Vercel](https://vercel.com) for automatic deployments.
+
+---
+
+## Environment Variables Reference
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `STORAGE_MODE` | Cloud only | Set to `supabase` for cloud mode. Leave empty for desktop. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Cloud only | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cloud only | Supabase anonymous key (safe for browser) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Cloud only | Server-side Supabase key for provisioning. **Never expose to client.** |
+| `NOVYX_MEMORY_API_KEY` | Desktop | Personal Novyx API key. In cloud mode, users get individual keys via provisioning. |
+| `NOVYX_ADMIN_KEY` | Cloud only | Admin key for provisioning per-user Novyx keys on signup |
+| `UPSTASH_REDIS_REST_URL` | Optional | Redis endpoint for rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | Optional | Redis auth token |
+| `TEST_ANTHROPIC_API_KEY` | Testing only | Anthropic key for E2E tests |
+
+---
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run Playwright E2E tests |
+| `npm run test:unit` | Run Vitest unit tests |
+| `npm run tauri:dev` | Tauri desktop development |
+| `npm run tauri:build` | Build Tauri desktop app |
+
+---
+
+## Project Structure
+
+```
+app/              Next.js app router (pages + API routes)
+components/       React components (34 components)
+lib/              Storage adapters, Novyx client, markdown plugins, search
+public/           Static assets
+src-tauri/        Tauri desktop app (Rust)
+seo/              SEO content calendar
+tests/            Playwright E2E + Vitest unit tests
+```
+
+---
+
+## Novyx Core
+
+Novyx Vault's persistent AI memory is powered by the [Novyx SDK](https://novyxlabs.com). Novyx Core provides:
+
+- **Remember** — Store memories from conversations and notes
+- **Recall** — Retrieve relevant context for AI responses
+- **Cortex** — Surface emerging themes across your knowledge
+- **Drift** — Track how your AI's understanding evolves over time
+- **Entities & Triples** — Semantic knowledge graph extraction
+
+Get an API key at [novyxlabs.com](https://novyxlabs.com).
+
+---
+
+## Contributing
+
+Novyx Vault is open source. Contributions are welcome.
+
+```bash
+git clone https://github.com/novyxlabs/novyx-vault.git
+cd novyx-vault
+npm install
+npm run dev
+```
+
+---
+
+## License
+
+MIT
+
+---
+
+Built by [Novyx Labs](https://novyxlabs.com)
