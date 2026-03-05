@@ -13,7 +13,9 @@ import {
   Lightbulb,
   CheckSquare,
   PenLine,
+  Settings,
 } from "lucide-react";
+import { loadSettings, getActiveProvider } from "@/lib/providers";
 
 interface TaskDue {
   text: string;
@@ -45,6 +47,7 @@ interface MorningBriefingProps {
   onOpenBrainDump: () => void;
   onOpenClipRemix: () => void;
   onOpenWritingCoach: () => void;
+  onOpenSettings?: () => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -108,6 +111,7 @@ export default function MorningBriefing({
   onOpenBrainDump,
   onOpenClipRemix,
   onOpenWritingCoach,
+  onOpenSettings,
 }: MorningBriefingProps) {
   const [data, setData] = useState<BriefingData | null>(null);
   const [sparks, setSparks] = useState<WritingSpark[]>([]);
@@ -131,6 +135,7 @@ export default function MorningBriefing({
   const { text: greeting, Icon: GreetingIcon } = getGreeting();
   const hasTasks = data && data.pendingTasks > 0;
   const hasRecent = recentNotes.length > 0;
+  const hasProvider = !!getActiveProvider(loadSettings());
 
   if (!loaded) {
     return (
@@ -182,6 +187,33 @@ export default function MorningBriefing({
           </p>
         )}
       </div>
+
+      {/* AI Setup Prompt */}
+      {!hasProvider && onOpenSettings && (
+        <div
+          className="ghost-fade-in rounded-xl border border-accent/30 bg-accent/5 p-4"
+          style={{ animationDelay: "120ms" }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles size={16} className="text-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-foreground mb-1">Set up AI to unlock your vault&apos;s full potential</h3>
+              <p className="text-xs text-muted leading-relaxed mb-3">
+                Add an AI provider to use Brain Dump, Clip & Remix, AI chat, Ghost Connections, and more. Bring your own API key — works with OpenAI, Anthropic, Ollama, and 10+ providers.
+              </p>
+              <button
+                onClick={onOpenSettings}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent text-white rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <Settings size={12} />
+                Configure AI Provider
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div

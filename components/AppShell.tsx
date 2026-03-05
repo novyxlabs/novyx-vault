@@ -685,6 +685,7 @@ export default function AppShell() {
                 onOpenBrainDump={() => setIsBrainDumpOpen(true)}
                 onOpenClipRemix={() => setIsClipRemixOpen(true)}
                 onOpenWritingCoach={() => setIsWritingCoachOpen(true)}
+                onOpenSettings={() => setIsSettingsOpen(true)}
               />
               {isEmptyDragOver && (
                 <div className="file-drop-overlay">
@@ -775,18 +776,21 @@ export default function AppShell() {
       onClose={() => setIsBrainDumpOpen(false)}
       onNoteSaved={(path) => { loadNotes(); setActiveNote(path); }}
       notes={flatNotes}
+      onOpenSettings={() => setIsSettingsOpen(true)}
     />
     <WritingCoach
       isOpen={isWritingCoachOpen}
       onClose={() => setIsWritingCoachOpen(false)}
       onSelectNote={(path) => { handleSelectNote(path); setIsWritingCoachOpen(false); }}
       onCreateNote={(title) => { handleCreateNoteWithContent(title, `# ${title}\n\n`); setIsWritingCoachOpen(false); }}
+      onOpenSettings={() => setIsSettingsOpen(true)}
     />
     <ClipRemix
       isOpen={isClipRemixOpen}
       onClose={() => setIsClipRemixOpen(false)}
       onNoteSaved={(path) => { loadNotes(); setActiveNote(path); }}
       notes={flatNotes}
+      onOpenSettings={() => setIsSettingsOpen(true)}
     />
     <WeeklyReview
       isOpen={isWeeklyReviewOpen}

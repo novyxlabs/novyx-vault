@@ -39,6 +39,7 @@ interface WritingCoachProps {
   onClose: () => void;
   onSelectNote?: (path: string) => void;
   onCreateNote?: (title: string) => void;
+  onOpenSettings?: () => void;
 }
 
 const TYPE_CONFIG: Record<
@@ -57,6 +58,7 @@ export default function WritingCoach({
   onClose,
   onSelectNote,
   onCreateNote,
+  onOpenSettings,
 }: WritingCoachProps) {
   const [data, setData] = useState<WritingCoachData | null>(null);
   const [loading, setLoading] = useState(false);

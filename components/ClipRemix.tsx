@@ -23,6 +23,7 @@ interface ClipRemixProps {
   onClose: () => void;
   onNoteSaved: (path: string) => void;
   notes: NoteEntry[];
+  onOpenSettings?: () => void;
 }
 
 interface RemixResult {
@@ -38,6 +39,7 @@ export default function ClipRemix({
   onClose,
   onNoteSaved,
   notes,
+  onOpenSettings,
 }: ClipRemixProps) {
   const [phase, setPhase] = useState<Phase>("input");
   const [clipText, setClipText] = useState("");
@@ -193,9 +195,19 @@ export default function ClipRemix({
             <div className="p-5 flex flex-col gap-4">
               {/* No provider warning */}
               {!activeProvider && (
-                <div className="px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-400 flex items-center gap-2">
-                  <Sparkles size={14} />
-                  Configure an AI provider in Settings to use Clip & Remix
+                <div className="flex items-center gap-2 px-3 py-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                  <Sparkles size={14} className="text-cyan-400 shrink-0" />
+                  <p className="text-xs text-cyan-300 flex-1">
+                    Add an AI provider to use Clip & Remix
+                  </p>
+                  {onOpenSettings && (
+                    <button
+                      onClick={() => { onClose(); onOpenSettings(); }}
+                      className="px-2.5 py-1 text-[11px] font-medium bg-cyan-500/20 text-cyan-300 rounded-md hover:bg-cyan-500/30 transition-colors shrink-0"
+                    >
+                      Open Settings
+                    </button>
+                  )}
                 </div>
               )}
 
