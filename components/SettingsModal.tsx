@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Plus, Trash2, Check, ChevronDown, LogOut, Sparkles, Zap, Globe, Server, Brain, Eye, EyeOff } from "lucide-react";
+import ObsidianImport from "./ObsidianImport";
 import {
   PROVIDER_PRESETS,
   loadSettings,
@@ -47,6 +48,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [novyxShowKey, setNovyxShowKey] = useState(false);
   const [novyxSaving, setNovyxSaving] = useState(false);
   const [novyxStatus, setNovyxStatus] = useState<"idle" | "saved" | "error">("idle");
+  const [digestEnabled, setDigestEnabled] = useState(false);
+  const [digestTime, setDigestTime] = useState("08:00");
   const isCloud = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   // Reset state when modal opens (replaces useEffect setState)
@@ -72,6 +75,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           if (data) {
             setNovyxHasKey(data.hasKey);
             setNovyxMasked(data.masked);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen, isCloud]);
+
+  // Fetch digest settings when modal opens
+  useEffect(() => {
+    if (isOpen && isCloud) {
+      fetch("/api/digest/settings")
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data) {
+            setDigestEnabled(data.digestEnabled ?? false);
+            setDigestTime(data.digestTime ?? "08:00");
           }
         })
         .catch(() => {});
@@ -561,6 +579,55 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
             </div>
           )}
+
+          {/* Daily Digest Section (cloud mode only) */}
+          {isCloud && (
+            <div className="border-t border-sidebar-border pt-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">Daily Digest Email</span>
+                </div>
+                <button
+                  onClick={async () => {
+                    const next = !digestEnabled;
+                    setDigestEnabled(next);
+                    await fetch("/api/digest/settings", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ digestEnabled: next, digestTime }),
+                    });
+                  }}
+                  className={`relative w-9 h-5 rounded-full transition-colors ${digestEnabled ? "bg-accent" : "bg-muted-bg"}`}
+                >
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${digestEnabled ? "left-[18px]" : "left-0.5"}`} />
+                </button>
+              </div>
+              <p className="text-xs text-muted mb-2">Get yesterday&apos;s note and a memory briefing every morning.</p>
+              {digestEnabled && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted">Send at</label>
+                  <input
+                    type="time"
+                    value={digestTime}
+                    onChange={async (e) => {
+                      setDigestTime(e.target.value);
+                      await fetch("/api/digest/settings", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ digestEnabled: true, digestTime: e.target.value }),
+                      });
+                    }}
+                    className="px-2 py-1 text-xs bg-background border border-sidebar-border rounded text-foreground outline-none focus:border-accent"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Import Section */}
+          <div className="border-t border-sidebar-border pt-4">
+            <ObsidianImport />
+          </div>
 
           {/* Sign Out (cloud mode only) */}
           {process.env.NEXT_PUBLIC_SUPABASE_URL && (

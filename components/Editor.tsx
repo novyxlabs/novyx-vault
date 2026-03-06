@@ -449,6 +449,16 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
       return;
     }
 
+    // Handle publish sentinel — dispatch custom event for NoteEditor to catch
+    if (insert === "__PUBLISH__") {
+      const { head } = view.state.selection.main;
+      const line = view.state.doc.lineAt(head);
+      view.dispatch({ changes: { from: line.from, to: head, insert: "" } });
+      setSlashMenu((prev) => ({ ...prev, open: false }));
+      window.dispatchEvent(new CustomEvent("novyx-publish"));
+      return;
+    }
+
     const { head } = view.state.selection.main;
     const line = view.state.doc.lineAt(head);
 

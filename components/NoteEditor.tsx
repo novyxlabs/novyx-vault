@@ -6,6 +6,7 @@ import Preview from "./Preview";
 import BacklinksPanel from "./BacklinksPanel";
 import HistoryPanel from "./HistoryPanel";
 import GhostConnections from "./GhostConnections";
+import ShareMenu from "./ShareMenu";
 import { parseFrontmatter } from "@/lib/frontmatter";
 import { Eye, Code, Columns, BookOpen, Upload, MessageSquare, Download, Globe, X, Brain, Check, Maximize2, Minimize2, Bold, Italic, Heading, List, ListOrdered, Quote, Code2, Minus, CheckSquare, Link, ListTree, ChevronRight, Info, Share2 } from "lucide-react";
 
@@ -66,6 +67,8 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isTocOpen, setIsTocOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
   const infoRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorHandle>(null);
   const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -96,7 +99,14 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, onFi
   }, [content]);
 
   // Close info panel when switching notes
-  useEffect(() => { setIsInfoOpen(false); }, [notePath]);
+  useEffect(() => { setIsInfoOpen(false); setIsShareOpen(false); }, [notePath]);
+
+  // Listen for /publish slash command
+  useEffect(() => {
+    const handler = () => setIsShareOpen(true);
+    window.addEventListener("novyx-publish", handler);
+    return () => window.removeEventListener("novyx-publish", handler);
+  }, []);
 
   // Close info panel on outside click
   useEffect(() => {
@@ -429,13 +439,23 @@ ${htmlLines.join("\n")}
           >
             <Download size={14} />
           </button>
-          <button
-            onClick={handleExportHtml}
-            className="p-1.5 rounded transition-colors text-muted hover:text-foreground"
-            title="Export as HTML"
-          >
-            <Share2 size={14} />
-          </button>
+          <div className="relative">
+            <button
+              ref={shareButtonRef}
+              onClick={() => setIsShareOpen((prev) => !prev)}
+              className={`p-1.5 rounded transition-colors ${isShareOpen ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"}`}
+              title="Share"
+            >
+              <Share2 size={14} />
+            </button>
+            <ShareMenu
+              notePath={notePath}
+              content={content}
+              isOpen={isShareOpen}
+              onClose={() => setIsShareOpen(false)}
+              anchorRef={shareButtonRef}
+            />
+          </div>
           <div className="relative">
             <button
               onClick={handleRemember}

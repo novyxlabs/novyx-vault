@@ -49,6 +49,7 @@ const COMMANDS: SlashCommand[] = [
   { id: "link", label: "Link", description: "Hyperlink", icon: <Link size={16} />, insert: "[](url)", cursorOffset: 5 },
   { id: "date", label: "Today's Date", description: "Insert current date", icon: <Calendar size={16} />, insert: "__DATE__" },
   { id: "ingest-link", label: "Ingest Link", description: "Fetch & save a URL", icon: <Globe size={16} />, insert: "__INGEST_LINK__" },
+  { id: "publish", label: "Publish", description: "Publish note to the web", icon: <Globe size={16} />, insert: "__PUBLISH__" },
   // AI commands
   { id: "ai-expand", label: "Expand", description: "Flesh out with more detail", icon: <Wand2 size={16} />, insert: "__AI_EXPAND__", isAI: true },
   { id: "ai-continue", label: "Continue", description: "Keep writing from here", icon: <ArrowRight size={16} />, insert: "__AI_CONTINUE__", isAI: true },
