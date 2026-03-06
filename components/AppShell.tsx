@@ -649,11 +649,8 @@ export default function AppShell() {
         onOpenReflect={() => setIsReflectOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
-          const { createClient } = await import("@supabase/supabase-js");
-          const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-          );
+          const { createBrowserSupabase } = await import("@/lib/supabase");
+          const supabase = createBrowserSupabase();
           clearUserLocalStorage();
           await supabase.auth.signOut();
           window.location.href = "/";

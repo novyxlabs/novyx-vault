@@ -198,7 +198,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center"
       role="dialog"
       aria-modal="true"
-      aria-label="AI Settings"
+      aria-label="Settings"
       onClick={onClose}
       onKeyDown={(e) => {
         if (e.key === "Tab") {
@@ -248,6 +248,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <span>No key configured — memory features may be limited</span>
                     )}
                   </div>
+                  {novyxStatus === "saved" && (
+                    <span className="text-xs text-green-400 ml-2">Saved</span>
+                  )}
                   <button
                     onClick={() => { setNovyxEditing(true); setNovyxStatus("idle"); }}
                     className="text-xs text-accent hover:text-accent-hover px-2 py-1 rounded hover:bg-accent/5"
@@ -568,11 +571,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {process.env.NEXT_PUBLIC_SUPABASE_URL && (
             <button
               onClick={async () => {
-                const { createClient } = await import("@supabase/supabase-js");
-                const supabase = createClient(
-                  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-                );
+                const { createBrowserSupabase } = await import("@/lib/supabase");
+                const supabase = createBrowserSupabase();
                 clearUserLocalStorage();
                 await supabase.auth.signOut();
                 window.location.href = "/";
