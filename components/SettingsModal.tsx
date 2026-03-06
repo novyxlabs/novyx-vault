@@ -19,12 +19,13 @@ interface SettingsModalProps {
 }
 
 // Popular providers shown as cards in the empty state
-const FEATURED_IDS = ["openai", "anthropic", "gemini", "deepseek", "groq", "ollama"];
+const FEATURED_IDS = ["openai", "anthropic", "gemini", "xai", "deepseek", "groq"];
 
 const PROVIDER_ICONS: Record<string, { icon: typeof Sparkles; color: string }> = {
   openai: { icon: Sparkles, color: "text-green-400" },
   anthropic: { icon: Sparkles, color: "text-orange-400" },
   gemini: { icon: Globe, color: "text-blue-400" },
+  xai: { icon: Zap, color: "text-sky-400" },
   deepseek: { icon: Zap, color: "text-cyan-400" },
   groq: { icon: Zap, color: "text-amber-400" },
   ollama: { icon: Server, color: "text-emerald-400" },
@@ -471,21 +472,16 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <div>
                           <label className="text-xs text-muted block mb-1">Model</label>
                           {preset && preset.models.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
+                            <select
+                              value={provider.model}
+                              onChange={(e) => updateProvider(provider.id, "model", e.target.value)}
+                              className="w-full bg-card-bg border border-sidebar-border rounded px-3 py-2 text-sm text-foreground font-mono outline-none focus:border-accent/50 appearance-none cursor-pointer"
+                              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+                            >
                               {preset.models.map((m) => (
-                                <button
-                                  key={m}
-                                  onClick={() => updateProvider(provider.id, "model", m)}
-                                  className={`px-2.5 py-1 rounded-md text-xs font-mono transition-colors ${
-                                    provider.model === m
-                                      ? "bg-accent/20 text-accent border border-accent/30"
-                                      : "bg-card-bg border border-sidebar-border text-muted hover:text-foreground hover:border-accent/20"
-                                  }`}
-                                >
-                                  {m}
-                                </button>
+                                <option key={m} value={m}>{m}</option>
                               ))}
-                            </div>
+                            </select>
                           ) : (
                             <input
                               type="text"
