@@ -77,7 +77,7 @@ async function sendDigests(targetUserId?: string) {
         .eq("is_trashed", false)
         .like("name", `%${dateStr}%`)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       const { data: recentNotes } = await supabase
         .from("notes")
