@@ -336,14 +336,14 @@ export default function MorningBriefing({
       {/* ============================================================= */}
       {/*  2. On Your Mind — theme chips                                */}
       {/* ============================================================= */}
-      {themes.length > 0 && (
-        <div
-          className="ghost-fade-in"
-          style={{ animationDelay: "160ms" }}
-        >
-          <h3 className="text-[11px] uppercase tracking-wider text-muted/50 font-medium mb-3">
-            On Your Mind
-          </h3>
+      <div
+        className="ghost-fade-in"
+        style={{ animationDelay: "160ms" }}
+      >
+        <h3 className="text-[11px] uppercase tracking-wider text-muted/50 font-medium mb-3">
+          On Your Mind
+        </h3>
+        {themes.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {themes.map(({ topic, count }) => (
               <span
@@ -357,8 +357,12 @@ export default function MorningBriefing({
               </span>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-xs text-muted/50 italic">
+            Start writing notes and I&apos;ll pick up on what&apos;s on your mind.
+          </p>
+        )}
+      </div>
 
       {/* ============================================================= */}
       {/*  3. Worth Revisiting — connected notes                        */}

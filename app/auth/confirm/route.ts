@@ -32,36 +32,25 @@ export async function GET(request: NextRequest) {
 
   // PKCE flow: Supabase sends a `code` param instead of `token_hash`
   if (code) {
-    const response = NextResponse.redirect(`${origin}/`);
+    const isRecovery = type === "recovery" || searchParams.get("next") === "/reset-password";
+    const destination = isRecovery ? `${origin}/reset-password` : `${origin}/`;
+    const response = NextResponse.redirect(destination);
     const supabase = makeSupabase(request, response);
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // If this was a recovery flow, redirect to reset-password
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Check if the user just came from a recovery link
-        const nextParam = searchParams.get("next");
-        if (nextParam === "/reset-password" || type === "recovery") {
-          return NextResponse.redirect(`${origin}/reset-password`);
-        }
-      }
       return response;
     }
   }
 
   // Legacy implicit flow: token_hash + type
   if (token_hash && type) {
-    let response = NextResponse.redirect(`${origin}/`);
+    const destination = type === "recovery" ? `${origin}/reset-password` : `${origin}/`;
+    const response = NextResponse.redirect(destination);
     const supabase = makeSupabase(request, response);
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
 
     if (!error) {
-      if (type === "recovery") {
-        response = NextResponse.redirect(`${origin}/reset-password`);
-        const freshSupabase = makeSupabase(request, response);
-        await freshSupabase.auth.getUser();
-      }
       return response;
     }
   }
