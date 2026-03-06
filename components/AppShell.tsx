@@ -649,13 +649,10 @@ export default function AppShell() {
         onOpenReflect={() => setIsReflectOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
-          const { createBrowserSupabase } = await import("@/lib/supabase");
-          const supabase = createBrowserSupabase();
           clearUserLocalStorage();
-          await supabase.auth.signOut();
-          window.location.href = "/";
-        } : undefined}
-        onGoHome={() => { setActiveNote(null); setContent(""); }}
+          await fetch("/api/auth/signout", { method: "POST" });
+          window.location.href = "/login";
+        } : undefined}        onGoHome={() => { setActiveNote(null); setContent(""); }}
         recentNotes={recentNotes}
         onDuplicateNote={handleDuplicateNote}
         pinnedNotes={pinnedNotes}

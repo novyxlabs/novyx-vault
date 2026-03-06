@@ -241,17 +241,16 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
               {!novyxEditing ? (
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted">
+                  <div className="text-xs text-muted flex items-center gap-2">
                     {novyxHasKey ? (
                       <span className="font-mono">{novyxMasked}</span>
                     ) : (
-                      <span>No key configured — memory features may be limited</span>
+                      <span>No key configured</span>
                     )}
-                  </div>
-                  {novyxStatus === "saved" && (
-                    <span className="text-xs text-green-400 ml-2">Saved</span>
-                  )}
-                  <button
+                    {novyxStatus === "saved" && (
+                      <span className="text-green-400">Saved!</span>
+                    )}
+                  </div>                  <button
                     onClick={() => { setNovyxEditing(true); setNovyxStatus("idle"); }}
                     className="text-xs text-accent hover:text-accent-hover px-2 py-1 rounded hover:bg-accent/5"
                   >
@@ -571,13 +570,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {process.env.NEXT_PUBLIC_SUPABASE_URL && (
             <button
               onClick={async () => {
-                const { createBrowserSupabase } = await import("@/lib/supabase");
-                const supabase = createBrowserSupabase();
                 clearUserLocalStorage();
-                await supabase.auth.signOut();
-                window.location.href = "/";
-              }}
-              className="flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors w-full"
+                await fetch("/api/auth/signout", { method: "POST" });
+                window.location.href = "/login";
+              }}              className="flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors w-full"
             >
               <LogOut size={14} />
               Sign Out
