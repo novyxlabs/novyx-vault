@@ -7,6 +7,7 @@ import {
   loadSettings,
   saveSettings,
   syncSettingsToCloud,
+  clearUserLocalStorage,
   type AISettings,
   type ProviderConfig,
   type ProviderPreset,
@@ -437,6 +438,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   process.env.NEXT_PUBLIC_SUPABASE_URL!,
                   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
                 );
+                clearUserLocalStorage();
                 await supabase.auth.signOut();
                 window.location.href = "/";
               }}

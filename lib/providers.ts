@@ -206,6 +206,15 @@ export function validateProviderBaseURL(baseURL: string): string | null {
 
 const STORAGE_KEY = "noctivault-ai-settings";
 
+/** Clear all noctivault localStorage keys. Call on sign-out to prevent cross-user leakage. */
+export function clearUserLocalStorage(): void {
+  if (typeof window === "undefined") return;
+  const keys = Object.keys(localStorage).filter((k) => k.startsWith("noctivault-"));
+  for (const key of keys) {
+    localStorage.removeItem(key);
+  }
+}
+
 export function loadSettings(): AISettings {
   if (typeof window === "undefined") {
     return { providers: [], activeProviderId: null };

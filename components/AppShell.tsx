@@ -28,7 +28,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
 import ImportPrompt from "@/components/ImportPrompt";
 import { resolveWikiLink } from "@/lib/wikilink";
-import { loadCloudSettings, syncSettingsToCloud } from "@/lib/providers";
+import { loadCloudSettings, syncSettingsToCloud, clearUserLocalStorage } from "@/lib/providers";
 import { Upload, Menu, Search, MessageSquare, ChevronLeft } from "lucide-react";
 
 interface NoteEntry {
@@ -654,6 +654,7 @@ export default function AppShell() {
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
           );
+          clearUserLocalStorage();
           await supabase.auth.signOut();
           window.location.href = "/";
         } : undefined}
