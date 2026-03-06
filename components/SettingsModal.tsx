@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Plus, Trash2, Check, ChevronDown, LogOut, Sparkles, Zap, Globe, Server } from "lucide-react";
+import { X, Plus, Trash2, Check, ChevronDown, LogOut, Sparkles, Zap, Globe, Server, Brain, Eye, EyeOff } from "lucide-react";
 import {
   PROVIDER_PRESETS,
   loadSettings,
@@ -38,16 +38,44 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [prevOpen, setPrevOpen] = useState(false);
   const apiKeyRef = useRef<HTMLInputElement>(null);
 
+  // Novyx key state
+  const [novyxMasked, setNovyxMasked] = useState<string | null>(null);
+  const [novyxHasKey, setNovyxHasKey] = useState(false);
+  const [novyxEditing, setNovyxEditing] = useState(false);
+  const [novyxInput, setNovyxInput] = useState("");
+  const [novyxShowKey, setNovyxShowKey] = useState(false);
+  const [novyxSaving, setNovyxSaving] = useState(false);
+  const [novyxStatus, setNovyxStatus] = useState<"idle" | "saved" | "error">("idle");
+  const isCloud = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+
   // Reset state when modal opens (replaces useEffect setState)
   if (isOpen && !prevOpen) {
     setSettings(loadSettings());
     setShowPresets(false);
     setShowAllProviders(false);
     setEditingId(null);
+    setNovyxEditing(false);
+    setNovyxInput("");
+    setNovyxStatus("idle");
   }
   if (isOpen !== prevOpen) {
     setPrevOpen(isOpen);
   }
+
+  // Fetch Novyx key status when modal opens
+  useEffect(() => {
+    if (isOpen && isCloud) {
+      fetch("/api/auth/novyx-key")
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data) {
+            setNovyxHasKey(data.hasKey);
+            setNovyxMasked(data.masked);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen, isCloud]);
 
   // Auto-focus API key input when editing a provider
   useEffect(() => {
@@ -132,6 +160,33 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     handleSave({ ...settings, activeProviderId: id });
   };
 
+  const handleNovyxSave = async () => {
+    if (!novyxInput.trim() || novyxInput.trim().length < 8) return;
+    setNovyxSaving(true);
+    setNovyxStatus("idle");
+    try {
+      const res = await fetch("/api/auth/novyx-key", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: novyxInput.trim() }),
+      });
+      if (res.ok) {
+        setNovyxStatus("saved");
+        setNovyxHasKey(true);
+        const masked = novyxInput.trim();
+        setNovyxMasked(masked.slice(0, 8) + "..." + masked.slice(-4));
+        setNovyxEditing(false);
+        setNovyxInput("");
+      } else {
+        setNovyxStatus("error");
+      }
+    } catch {
+      setNovyxStatus("error");
+    } finally {
+      setNovyxSaving(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   const hasProviders = settings.providers.length > 0;
@@ -168,7 +223,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-sidebar-border">
-          <h2 className="text-lg font-semibold">AI Settings</h2>
+          <h2 className="text-lg font-semibold">Settings</h2>
           <button onClick={onClose} className="p-1 rounded text-muted hover:text-foreground">
             <X size={18} />
           </button>
@@ -176,11 +231,91 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Novyx Memory Key Section (cloud mode only) */}
+          {isCloud && (
+            <div className="border border-sidebar-border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain size={16} className="text-purple-400" />
+                <span className="text-sm font-medium">Novyx Memory</span>
+              </div>
+
+              {!novyxEditing ? (
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-muted">
+                    {novyxHasKey ? (
+                      <span className="font-mono">{novyxMasked}</span>
+                    ) : (
+                      <span>No key configured — memory features may be limited</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setNovyxEditing(true); setNovyxStatus("idle"); }}
+                    className="text-xs text-accent hover:text-accent-hover px-2 py-1 rounded hover:bg-accent/5"
+                  >
+                    {novyxHasKey ? "Change" : "Add Key"}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      type={novyxShowKey ? "text" : "password"}
+                      value={novyxInput}
+                      onChange={(e) => setNovyxInput(e.target.value)}
+                      placeholder="Enter your Novyx API key..."
+                      className="w-full bg-card-bg border border-sidebar-border rounded px-3 py-1.5 text-sm text-foreground font-mono outline-none focus:border-accent/50 pr-8"
+                      autoFocus
+                      onKeyDown={(e) => { if (e.key === "Enter") handleNovyxSave(); }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNovyxShowKey((s) => !s)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      {novyxShowKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleNovyxSave}
+                      disabled={novyxSaving || novyxInput.trim().length < 8}
+                      className="px-3 py-1 text-xs bg-accent text-white rounded hover:bg-accent-hover disabled:opacity-50 transition-colors"
+                    >
+                      {novyxSaving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={() => { setNovyxEditing(false); setNovyxInput(""); setNovyxStatus("idle"); }}
+                      className="px-3 py-1 text-xs text-muted hover:text-foreground rounded hover:bg-muted-bg"
+                    >
+                      Cancel
+                    </button>
+                    {novyxStatus === "saved" && (
+                      <span className="text-xs text-green-400">Saved</span>
+                    )}
+                    {novyxStatus === "error" && (
+                      <span className="text-xs text-red-400">Failed to save</span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted/60 leading-relaxed">
+                    Your Novyx key powers the memory system — remembering, recalling, insights, and knowledge graph.
+                    Keys are stored securely server-side and never sent to the browser.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AI Providers Header */}
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-accent" />
+            <span className="text-sm font-medium">AI Providers</span>
+          </div>
+
           {/* Empty State: Provider Picker */}
           {!hasProviders && (
             <div className="space-y-5">
               <div className="text-center">
-                <Sparkles size={24} className="text-accent mx-auto mb-2" />
                 <h3 className="text-sm font-medium text-foreground mb-1">
                   Choose your AI provider
                 </h3>
