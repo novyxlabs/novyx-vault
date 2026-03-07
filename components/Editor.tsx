@@ -63,6 +63,9 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   onChangeRef.current = onChange;
+  const checkSlashRef = useRef<((v: EditorView) => void) | null>(null);
+  const checkWikiRef = useRef<((v: EditorView) => void) | null>(null);
+  const checkSelRef = useRef<((v: EditorView) => void) | null>(null);
 
   useImperativeHandle(ref, () => ({
     insertText(text: string, cursorOffset = 0) {
@@ -165,6 +168,11 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
       }
     }, 300);
   }, [selToolbar.open, aiStreaming]);
+
+  // Keep refs in sync so the CodeMirror editor always calls latest callbacks
+  checkSlashRef.current = checkSlashCommand;
+  checkWikiRef.current = checkWikiLink;
+  checkSelRef.current = checkSelection;
 
   const handleWikiSelect = useCallback((noteName: string) => {
     const view = viewRef.current;
@@ -585,11 +593,26 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onChangeRef.current(update.state.doc.toString());
+
+            // Auto-collapse double list markers (e.g., "- - text" → "- text")
+            // This happens when auto-continue inserts "- " and user also types "- "
+            const { head } = update.state.selection.main;
+            const curLine = update.state.doc.lineAt(head);
+            const dblMatch = curLine.text.match(/^(\s*)([-*+]) \2 /);
+            if (dblMatch) {
+              const removeFrom = curLine.from + dblMatch[1].length;
+              const removeTo = removeFrom + 2; // remove first marker + space
+              setTimeout(() => {
+                update.view.dispatch({
+                  changes: { from: removeFrom, to: removeTo, insert: "" },
+                });
+              }, 0);
+            }
           }
           if (update.docChanged || update.selectionSet) {
-            checkSlashCommand(update.view);
-            checkWikiLink(update.view);
-            checkSelection(update.view);
+            checkSlashRef.current?.(update.view);
+            checkWikiRef.current?.(update.view);
+            checkSelRef.current?.(update.view);
           }
         }),
         EditorView.domEventHandlers({

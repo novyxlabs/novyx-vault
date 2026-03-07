@@ -421,9 +421,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 return (
                   <div
                     key={provider.id}
-                    className={`border rounded-lg p-4 transition-colors min-h-[4rem] ${
+                    className={`border rounded-lg p-4 transition-colors ${
                       isActive ? "border-accent/50 bg-accent/5" : "border-sidebar-border bg-card-bg/50"
                     }`}
+                    style={{ minHeight: "4rem" }}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">

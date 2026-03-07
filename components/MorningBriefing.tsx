@@ -160,8 +160,10 @@ export default function MorningBriefing({
   const [loaded, setLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const activeProvider = getActiveProvider(loadSettings());
-  const hasProvider = !!activeProvider && !!(activeProvider.apiKey || PROVIDER_PRESETS.find(p => p.id === activeProvider.id)?.isLocal);
+  const currentSettings = loadSettings();
+  const activeProvider = getActiveProvider(currentSettings);
+  const isLocalProvider = activeProvider ? PROVIDER_PRESETS.some(p => p.id === activeProvider.id && p.isLocal) : false;
+  const hasWorkingProvider = !!activeProvider && (isLocalProvider || (!!activeProvider.apiKey && activeProvider.apiKey.length > 3));
 
   const fetchData = useCallback(async () => {
     try {
@@ -308,7 +310,7 @@ export default function MorningBriefing({
       </div>
 
       {/* AI Setup Prompt */}
-      {!hasProvider && onOpenSettings && (
+      {!hasWorkingProvider && onOpenSettings && (
         <div
           className="ghost-fade-in rounded-xl border border-accent/30 bg-accent/5 p-4"
           style={{ animationDelay: "120ms" }}

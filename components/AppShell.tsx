@@ -72,6 +72,7 @@ export default function AppShell() {
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
   const pendingSave = useRef<{ path: string; content: string } | null>(null);
   const lastSnapshotRef = useRef<number>(0);
+  const loadedContentLenRef = useRef<number>(0);
 
   const loadNotes = useCallback(async () => {
     try {
@@ -87,7 +88,9 @@ export default function AppShell() {
     try {
       const res = await fetch(`/api/notes?path=${encodeURIComponent(path)}`);
       const data = await res.json();
-      setContent(data.content || "");
+      const noteContent = data.content || "";
+      setContent(noteContent);
+      loadedContentLenRef.current = noteContent.length;
     } catch (err) {
       console.error("Failed to load note:", err);
     }
@@ -117,7 +120,9 @@ export default function AppShell() {
 
   const saveNote = useCallback(
     (path: string, newContent: string) => {
-      // Prevent saving empty content (protects against undo wiping notes)
+      // Prevent saving when undo wipes most of the content
+      const loadedLen = loadedContentLenRef.current;
+      if (loadedLen > 50 && newContent.trim().length < loadedLen * 0.2) return;
       if (!newContent.trim()) return;
 
       if (saveTimeout.current) {
