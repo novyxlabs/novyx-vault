@@ -14,7 +14,7 @@ import {
   ArrowRight,
   Settings,
 } from "lucide-react";
-import { loadSettings, getActiveProvider } from "@/lib/providers";
+import { loadSettings, getActiveProvider, PROVIDER_PRESETS } from "@/lib/providers";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -85,18 +85,18 @@ function getGreeting(): { text: string; subtext: string; Icon: typeof Sun } {
   if (hour < 12)
     return {
       text: "Good morning",
-      subtext: "Here's what I've been thinking about...",
+      subtext: "Ready when you are.",
       Icon: Sun,
     };
   if (hour < 18)
     return {
       text: "Good afternoon",
-      subtext: "I've noticed some patterns since we last talked...",
+      subtext: "What are you working on?",
       Icon: Sunset,
     };
   return {
     text: "Good evening",
-    subtext: "I've been connecting some dots for you...",
+    subtext: "Let's pick up where you left off.",
     Icon: Moon,
   };
 }
@@ -160,48 +160,53 @@ export default function MorningBriefing({
   const [loaded, setLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const hasProvider = !!getActiveProvider(loadSettings());
+  const activeProvider = getActiveProvider(loadSettings());
+  const hasProvider = !!activeProvider && !!(activeProvider.apiKey || PROVIDER_PRESETS.find(p => p.id === activeProvider.id)?.isLocal);
 
   const fetchData = useCallback(async () => {
-    const results = await Promise.allSettled([
-      fetch("/api/briefing").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/memory/insights?limit=3").then((r) =>
-        r.ok ? r.json() : null
-      ),
-      fetch("/api/notes/writing-coach").then((r) =>
-        r.ok ? r.json() : null
-      ),
-    ]);
+    try {
+      const results = await Promise.allSettled([
+        fetch("/api/briefing").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/memory/insights?limit=3").then((r) =>
+          r.ok ? r.json() : null
+        ),
+        fetch("/api/notes/writing-coach").then((r) =>
+          r.ok ? r.json() : null
+        ),
+      ]);
 
-    const briefingResult =
-      results[0].status === "fulfilled" ? results[0].value : null;
-    const insightsResult: InsightsData | null =
-      results[1].status === "fulfilled" ? results[1].value : null;
-    const coachResult =
-      results[2].status === "fulfilled" ? results[2].value : null;
+      const briefingResult =
+        results[0].status === "fulfilled" ? results[0].value : null;
+      const insightsResult: InsightsData | null =
+        results[1].status === "fulfilled" ? results[1].value : null;
+      const coachResult =
+        results[2].status === "fulfilled" ? results[2].value : null;
 
-    if (briefingResult) setBriefing(briefingResult);
+      if (briefingResult) setBriefing(briefingResult);
 
-    // Pick the single best insight
-    if (insightsResult?.insights?.length) {
-      setInsight(insightsResult.insights[0].observation);
-    } else if (briefingResult?.insights?.length) {
-      setInsight(briefingResult.insights[0].observation);
+      // Pick the single best insight
+      if (insightsResult?.insights?.length) {
+        setInsight(insightsResult.insights[0].observation);
+      } else if (briefingResult?.insights?.length) {
+        setInsight(briefingResult.insights[0].observation);
+      }
+
+      // Worth Revisiting: pick stale/connection suggestions that reference actual notes
+      if (coachResult?.suggestions) {
+        const revisit = (coachResult.suggestions as WritingSuggestion[])
+          .filter(
+            (s) =>
+              (s.type === "stale" || s.type === "connection" || s.type === "hot_topic") &&
+              s.relatedNotes.length > 0
+          )
+          .slice(0, 3);
+        setSuggestions(revisit);
+      }
+    } catch {
+      // Ensure component renders even if data processing fails
+    } finally {
+      setLoaded(true);
     }
-
-    // Worth Revisiting: pick stale/connection suggestions that reference actual notes
-    if (coachResult?.suggestions) {
-      const revisit = (coachResult.suggestions as WritingSuggestion[])
-        .filter(
-          (s) =>
-            (s.type === "stale" || s.type === "connection" || s.type === "hot_topic") &&
-            s.relatedNotes.length > 0
-        )
-        .slice(0, 3);
-      setSuggestions(revisit);
-    }
-
-    setLoaded(true);
   }, []);
 
   useEffect(() => {

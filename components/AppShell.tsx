@@ -99,7 +99,7 @@ export default function AppShell() {
       saveTimeout.current = null;
     }
     const pending = pendingSave.current;
-    if (pending) {
+    if (pending && pending.content.trim()) {
       pendingSave.current = null;
       try {
         await fetch("/api/notes", {
@@ -117,6 +117,9 @@ export default function AppShell() {
 
   const saveNote = useCallback(
     (path: string, newContent: string) => {
+      // Prevent saving empty content (protects against undo wiping notes)
+      if (!newContent.trim()) return;
+
       if (saveTimeout.current) {
         clearTimeout(saveTimeout.current);
       }

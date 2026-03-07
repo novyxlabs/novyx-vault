@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import remarkWikiLinks from "@/lib/remarkWikiLinks";
 import remarkTags from "@/lib/remarkTags";
 import { parseFrontmatter } from "@/lib/frontmatter";
@@ -245,6 +246,7 @@ export default function Preview({ content, onNavigateWikiLink, onToggleCheckbox 
             <ReactMarkdown
               key={`text-${i}`}
               remarkPlugins={[remarkGfm, remarkWikiLinks, remarkTags]}
+              rehypePlugins={[rehypeRaw]}
               components={markdownComponents}
             >
               {seg.value}

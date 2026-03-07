@@ -178,7 +178,7 @@ export default function ClipRemix({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-sidebar-border shrink-0">
           <div className="flex items-center gap-2">
-            <Scissors size={16} className="text-cyan-400" />
+            <Scissors size={16} className="text-accent" />
             <h2 className="text-sm font-medium">Clip & Remix</h2>
           </div>
           <button
@@ -195,15 +195,15 @@ export default function ClipRemix({
             <div className="p-5 flex flex-col gap-4">
               {/* No provider warning */}
               {!activeProvider && (
-                <div className="flex items-center gap-2 px-3 py-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
-                  <Sparkles size={14} className="text-cyan-400 shrink-0" />
-                  <p className="text-xs text-cyan-300 flex-1">
+                <div className="flex items-center gap-2 px-3 py-2.5 bg-accent/10 border border-accent/20 rounded-lg">
+                  <Sparkles size={14} className="text-accent shrink-0" />
+                  <p className="text-xs text-accent/80 flex-1">
                     Add an AI provider to use Clip & Remix
                   </p>
                   {onOpenSettings && (
                     <button
                       onClick={() => { onClose(); onOpenSettings(); }}
-                      className="px-2.5 py-1 text-[11px] font-medium bg-cyan-500/20 text-cyan-300 rounded-md hover:bg-cyan-500/30 transition-colors shrink-0"
+                      className="px-2.5 py-1 text-[11px] font-medium bg-accent/20 text-accent/80 rounded-md hover:bg-accent/30 transition-colors shrink-0"
                     >
                       Open Settings
                     </button>
@@ -213,7 +213,7 @@ export default function ClipRemix({
 
               {/* Low note count notice */}
               {notes.length === 0 && activeProvider && (
-                <div className="px-3 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-lg text-xs text-cyan-400 flex items-center gap-2">
+                <div className="px-3 py-2 bg-accent/10 border border-accent/20 rounded-lg text-xs text-accent flex items-center gap-2">
                   <FileText size={14} />
                   Add more notes to improve voice matching
                 </div>
@@ -227,7 +227,7 @@ export default function ClipRemix({
                   onChange={(e) => setClipText(e.target.value)}
                   placeholder="Paste any text — article, tweet, email, quote..."
                   rows={8}
-                  className="w-full bg-card-bg border border-sidebar-border rounded-lg p-4 text-sm text-foreground placeholder-muted outline-none focus:border-cyan-400/50 resize-none"
+                  className="w-full bg-card-bg border border-sidebar-border rounded-lg p-4 text-sm text-foreground placeholder-muted outline-none focus:border-accent/50 resize-none"
                 />
                 <span className="absolute bottom-3 right-3 text-[10px] text-muted tabular-nums">
                   {charCount} chars
@@ -245,7 +245,7 @@ export default function ClipRemix({
                   value={sourceUrl}
                   onChange={(e) => setSourceUrl(e.target.value)}
                   placeholder="Source URL (optional)"
-                  className="flex-1 bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted outline-none focus:border-cyan-400/50"
+                  className="flex-1 bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted outline-none focus:border-accent/50"
                 />
               </div>
 
@@ -260,7 +260,7 @@ export default function ClipRemix({
               <button
                 onClick={handleRemix}
                 disabled={!canRemix}
-                className="w-full py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:opacity-90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Scissors size={14} />
                 Remix in My Voice
@@ -271,7 +271,7 @@ export default function ClipRemix({
           {/* Phase 2: Processing */}
           {phase === "processing" && (
             <div className="p-12 flex flex-col items-center justify-center gap-4">
-              <Scissors size={32} className="text-cyan-400 animate-pulse" />
+              <Scissors size={32} className="text-accent animate-pulse" />
               <p className="text-sm text-muted">Remixing in your voice...</p>
             </div>
           )}
@@ -286,7 +286,7 @@ export default function ClipRemix({
                   type="text"
                   value={editableTitle}
                   onChange={(e) => setEditableTitle(e.target.value)}
-                  className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-cyan-400/50"
+                  className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-accent/50"
                 />
               </div>
 
@@ -308,10 +308,10 @@ export default function ClipRemix({
                 {/* Remixed */}
                 <div>
                   <label className="text-xs text-muted block mb-1 flex items-center gap-1">
-                    <Sparkles size={12} className="text-cyan-400" />
+                    <Sparkles size={12} className="text-accent" />
                     Remixed
                   </label>
-                  <div className="bg-card-bg border border-cyan-500/20 rounded-lg p-3 max-h-64 overflow-y-auto">
+                  <div className="bg-card-bg border border-accent/20 rounded-lg p-3 max-h-64 overflow-y-auto">
                     <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                       {result.content}
                     </p>
@@ -326,7 +326,7 @@ export default function ClipRemix({
                   {result.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-accent/10 text-accent border border-accent/20"
                     >
                       #{tag}
                     </span>
@@ -343,7 +343,7 @@ export default function ClipRemix({
                     href={sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-cyan-400 hover:underline truncate max-w-xs"
+                    className="text-accent hover:underline truncate max-w-xs"
                   >
                     {sourceUrl}
                   </a>

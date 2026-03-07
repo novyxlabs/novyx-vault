@@ -93,15 +93,17 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ content, 
     const line = view.state.doc.lineAt(head);
     const lineText = line.text.substring(0, head - line.from);
 
-    // Check if line starts with / followed by optional filter text
-    const match = lineText.match(/^\/(\w*)$/);
+    // Check if line starts with / (or has / after list marker/whitespace)
+    const match = lineText.match(/^\/(\w*)$/) || lineText.match(/(?:^[-*+] |^\d+[.)] |^\s+)\/(\w*)$/);
     if (match) {
+      const filter = match[1] ?? match[2] ?? "";
+      const slashIdx = lineText.lastIndexOf("/");
       const coords = view.coordsAtPos(head);
       if (coords) {
         setSlashMenu({
           open: true,
-          filter: match[1],
-          pos: line.from,
+          filter,
+          pos: line.from + slashIdx,
           top: coords.bottom + 4,
           left: coords.left,
         });

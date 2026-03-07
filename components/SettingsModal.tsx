@@ -166,9 +166,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   const updateProvider = (id: string, field: keyof ProviderConfig, value: string) => {
+    // Read fresh from localStorage to avoid stale React state closure
+    const current = loadSettings();
     const updated: AISettings = {
-      ...settings,
-      providers: settings.providers.map((p) =>
+      ...current,
+      providers: current.providers.map((p) =>
         p.id === id ? { ...p, [field]: value } : p
       ),
     };
@@ -419,8 +421,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 return (
                   <div
                     key={provider.id}
-                    className={`border rounded-lg p-4 transition-colors ${
-                      isActive ? "border-accent/50 bg-accent/5" : "border-sidebar-border"
+                    className={`border rounded-lg p-4 transition-colors min-h-[4rem] ${
+                      isActive ? "border-accent/50 bg-accent/5" : "border-sidebar-border bg-card-bg/50"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">

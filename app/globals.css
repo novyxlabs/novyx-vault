@@ -220,6 +220,11 @@ body {
   margin: 1em 0;
 }
 
+.markdown-preview ul ul, .markdown-preview ul ol,
+.markdown-preview ol ul, .markdown-preview ol ol {
+  margin: 0.25em 0;
+}
+
 .markdown-preview li {
   margin: 0.25em 0;
 }
