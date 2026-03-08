@@ -123,17 +123,21 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
       .then((data) => {
         const raw = data.usage || {};
         const gating = data.gating;
-        const t = gating?.tier || raw.tier || "free";
+        const t = gating?.tier || raw.tier || raw.plan || "free";
+        // Debug: log raw keys so we can see what the API actually returns
+        console.log("[usage] raw keys:", Object.keys(raw));
+        console.log("[usage] raw data:", JSON.stringify(raw).slice(0, 500));
+        console.log("[usage] gating:", JSON.stringify(gating).slice(0, 500));
         setTier(t);
         setUsage({
           tier: t,
-          memories_count: raw.memories_count ?? gating?.usage?.memories_count ?? 0,
-          memories_limit: raw.memories_limit ?? gating?.usage?.memories_limit ?? 0,
-          api_calls_used: raw.api_calls_used ?? 0,
-          api_calls_limit: raw.api_calls_limit ?? 0,
-          rollbacks_used: raw.rollbacks_used ?? 0,
-          rollbacks_limit: raw.rollbacks_limit ?? 0,
-          billing_reset_date: raw.billing_reset_date ?? null,
+          memories_count: raw.memories_count ?? raw.memory_count ?? raw.memories ?? gating?.usage?.memories_count ?? 0,
+          memories_limit: raw.memories_limit ?? raw.memory_limit ?? gating?.usage?.memories_limit ?? 0,
+          api_calls_used: raw.api_calls_used ?? raw.api_calls ?? raw.calls_used ?? raw.requests ?? 0,
+          api_calls_limit: raw.api_calls_limit ?? raw.calls_limit ?? raw.request_limit ?? 0,
+          rollbacks_used: raw.rollbacks_used ?? raw.rollbacks ?? 0,
+          rollbacks_limit: raw.rollbacks_limit ?? raw.rollback_limit ?? 0,
+          billing_reset_date: raw.billing_reset_date ?? raw.reset_date ?? raw.billing_cycle_end ?? null,
         });
       })
       .catch(() => setError(true))
@@ -207,28 +211,77 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
                 )}
               </div>
 
-              {/* Usage Bars */}
+              {/* Usage Stats */}
               <div className="space-y-4">
-                {usage.memories_limit > 0 && (
+                {usage.memories_limit > 0 ? (
                   <UsageBar
                     label="Memories"
                     used={usage.memories_count}
                     limit={usage.memories_limit}
                   />
-                )}
-                {usage.api_calls_limit > 0 && (
+                ) : usage.memories_count > 0 ? (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted">Memories</span>
+                      <span className="text-xs font-mono text-foreground">
+                        {usage.memories_count.toLocaleString()}
+                        <span className="text-muted ml-1">/ unlimited</span>
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted-bg overflow-hidden">
+                      <div className="h-full rounded-full w-1/4" style={{ backgroundColor: "var(--accent)" }} />
+                    </div>
+                  </div>
+                ) : null}
+
+                {usage.api_calls_limit > 0 ? (
                   <UsageBar
                     label="API Calls"
                     used={usage.api_calls_used}
                     limit={usage.api_calls_limit}
                   />
-                )}
-                {usage.rollbacks_limit > 0 && (
+                ) : usage.api_calls_used > 0 ? (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted">API Calls</span>
+                      <span className="text-xs font-mono text-foreground">
+                        {usage.api_calls_used.toLocaleString()}
+                        <span className="text-muted ml-1">/ unlimited</span>
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted-bg overflow-hidden">
+                      <div className="h-full rounded-full w-1/6" style={{ backgroundColor: "var(--accent)" }} />
+                    </div>
+                  </div>
+                ) : null}
+
+                {usage.rollbacks_limit > 0 ? (
                   <UsageBar
                     label="Rollbacks"
                     used={usage.rollbacks_used}
                     limit={usage.rollbacks_limit}
                   />
+                ) : usage.rollbacks_used > 0 ? (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted">Rollbacks</span>
+                      <span className="text-xs font-mono text-foreground">
+                        {usage.rollbacks_used.toLocaleString()}
+                        <span className="text-muted ml-1">/ unlimited</span>
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted-bg overflow-hidden">
+                      <div className="h-full rounded-full w-1/6" style={{ backgroundColor: "var(--accent)" }} />
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Fallback: show raw data if nothing else rendered */}
+                {usage.memories_count === 0 && usage.api_calls_used === 0 && usage.rollbacks_used === 0 && (
+                  <div className="rounded-lg border border-sidebar-border bg-card-bg/50 p-4 text-center">
+                    <p className="text-sm text-muted">No usage recorded yet.</p>
+                    <p className="text-xs text-muted/50 mt-1">Usage will appear as you interact with Novyx Memory.</p>
+                  </div>
                 )}
               </div>
 
