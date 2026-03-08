@@ -57,10 +57,6 @@ function formatFullTime(ts: string): string {
   }
 }
 
-function truncate(s: string, max: number): string {
-  return s.length > max ? s.slice(0, max) + "…" : s;
-}
-
 export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistoryViewProps) {
   const [entries, setEntries] = useState<TimelineEntry[]>([]);
   const [allEntries, setAllEntries] = useState<TimelineEntry[]>([]);
@@ -266,7 +262,7 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
                             {/* Content preview */}
                             {entry.observation_preview && (
                               <p className="text-sm text-foreground/80 leading-relaxed mb-2 line-clamp-2">
-                                {truncate(entry.observation_preview, 150)}
+                                {entry.observation_preview}
                               </p>
                             )}
 
