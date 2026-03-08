@@ -13,6 +13,11 @@ import {
   FileText,
   ArrowRight,
   Settings,
+  Rocket,
+  PlusCircle,
+  Cpu,
+  Brain,
+  CheckCircle2,
 } from "lucide-react";
 import { loadSettings, getActiveProvider, PROVIDER_PRESETS } from "@/lib/providers";
 
@@ -159,6 +164,7 @@ export default function MorningBriefing({
   const [suggestions, setSuggestions] = useState<WritingSuggestion[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [hasNovyxKey, setHasNovyxKey] = useState<boolean | null>(null);
 
   const currentSettings = loadSettings();
   const activeProvider = getActiveProvider(currentSettings);
@@ -213,6 +219,11 @@ export default function MorningBriefing({
 
   useEffect(() => {
     fetchData();
+    // Check if Novyx key is configured
+    fetch("/api/auth/novyx-key")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => setHasNovyxKey(!!data?.hasKey))
+      .catch(() => setHasNovyxKey(false));
   }, [fetchData]);
 
   const handleRefresh = async () => {
@@ -268,6 +279,91 @@ export default function MorningBriefing({
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 md:px-6 md:py-12 space-y-8">
+      {/* ============================================================= */}
+      {/*  0. Onboarding — shown when no notes exist                    */}
+      {/* ============================================================= */}
+      {recentNotes.length === 0 && (
+        <div className="ghost-fade-in rounded-xl border border-accent/20 bg-accent/5 p-5 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <Rocket size={18} className="text-accent" />
+            <h3 className="text-base font-semibold">Get started with Novyx Vault</h3>
+          </div>
+          <p className="text-sm text-muted leading-relaxed">
+            Three steps to your AI-powered workspace.
+          </p>
+          <div className="space-y-2.5">
+            {/* Step 1: Create a note */}
+            <button
+              onClick={onCreateNote}
+              className="w-full flex items-center gap-3 rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3 text-left hover:border-accent/40 transition-colors group"
+            >
+              <div className="w-7 h-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
+                <PlusCircle size={14} className="text-accent" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium">Create your first note</span>
+                <p className="text-[11px] text-muted">Start writing — Markdown, wikilinks, and tags supported.</p>
+              </div>
+              <ArrowRight size={14} className="text-muted group-hover:text-accent transition-colors shrink-0" />
+            </button>
+
+            {/* Step 2: Add an AI provider */}
+            <button
+              onClick={onOpenSettings}
+              className="w-full flex items-center gap-3 rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3 text-left hover:border-accent/40 transition-colors group"
+            >
+              <div className="w-7 h-7 rounded-md bg-blue-400/10 flex items-center justify-center shrink-0">
+                {hasWorkingProvider ? (
+                  <CheckCircle2 size={14} className="text-emerald-400" />
+                ) : (
+                  <Cpu size={14} className="text-blue-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium">
+                  {hasWorkingProvider ? "AI provider configured" : "Add an AI provider"}
+                </span>
+                <p className="text-[11px] text-muted">
+                  {hasWorkingProvider
+                    ? `Using ${activeProvider?.name || "your provider"}.`
+                    : "18 providers supported — OpenAI, Anthropic, local models, and more."}
+                </p>
+              </div>
+              {!hasWorkingProvider && (
+                <ArrowRight size={14} className="text-muted group-hover:text-accent transition-colors shrink-0" />
+              )}
+            </button>
+
+            {/* Step 3: Connect Novyx Memory */}
+            <button
+              onClick={onOpenSettings}
+              className="w-full flex items-center gap-3 rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3 text-left hover:border-accent/40 transition-colors group"
+            >
+              <div className="w-7 h-7 rounded-md bg-amber-400/10 flex items-center justify-center shrink-0">
+                {hasNovyxKey ? (
+                  <CheckCircle2 size={14} className="text-emerald-400" />
+                ) : (
+                  <Brain size={14} className="text-amber-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium">
+                  {hasNovyxKey ? "Novyx Memory connected" : "Connect Novyx Memory"}
+                </span>
+                <p className="text-[11px] text-muted">
+                  {hasNovyxKey
+                    ? "Your AI remembers across sessions."
+                    : "Add your API key in Settings for persistent AI memory."}
+                </p>
+              </div>
+              {!hasNovyxKey && (
+                <ArrowRight size={14} className="text-muted group-hover:text-accent transition-colors shrink-0" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ============================================================= */}
       {/*  1. Companion Greeting                                        */}
       {/* ============================================================= */}
