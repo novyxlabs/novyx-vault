@@ -289,7 +289,7 @@ export default function MorningBriefing({
             <h3 className="text-base font-semibold">Get started with Novyx Vault</h3>
           </div>
           <p className="text-sm text-muted leading-relaxed">
-            Three steps to your AI-powered workspace.
+            Set up your workspace in under a minute. Each step unlocks more capabilities.
           </p>
           <div className="space-y-2.5">
             {/* Step 1: Create a note */}
