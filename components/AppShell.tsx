@@ -24,6 +24,7 @@ import WritingCoach from "@/components/WritingCoach";
 import ClipRemix from "@/components/ClipRemix";
 import WeeklyReview from "@/components/WeeklyReview";
 import ReflectTimeline from "@/components/ReflectTimeline";
+import UsageView from "@/components/UsageView";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
 import ImportPrompt from "@/components/ImportPrompt";
@@ -65,6 +66,7 @@ export default function AppShell() {
   const [isClipRemixOpen, setIsClipRemixOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isReflectOpen, setIsReflectOpen] = useState(false);
+  const [isUsageOpen, setIsUsageOpen] = useState(false);
   const [recentNotes, setRecentNotes] = useState<string[]>([]);
   const [pinnedNotes, setPinnedNotes] = useState<string[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
@@ -655,6 +657,7 @@ export default function AppShell() {
         onOpenClipRemix={() => setIsClipRemixOpen(true)}
         onOpenWeeklyReview={() => setIsWeeklyReviewOpen(true)}
         onOpenReflect={() => setIsReflectOpen(true)}
+        onOpenUsage={() => setIsUsageOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
           clearUserLocalStorage();
@@ -751,6 +754,10 @@ export default function AppShell() {
     <MemoryDashboard
       isOpen={isMemoryOpen}
       onClose={() => setIsMemoryOpen(false)}
+    />
+    <UsageView
+      isOpen={isUsageOpen}
+      onClose={() => setIsUsageOpen(false)}
     />
     <NewNoteModal
       isOpen={newNoteFolder !== null}

@@ -38,6 +38,7 @@ import {
   Settings,
   LogOut,
   User,
+  Gauge,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
@@ -77,6 +78,7 @@ interface SidebarProps {
   onOpenClipRemix: () => void;
   onOpenWeeklyReview: () => void;
   onOpenReflect: () => void;
+  onOpenUsage: () => void;
   onOpenSettings: () => void;
   onSignOut?: () => void;
   onGoHome: () => void;
@@ -477,6 +479,7 @@ export default function Sidebar({
   onOpenClipRemix,
   onOpenWeeklyReview,
   onOpenReflect,
+  onOpenUsage,
   onOpenSettings,
   onSignOut,
   onGoHome,
@@ -966,6 +969,18 @@ export default function Sidebar({
                 <span className="text-[9px] leading-none font-medium">Evolve</span>
               </button>
             </div>
+          </div>
+          {/* Novyx */}
+          <div className="px-2 pb-1">
+            <div className="text-[9px] uppercase tracking-[0.15em] text-muted/30 font-medium px-1 mb-1">Novyx</div>
+            <button
+              onClick={onOpenUsage}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-accent/60 hover:bg-accent/10 hover:text-accent transition-all text-left"
+              title="Usage & limits"
+            >
+              <Gauge size={13} />
+              <span className="text-[10px] leading-none font-medium">Usage & Limits</span>
+            </button>
           </div>
           {/* Vault Tools */}
           <div className="px-2 pb-1.5">
