@@ -41,24 +41,21 @@ export default function VerifyEmailPage() {
 
   return (
     <div
+      className="bg-background text-foreground font-sans"
       style={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--bg-primary, #0a0a0b)",
-        color: "var(--text-primary, #e4e4e7)",
-        fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
       }}
     >
       <div
+        className="bg-card-bg border border-sidebar-border"
         style={{
           width: "100%",
           maxWidth: 400,
           padding: 32,
           borderRadius: 12,
-          background: "var(--bg-secondary, #141417)",
-          border: "1px solid var(--border, #27272a)",
           textAlign: "center",
         }}
       >
@@ -72,9 +69,9 @@ export default function VerifyEmailPage() {
           Novyx Vault
         </h1>
         <p
+          className="text-muted"
           style={{
             fontSize: 14,
-            color: "var(--text-secondary, #a1a1aa)",
             marginBottom: 24,
           }}
         >
@@ -82,11 +79,10 @@ export default function VerifyEmailPage() {
         </p>
 
         <div
+          className="bg-background border border-sidebar-border"
           style={{
             padding: "20px 16px",
             borderRadius: 8,
-            background: "var(--bg-primary, #0a0a0b)",
-            border: "1px solid var(--border, #27272a)",
             marginBottom: 20,
           }}
         >
@@ -112,12 +108,12 @@ export default function VerifyEmailPage() {
         <button
           onClick={handleResend}
           disabled={resending}
+          className="bg-accent"
           style={{
             width: "100%",
             padding: "10px 0",
             borderRadius: 8,
             border: "none",
-            background: "var(--accent, #6366f1)",
             color: "#fff",
             fontSize: 14,
             fontWeight: 600,
@@ -131,10 +127,10 @@ export default function VerifyEmailPage() {
 
         <button
           onClick={handleSignOut}
+          className="text-muted"
           style={{
             background: "none",
             border: "none",
-            color: "var(--text-secondary, #a1a1aa)",
             cursor: "pointer",
             fontSize: 13,
             textDecoration: "underline",

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-[var(--bg-primary,#0a0a0b)] text-[var(--text-primary,#e4e4e7)] font-[var(--font-geist-sans),system-ui,sans-serif]">
+    <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Nav */}
       <nav aria-label="Main navigation" className="flex items-center justify-between max-w-6xl mx-auto px-6 py-5">
         <Link href="/" className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
@@ -27,7 +27,7 @@ export default function FeaturesPage() {
         </Link>
         <a
           href="/login"
-          className="px-4 py-2 rounded-lg bg-[var(--accent,#6366f1)] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           Get Started
         </a>
@@ -39,7 +39,7 @@ export default function FeaturesPage() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
             Features
           </h1>
-          <p className="text-lg text-[var(--text-secondary,#a1a1aa)] max-w-2xl mx-auto">
+          <p className="text-lg text-muted max-w-2xl mx-auto">
             Everything you need to capture, connect, and recall your knowledge &mdash; with AI that
             gets smarter the longer you use it.
           </p>
@@ -285,12 +285,12 @@ export default function FeaturesPage() {
         {/* CTA */}
         <section className="text-center pt-20 pb-8">
           <h2 className="text-2xl font-bold mb-4">Ready to build your second brain?</h2>
-          <p className="text-[var(--text-secondary,#a1a1aa)] mb-8">
+          <p className="text-muted mb-8">
             Free to use. No credit card required.
           </p>
           <a
             href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[var(--accent,#6366f1)] text-white font-semibold hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 transition-opacity"
           >
             Get Started Free
             <ArrowRight size={18} />
@@ -299,19 +299,19 @@ export default function FeaturesPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[var(--border,#27272a)] py-8">
+      <footer className="border-t border-sidebar-border py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-[var(--text-secondary,#a1a1aa)]">
+          <p className="text-sm text-muted">
             Built by{" "}
             <a href="https://novyxlabs.com" target="_blank" rel="noopener noreferrer"
-              className="text-[var(--text-primary,#e4e4e7)] hover:text-[var(--accent,#6366f1)] transition-colors">
+              className="text-foreground hover:text-accent transition-colors">
               Novyx Labs
             </a>
           </p>
-          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-[var(--text-secondary,#a1a1aa)]">
-            <Link href="/" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">Home</Link>
-            <Link href="/terms" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">Terms</Link>
-            <Link href="/privacy" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">Privacy</Link>
+          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted">
+            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           </nav>
         </div>
       </footer>
@@ -323,10 +323,10 @@ function Feature({ icon, title, id, children }: { icon: React.ReactNode; title: 
   return (
     <section id={id} className="scroll-mt-24">
       <div className="flex items-center gap-3 mb-4">
-        <div className="text-[var(--accent,#6366f1)]">{icon}</div>
+        <div className="text-accent">{icon}</div>
         <h2 className="text-xl font-bold">{title}</h2>
       </div>
-      <div className="space-y-4 text-[var(--text-secondary,#a1a1aa)] leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ul]:text-sm [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-[var(--bg-secondary,#141417)] [&_code]:text-[var(--accent,#6366f1)] [&_code]:text-sm">
+      <div className="space-y-4 text-muted leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ul]:text-sm [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-card-bg [&_code]:text-accent [&_code]:text-sm">
         {children}
       </div>
     </section>
@@ -341,7 +341,7 @@ function Providers() {
   return (
     <div className="flex flex-wrap gap-2 mt-4">
       {providers.map((p) => (
-        <span key={p} className="px-3 py-1 text-xs rounded-full border border-[var(--border,#27272a)] text-[var(--text-secondary,#a1a1aa)]">
+        <span key={p} className="px-3 py-1 text-xs rounded-full border border-sidebar-border text-muted">
           {p}
         </span>
       ))}

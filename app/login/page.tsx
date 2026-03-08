@@ -138,24 +138,21 @@ export default function LoginPage() {
 
   return (
     <div
+      className="bg-background text-foreground font-sans"
       style={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--bg-primary, #0a0a0b)",
-        color: "var(--text-primary, #e4e4e7)",
-        fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
       }}
     >
       <div
+        className="bg-card-bg border border-sidebar-border"
         style={{
           width: "100%",
           maxWidth: 400,
           padding: 32,
           borderRadius: 12,
-          background: "var(--bg-secondary, #141417)",
-          border: "1px solid var(--border, #27272a)",
         }}
       >
         <h1
@@ -169,9 +166,9 @@ export default function LoginPage() {
           Novyx Vault
         </h1>
         <p
+          className="text-muted"
           style={{
             fontSize: 14,
-            color: "var(--text-secondary, #a1a1aa)",
             marginBottom: 24,
             textAlign: "center",
           }}
@@ -184,13 +181,12 @@ export default function LoginPage() {
             type="button"
             onClick={() => handleOAuth("google")}
             disabled={loading}
+            className="text-foreground border border-sidebar-border"
             style={{
               flex: 1,
               padding: "10px 0",
               borderRadius: 8,
-              border: "1px solid var(--border, #27272a)",
               background: "transparent",
-              color: "var(--text-primary, #e4e4e7)",
               cursor: loading ? "not-allowed" : "pointer",
               fontSize: 13,
               display: "flex",
@@ -207,13 +203,12 @@ export default function LoginPage() {
             type="button"
             onClick={() => handleOAuth("github")}
             disabled={loading}
+            className="text-foreground border border-sidebar-border"
             style={{
               flex: 1,
               padding: "10px 0",
               borderRadius: 8,
-              border: "1px solid var(--border, #27272a)",
               background: "transparent",
-              color: "var(--text-primary, #e4e4e7)",
               cursor: loading ? "not-allowed" : "pointer",
               fontSize: 13,
               display: "flex",
@@ -237,22 +232,23 @@ export default function LoginPage() {
           }}
         >
           <div
+            className="bg-sidebar-border"
             style={{
               flex: 1,
               height: 1,
-              background: "var(--border, #27272a)",
             }}
           />
           <span
-            style={{ fontSize: 12, color: "var(--text-secondary, #a1a1aa)" }}
+            className="text-muted"
+            style={{ fontSize: 12 }}
           >
             or
           </span>
           <div
+            className="bg-sidebar-border"
             style={{
               flex: 1,
               height: 1,
-              background: "var(--border, #27272a)",
             }}
           />
         </div>
@@ -265,13 +261,12 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+              className="bg-background text-foreground"
               style={{
                 width: "100%",
                 padding: "10px 12px",
                 borderRadius: 8,
-                border: `1px solid ${emailError ? "#ef4444" : "var(--border, #27272a)"}`,
-                background: "var(--bg-primary, #0a0a0b)",
-                color: "var(--text-primary, #e4e4e7)",
+                border: `1px solid ${emailError ? "#ef4444" : "var(--sidebar-border, #27272a)"}`,
                 fontSize: 14,
                 outline: "none",
                 boxSizing: "border-box",
@@ -290,13 +285,12 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+              className="bg-background text-foreground"
               style={{
                 width: "100%",
                 padding: "10px 40px 10px 12px",
                 borderRadius: 8,
-                border: `1px solid ${passwordError ? "#ef4444" : "var(--border, #27272a)"}`,
-                background: "var(--bg-primary, #0a0a0b)",
-                color: "var(--text-primary, #e4e4e7)",
+                border: `1px solid ${passwordError ? "#ef4444" : "var(--sidebar-border, #27272a)"}`,
                 fontSize: 14,
                 outline: "none",
                 boxSizing: "border-box",
@@ -305,6 +299,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
+              className="text-muted"
               style={{
                 position: "absolute",
                 right: 10,
@@ -312,7 +307,6 @@ export default function LoginPage() {
                 transform: "translateY(-50%)",
                 background: "none",
                 border: "none",
-                color: "var(--text-secondary, #a1a1aa)",
                 cursor: "pointer",
                 padding: 4,
                 fontSize: 12,
@@ -353,7 +347,7 @@ export default function LoginPage() {
                       alignItems: "center",
                       gap: 6,
                       fontSize: 12,
-                      color: passed ? "#22c55e" : "var(--text-secondary, #a1a1aa)",
+                      color: passed ? "#22c55e" : "var(--muted, #a1a1aa)",
                       marginBottom: 2,
                     }}
                   >
@@ -369,9 +363,9 @@ export default function LoginPage() {
             <div style={{ textAlign: "right", marginBottom: 12, marginTop: -8 }}>
               <a
                 href="/forgot-password"
+                className="text-accent"
                 style={{
                   fontSize: 12,
-                  color: "var(--accent, #6366f1)",
                   textDecoration: "none",
                 }}
               >
@@ -394,12 +388,12 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
+            className="bg-accent"
             style={{
               width: "100%",
               padding: "10px 0",
               borderRadius: 8,
               border: "none",
-              background: "var(--accent, #6366f1)",
               color: "#fff",
               fontSize: 14,
               fontWeight: 600,
@@ -416,11 +410,11 @@ export default function LoginPage() {
         </form>
 
         <p
+          className="text-muted"
           style={{
             marginTop: 16,
             fontSize: 13,
             textAlign: "center",
-            color: "var(--text-secondary, #a1a1aa)",
           }}
         >
           {mode === "login" ? "No account? " : "Already have an account? "}
@@ -432,10 +426,10 @@ export default function LoginPage() {
               setMessage("");
               setTouched({ email: false, password: false });
             }}
+            className="text-accent"
             style={{
               background: "none",
               border: "none",
-              color: "var(--accent, #6366f1)",
               cursor: "pointer",
               textDecoration: "underline",
               fontSize: 13,
@@ -446,15 +440,14 @@ export default function LoginPage() {
         </p>
 
         <div
+          className="border-t border-sidebar-border text-muted"
           style={{
             marginTop: 20,
             paddingTop: 16,
-            borderTop: "1px solid var(--border, #27272a)",
             display: "flex",
             justifyContent: "center",
             gap: 16,
             fontSize: 12,
-            color: "var(--text-secondary, #a1a1aa)",
           }}
         >
           <a href="/terms" style={{ color: "inherit", textDecoration: "none" }}>

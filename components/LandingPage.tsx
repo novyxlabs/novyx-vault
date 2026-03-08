@@ -8,25 +8,25 @@ import HeroDemo from "./HeroDemo";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[var(--bg-primary,#0a0a0b)] text-[var(--text-primary,#e4e4e7)] font-[var(--font-geist-sans),system-ui,sans-serif]">
+    <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Nav */}
       <nav aria-label="Main navigation" className="flex items-center justify-between max-w-6xl mx-auto px-6 py-5">
         <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
         <div className="flex items-center gap-4">
-          <a href="/features" className="text-sm text-[var(--text-secondary,#a1a1aa)] hover:text-[var(--text-primary,#e4e4e7)] transition-colors hidden sm:inline">Features</a>
-          <a href="https://novyx.ai" target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--text-secondary,#a1a1aa)] hover:text-[var(--text-primary,#e4e4e7)] transition-colors hidden sm:inline">Novyx Core</a>
+          <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors hidden sm:inline">Features</a>
+          <a href="https://novyx.ai" target="_blank" rel="noopener noreferrer" className="text-sm text-muted hover:text-foreground transition-colors hidden sm:inline">Novyx Core</a>
           <a
             href="https://github.com/novyxlabs"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub"
-            className="text-[var(--text-secondary,#a1a1aa)] hover:text-[var(--text-primary,#e4e4e7)] transition-colors"
+            className="text-muted hover:text-foreground transition-colors"
           >
             <Github size={20} />
           </a>
           <a
             href="/login"
-            className="px-4 py-2 rounded-lg bg-[var(--accent,#6366f1)] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Sign In
           </a>
@@ -38,24 +38,24 @@ export default function LandingPage() {
         <section className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
             An open-source AI workspace with{" "}
-            <span className="text-[var(--accent,#6366f1)]">persistent memory</span>
+            <span className="text-accent">persistent memory</span>
           </h1>
-          <p className="text-lg sm:text-xl text-[var(--text-secondary,#a1a1aa)] max-w-2xl mx-auto mb-4">
+          <p className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-4">
             Your notes, your AI&apos;s memory, and cryptographic proof that nothing was lost or changed.
             Built on{" "}
-            <a href="https://novyx.ai" target="_blank" rel="noopener noreferrer" className="text-[var(--accent,#6366f1)] hover:underline">
+            <a href="https://novyx.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
               Novyx Core
             </a>.
           </p>
-          <p className="text-base text-[var(--text-secondary,#a1a1aa)] max-w-2xl mx-auto mb-10">
+          <p className="text-base text-muted max-w-2xl mx-auto mb-10">
             Use it as your AI-powered workspace, or install{" "}
-            <code className="text-sm bg-[var(--bg-secondary,#141417)] px-1.5 py-0.5 rounded border border-[var(--border,#27272a)]">novyx-mcp</code>{" "}
+            <code className="text-sm bg-card-bg px-1.5 py-0.5 rounded border border-sidebar-border">novyx-mcp</code>{" "}
             in Claude Desktop or Cursor and manage your agent&apos;s memories here when you upgrade to cloud.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
               href="/login"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[var(--accent,#6366f1)] text-white font-semibold hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 transition-opacity"
             >
               Get Started Free
               <ArrowRight size={18} />
@@ -64,7 +64,7 @@ export default function LandingPage() {
               href="https://github.com/novyxlabs"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-[var(--border,#27272a)] text-[var(--text-secondary,#a1a1aa)] hover:text-[var(--text-primary,#e4e4e7)] hover:border-[var(--text-secondary,#a1a1aa)] transition-colors font-medium"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-sidebar-border text-muted hover:text-foreground hover:border-[var(--text-secondary,#a1a1aa)] transition-colors font-medium"
             >
               <Github size={18} />
               View on GitHub
@@ -80,7 +80,7 @@ export default function LandingPage() {
           <h2 className="text-2xl font-bold text-center mb-4">
             Where human thinking meets agent memory
           </h2>
-          <p className="text-center text-[var(--text-secondary,#a1a1aa)] mb-12 max-w-2xl mx-auto">
+          <p className="text-center text-muted mb-12 max-w-2xl mx-auto">
             One workspace for your notes and your AI&apos;s context. Markdown files, persistent memory,
             and a verifiable audit trail &mdash; no black boxes.
           </p>
@@ -124,31 +124,31 @@ export default function LandingPage() {
             Two ways in, one workspace
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="p-6 rounded-xl border border-[var(--border,#27272a)] bg-[var(--bg-secondary,#141417)]">
-              <div className="w-10 h-10 rounded-lg bg-[var(--accent,#6366f1)]/10 text-[var(--accent,#6366f1)] flex items-center justify-center mb-4 text-sm font-bold">
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <div className="w-10 h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center mb-4 text-sm font-bold">
                 A
               </div>
               <h3 className="font-semibold mb-2">Start with Vault</h3>
-              <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed mb-3">
+              <p className="text-sm text-muted leading-relaxed mb-3">
                 Sign up, write notes in markdown, and add an AI provider. Your AI gets persistent memory
                 powered by Novyx &mdash; it remembers your projects, preferences, and thinking patterns
                 across every session.
               </p>
-              <p className="text-xs text-[var(--text-secondary,#a1a1aa)] leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 Best for: developers who want an AI-first notes app that actually remembers them.
               </p>
             </div>
-            <div className="p-6 rounded-xl border border-[var(--border,#27272a)] bg-[var(--bg-secondary,#141417)]">
-              <div className="w-10 h-10 rounded-lg bg-[var(--accent,#6366f1)]/10 text-[var(--accent,#6366f1)] flex items-center justify-center mb-4 text-sm font-bold">
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <div className="w-10 h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center mb-4 text-sm font-bold">
                 B
               </div>
               <h3 className="font-semibold mb-2">Start with MCP</h3>
-              <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed mb-3">
-                Install <code className="text-xs bg-[var(--bg-primary,#0a0a0b)] px-1 py-0.5 rounded border border-[var(--border,#27272a)]">novyx-mcp</code> in
+              <p className="text-sm text-muted leading-relaxed mb-3">
+                Install <code className="text-xs bg-background px-1 py-0.5 rounded border border-sidebar-border">novyx-mcp</code> in
                 Claude Desktop or Cursor. Your agent gets local memory via SQLite. When you upgrade to cloud,
                 open Vault to see, search, and manage those memories alongside your notes.
               </p>
-              <p className="text-xs text-[var(--text-secondary,#a1a1aa)] leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 Best for: developers already using AI coding agents who want their agent to remember context.
               </p>
             </div>
@@ -160,7 +160,7 @@ export default function LandingPage() {
           <h2 className="text-2xl font-bold text-center mb-4">
             Trust through transparency
           </h2>
-          <p className="text-center text-[var(--text-secondary,#a1a1aa)] mb-12 max-w-2xl mx-auto">
+          <p className="text-center text-muted mb-12 max-w-2xl mx-auto">
             Most AI tools are black boxes. Novyx Vault gives you a verifiable record of every memory
             operation &mdash; with hash-chained proof, usage dashboards, and full rollback history.
           </p>
@@ -185,12 +185,12 @@ export default function LandingPage() {
 
         {/* Bring Your Own AI */}
         <section className="max-w-4xl mx-auto px-6 py-16">
-          <div className="p-8 rounded-2xl border border-[var(--border,#27272a)] bg-[var(--bg-secondary,#141417)]">
+          <div className="p-8 rounded-2xl border border-sidebar-border bg-card-bg">
             <div className="flex items-center gap-3 mb-4">
-              <Key size={24} className="text-[var(--accent,#6366f1)]" />
+              <Key size={24} className="text-accent" />
               <h2 className="text-2xl font-bold">Bring your own AI</h2>
             </div>
-            <p className="text-[var(--text-secondary,#a1a1aa)] mb-6 max-w-xl">
+            <p className="text-muted mb-6 max-w-xl">
               Novyx Vault works with the AI provider you already use. Connect your own API key and
               choose from over a dozen providers. Your keys stay in your browser &mdash; they never
               touch our servers.
@@ -199,7 +199,7 @@ export default function LandingPage() {
               {["OpenAI", "Anthropic", "DeepSeek", "Ollama", "LM Studio", "Groq", "Together", "Mistral", "Gemini", "Cerebras", "Moonshot"].map((provider) => (
                 <span
                   key={provider}
-                  className="px-3 py-1 text-xs rounded-full border border-[var(--border,#27272a)] text-[var(--text-secondary,#a1a1aa)]"
+                  className="px-3 py-1 text-xs rounded-full border border-sidebar-border text-muted"
                 >
                   {provider}
                 </span>
@@ -215,40 +215,40 @@ export default function LandingPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex gap-4">
-              <Shield size={20} className="text-[var(--accent,#6366f1)] shrink-0 mt-1" />
+              <Shield size={20} className="text-accent shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold mb-1">Privacy by default</h3>
-                <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed">
+                <p className="text-sm text-muted leading-relaxed">
                   Local-first means your data never leaves your machine unless you opt into cloud sync.
                   API keys are stored in your browser only. We never see your notes or AI conversations.
                 </p>
               </div>
             </div>
             <div className="flex gap-4">
-              <Layers size={20} className="text-[var(--accent,#6366f1)] shrink-0 mt-1" />
+              <Layers size={20} className="text-accent shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold mb-1">No vendor lock-in</h3>
-                <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed">
+                <p className="text-sm text-muted leading-relaxed">
                   Notes are plain markdown. Memories are portable via the Novyx API. Export everything
                   anytime. Self-host the entire stack if you want.
                 </p>
               </div>
             </div>
             <div className="flex gap-4">
-              <Zap size={20} className="text-[var(--accent,#6366f1)] shrink-0 mt-1" />
+              <Zap size={20} className="text-accent shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold mb-1">MCP-native</h3>
-                <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed">
+                <p className="text-sm text-muted leading-relaxed">
                   Install novyx-mcp in any MCP-compatible tool. Memories sync to Vault automatically.
                   One API key connects your agent&apos;s context to your personal workspace.
                 </p>
               </div>
             </div>
             <div className="flex gap-4">
-              <BookOpen size={20} className="text-[var(--accent,#6366f1)] shrink-0 mt-1" />
+              <BookOpen size={20} className="text-accent shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold mb-1">AI writing tools</h3>
-                <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed">
+                <p className="text-sm text-muted leading-relaxed">
                   Brain Dump converts raw thoughts into structured notes. Clip Remix rewrites content in
                   your voice. AI chat responds with full context of your vault and memory.
                 </p>
@@ -259,10 +259,10 @@ export default function LandingPage() {
 
         {/* Open Source CTA */}
         <section className="max-w-3xl mx-auto px-6 py-16 text-center">
-          <div className="p-8 rounded-2xl border border-[var(--border,#27272a)] bg-[var(--bg-secondary,#141417)]">
-            <Github size={32} className="mx-auto mb-4 text-[var(--text-secondary,#a1a1aa)]" />
+          <div className="p-8 rounded-2xl border border-sidebar-border bg-card-bg">
+            <Github size={32} className="mx-auto mb-4 text-muted" />
             <h2 className="text-2xl font-bold mb-3">Open Source</h2>
-            <p className="text-[var(--text-secondary,#a1a1aa)] mb-6 max-w-lg mx-auto">
+            <p className="text-muted mb-6 max-w-lg mx-auto">
               Novyx Vault is fully open source. Inspect every line of code, contribute features,
               report issues, or self-host your own instance. Built transparently by Novyx Labs.
             </p>
@@ -270,7 +270,7 @@ export default function LandingPage() {
               href="https://github.com/novyxlabs"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[var(--accent,#6366f1)] text-white font-semibold hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 transition-opacity"
             >
               <Github size={18} />
               View on GitHub
@@ -280,34 +280,34 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[var(--border,#27272a)] py-8">
+      <footer className="border-t border-sidebar-border py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-[var(--text-secondary,#a1a1aa)]">
+          <p className="text-sm text-muted">
             Built by{" "}
             <a
               href="https://novyxlabs.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--text-primary,#e4e4e7)] hover:text-[var(--accent,#6366f1)] transition-colors"
+              className="text-foreground hover:text-accent transition-colors"
             >
               Novyx Labs
             </a>
           </p>
-          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-[var(--text-secondary,#a1a1aa)]">
-            <a href="/features" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">
+          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted">
+            <a href="/features" className="hover:text-foreground transition-colors">
               Features
             </a>
-            <a href="/terms" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">
+            <a href="/terms" className="hover:text-foreground transition-colors">
               Terms
             </a>
-            <a href="/privacy" className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors">
+            <a href="/privacy" className="hover:text-foreground transition-colors">
               Privacy
             </a>
             <a
               href="https://github.com/novyxlabs"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-[var(--text-primary,#e4e4e7)] transition-colors"
+              className="hover:text-foreground transition-colors"
             >
               GitHub
             </a>
@@ -320,20 +320,20 @@ export default function LandingPage() {
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="p-6 rounded-xl border border-[var(--border,#27272a)] bg-[var(--bg-secondary,#141417)] hover:border-[var(--text-secondary,#a1a1aa)] transition-colors">
-      <div className="text-[var(--accent,#6366f1)] mb-3">{icon}</div>
+    <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg hover:border-[var(--text-secondary,#a1a1aa)] transition-colors">
+      <div className="text-accent mb-3">{icon}</div>
       <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed">{description}</p>
+      <p className="text-sm text-muted leading-relaxed">{description}</p>
     </div>
   );
 }
 
 function DiffCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="p-6 rounded-xl border border-[var(--border,#27272a)] bg-[var(--bg-secondary,#141417)]">
-      <div className="text-[var(--accent,#6366f1)] mb-3">{icon}</div>
+    <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+      <div className="text-accent mb-3">{icon}</div>
       <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-[var(--text-secondary,#a1a1aa)] leading-relaxed">{description}</p>
+      <p className="text-sm text-muted leading-relaxed">{description}</p>
     </div>
   );
 }

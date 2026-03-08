@@ -33,24 +33,21 @@ export default function ForgotPasswordPage() {
 
   return (
     <div
+      className="bg-background text-foreground font-sans"
       style={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--bg-primary, #0a0a0b)",
-        color: "var(--text-primary, #e4e4e7)",
-        fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
       }}
     >
       <div
+        className="bg-card-bg border border-sidebar-border"
         style={{
           width: "100%",
           maxWidth: 400,
           padding: 32,
           borderRadius: 12,
-          background: "var(--bg-secondary, #141417)",
-          border: "1px solid var(--border, #27272a)",
         }}
       >
         <h1
@@ -64,9 +61,9 @@ export default function ForgotPasswordPage() {
           Novyx Vault
         </h1>
         <p
+          className="text-muted"
           style={{
             fontSize: 14,
-            color: "var(--text-secondary, #a1a1aa)",
             marginBottom: 24,
             textAlign: "center",
           }}
@@ -77,11 +74,10 @@ export default function ForgotPasswordPage() {
         {sent ? (
           <div style={{ textAlign: "center" }}>
             <div
+              className="bg-background border border-sidebar-border"
               style={{
                 padding: "20px 16px",
                 borderRadius: 8,
-                background: "var(--bg-primary, #0a0a0b)",
-                border: "1px solid var(--border, #27272a)",
                 marginBottom: 20,
               }}
             >
@@ -91,9 +87,9 @@ export default function ForgotPasswordPage() {
             </div>
             <a
               href="/login"
+              className="text-accent"
               style={{
                 fontSize: 13,
-                color: "var(--accent, #6366f1)",
                 textDecoration: "none",
               }}
             >
@@ -108,14 +104,12 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="bg-background text-foreground border border-sidebar-border"
               style={{
                 width: "100%",
                 padding: "10px 12px",
                 marginBottom: 16,
                 borderRadius: 8,
-                border: "1px solid var(--border, #27272a)",
-                background: "var(--bg-primary, #0a0a0b)",
-                color: "var(--text-primary, #e4e4e7)",
                 fontSize: 14,
                 outline: "none",
                 boxSizing: "border-box",
@@ -131,12 +125,12 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
+              className="bg-accent"
               style={{
                 width: "100%",
                 padding: "10px 0",
                 borderRadius: 8,
                 border: "none",
-                background: "var(--accent, #6366f1)",
                 color: "#fff",
                 fontSize: 14,
                 fontWeight: 600,
@@ -149,16 +143,16 @@ export default function ForgotPasswordPage() {
             </button>
 
             <p
+              className="text-muted"
               style={{
                 textAlign: "center",
                 fontSize: 13,
-                color: "var(--text-secondary, #a1a1aa)",
               }}
             >
               <a
                 href="/login"
+                className="text-accent"
                 style={{
-                  color: "var(--accent, #6366f1)",
                   textDecoration: "none",
                 }}
               >
