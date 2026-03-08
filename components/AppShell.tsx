@@ -26,6 +26,7 @@ import WeeklyReview from "@/components/WeeklyReview";
 import ReflectTimeline from "@/components/ReflectTimeline";
 import UsageView from "@/components/UsageView";
 import AuditTrailView from "@/components/AuditTrailView";
+import RollbackHistoryView from "@/components/RollbackHistoryView";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
 import ImportPrompt from "@/components/ImportPrompt";
@@ -69,6 +70,7 @@ export default function AppShell() {
   const [isReflectOpen, setIsReflectOpen] = useState(false);
   const [isUsageOpen, setIsUsageOpen] = useState(false);
   const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
+  const [isRollbackHistoryOpen, setIsRollbackHistoryOpen] = useState(false);
   const [recentNotes, setRecentNotes] = useState<string[]>([]);
   const [pinnedNotes, setPinnedNotes] = useState<string[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
@@ -661,6 +663,7 @@ export default function AppShell() {
         onOpenReflect={() => setIsReflectOpen(true)}
         onOpenUsage={() => setIsUsageOpen(true)}
         onOpenAuditTrail={() => setIsAuditTrailOpen(true)}
+        onOpenRollbackHistory={() => setIsRollbackHistoryOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
           clearUserLocalStorage();
@@ -765,6 +768,10 @@ export default function AppShell() {
     <AuditTrailView
       isOpen={isAuditTrailOpen}
       onClose={() => setIsAuditTrailOpen(false)}
+    />
+    <RollbackHistoryView
+      isOpen={isRollbackHistoryOpen}
+      onClose={() => setIsRollbackHistoryOpen(false)}
     />
     <NewNoteModal
       isOpen={newNoteFolder !== null}

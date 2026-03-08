@@ -81,6 +81,7 @@ interface SidebarProps {
   onOpenReflect: () => void;
   onOpenUsage: () => void;
   onOpenAuditTrail: () => void;
+  onOpenRollbackHistory: () => void;
   onOpenSettings: () => void;
   onSignOut?: () => void;
   onGoHome: () => void;
@@ -483,6 +484,7 @@ export default function Sidebar({
   onOpenReflect,
   onOpenUsage,
   onOpenAuditTrail,
+  onOpenRollbackHistory,
   onOpenSettings,
   onSignOut,
   onGoHome,
@@ -991,6 +993,14 @@ export default function Sidebar({
             >
               <Shield size={13} />
               <span className="text-[10px] leading-none font-medium">Audit Trail</span>
+            </button>
+            <button
+              onClick={onOpenRollbackHistory}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-amber-400/60 hover:bg-amber-400/10 hover:text-amber-400 transition-all text-left"
+              title="Rollback history"
+            >
+              <History size={13} />
+              <span className="text-[10px] leading-none font-medium">Rollback History</span>
             </button>
           </div>
           {/* Vault Tools */}
