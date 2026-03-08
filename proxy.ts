@@ -28,8 +28,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/terms") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/features") ||
-    pathname.startsWith("/blog") ||
-    pathname.startsWith("/_next") ||
+pathname.startsWith("/_next") ||
     pathname === "/opengraph-image" ||
     pathname.includes(".")
   ) {
