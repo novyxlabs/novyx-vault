@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Plus, Trash2, Check, ChevronDown, LogOut, Sparkles, Zap, Globe, Server, Brain, Eye, EyeOff } from "lucide-react";
+import { X, Plus, Trash2, Check, ChevronDown, LogOut, Sparkles, Zap, Globe, Server, Brain, Eye, EyeOff, Terminal } from "lucide-react";
 import ObsidianImport from "./ObsidianImport";
 import {
   PROVIDER_PRESETS,
@@ -50,6 +50,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [novyxStatus, setNovyxStatus] = useState<"idle" | "saved" | "error">("idle");
   const [digestEnabled, setDigestEnabled] = useState(false);
   const [digestTime, setDigestTime] = useState("08:00");
+  const [memoryHealth, setMemoryHealth] = useState<"checking" | "ok" | "unreachable">("checking");
   const isCloud = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   // Reset state when modal opens (replaces useEffect setState)
@@ -95,6 +96,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         .catch(() => {});
     }
   }, [isOpen, isCloud]);
+
+  // Check Novyx Memory API health when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setMemoryHealth("checking");
+      fetch("/api/memory/health")
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          setMemoryHealth(data?.status === "ok" ? "ok" : "unreachable");
+        })
+        .catch(() => setMemoryHealth("unreachable"));
+    }
+  }, [isOpen]);
 
   // Auto-focus API key input when editing a provider
   useEffect(() => {
@@ -261,7 +275,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <Brain size={14} className="text-purple-400" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-foreground">Novyx Memory</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-foreground">Novyx Memory</span>
+                      <span className="flex items-center gap-1 text-[10px]">
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${
+                          memoryHealth === "ok" ? "bg-green-400" :
+                          memoryHealth === "unreachable" ? "bg-red-400" :
+                          "bg-gray-400 animate-pulse"
+                        }`} />
+                        <span className={
+                          memoryHealth === "ok" ? "text-green-400" :
+                          memoryHealth === "unreachable" ? "text-red-400" :
+                          "text-muted"
+                        }>
+                          {memoryHealth === "ok" ? "Connected" :
+                           memoryHealth === "unreachable" ? "Unreachable" :
+                           "Checking..."}
+                        </span>
+                      </span>
+                    </div>
                     {!novyxEditing && (
                       <div className="text-[11px] text-muted flex items-center gap-1.5 mt-0.5">
                         {novyxHasKey ? (
@@ -341,6 +373,32 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
             </div>
           )}
+
+          {/* MCP Setup Guide */}
+          <details className="rounded-lg border border-sidebar-border bg-card-bg/50 group">
+            <summary className="flex items-center gap-2.5 px-4 py-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+              <Terminal size={14} className="text-blue-400 shrink-0" />
+              <span className="text-sm font-medium text-foreground">Connect via MCP</span>
+              <ChevronDown size={12} className="text-muted ml-auto group-open:rotate-180 transition-transform" />
+            </summary>
+            <div className="px-4 pb-3 space-y-2.5">
+              <p className="text-[11px] text-muted leading-relaxed">
+                Install <code className="text-[10px] bg-muted-bg px-1 py-0.5 rounded">novyx-mcp</code> in Claude Desktop or Cursor to give your AI agent persistent memory. Memories sync to Vault automatically.
+              </p>
+              <div className="relative">
+                <pre className="text-[10px] bg-background rounded-md border border-sidebar-border p-2.5 overflow-x-auto font-mono text-muted leading-relaxed">
+{`npm install -g novyx-mcp`}
+                </pre>
+              </div>
+              <p className="text-[10px] text-muted/60 leading-relaxed">
+                Add to your Claude Desktop config with your Novyx API key. See the{" "}
+                <a href="https://github.com/novyxlabs/novyx-vault#mcp-integration" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                  README
+                </a>{" "}
+                for full setup instructions.
+              </p>
+            </div>
+          </details>
 
           {/* AI Providers Header */}
           <div className="pt-2">
