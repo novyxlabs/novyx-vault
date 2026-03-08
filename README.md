@@ -1,10 +1,10 @@
 # Novyx Vault
 
-**The only note app where AI gets smarter the longer you use it.**
+**An open-source AI workspace with persistent memory.**
 
-Novyx Vault is an open-source, local-first personal knowledge base with AI memory that evolves alongside your thinking. Write in markdown, link ideas with wiki-style connections, and let AI surface relationships you never knew existed.
+Your notes, your AI's memory, and cryptographic proof that nothing was lost or changed. Write in markdown, link ideas with wiki-style connections, and let AI surface relationships you never knew existed.
 
-Built on [Novyx Core](https://novyxlabs.com) for persistent AI memory.
+Built on [Novyx Core](https://novyx.ai) for persistent AI memory.
 
 **[Try it free →](https://vault.novyxlabs.com)**
 
@@ -160,7 +160,47 @@ Novyx Vault's persistent AI memory is powered by the [Novyx SDK](https://novyxla
 - **Drift** — Track how your AI's understanding evolves over time
 - **Entities & Triples** — Semantic knowledge graph extraction
 
-Get an API key at [novyxlabs.com](https://novyxlabs.com).
+Get an API key at [novyx.ai](https://novyx.ai).
+
+---
+
+## MCP Integration
+
+Novyx Vault works alongside `novyx-mcp` to give your AI agents persistent memory across any MCP-compatible tool.
+
+### Setup
+
+Install the MCP server globally:
+
+```bash
+npm install -g novyx-mcp
+```
+
+Add to your Claude Desktop config (`~/.claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "novyx-memory": {
+      "command": "novyx-mcp",
+      "env": {
+        "NOVYX_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+Works the same way in Cursor, Windsurf, or any MCP-compatible client.
+
+### How it works
+
+1. **Your agent stores memories** as it works — project context, preferences, code patterns
+2. **Open Vault** to view, search, and manage those memories in a visual dashboard
+3. **Audit trail** shows every operation with hash-chain verification
+4. **Rollback** to any previous memory state if needed
+
+The same Novyx API key works across Vault, MCP, and the Novyx SDK directly. Memories created via MCP appear in Vault automatically.
 
 ---
 
