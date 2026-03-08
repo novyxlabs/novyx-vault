@@ -87,7 +87,7 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
         setAllEntries(all);
         // Filter to rollback operations
         const rollbacks = all.filter(
-          (e: TimelineEntry) => e.operation.toLowerCase() === "rollback" || e.operation.toLowerCase() === "restore"
+          (e: TimelineEntry) => (e.operation || "").toLowerCase() === "rollback" || (e.operation || "").toLowerCase() === "restore"
         );
         setEntries(rollbacks);
       })

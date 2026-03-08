@@ -27,7 +27,8 @@ const OP_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   forget: { bg: "bg-red-400/10", text: "text-red-400", label: "Forget" },
 };
 
-function getOpStyle(op: string) {
+function getOpStyle(op: string | undefined) {
+  if (!op) return { bg: "bg-muted-bg", text: "text-muted", label: "Unknown" };
   const key = op.toLowerCase();
   return OP_COLORS[key] || { bg: "bg-muted-bg", text: "text-muted", label: op };
 }
@@ -107,12 +108,12 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
   if (!isOpen) return null;
 
   const isLocked = tier === "free" || tier === "starter";
-  const filtered = filter === "all" ? entries : entries.filter((e) => e.operation.toLowerCase() === filter);
+  const filtered = filter === "all" ? entries : entries.filter((e) => (e.operation || "").toLowerCase() === filter);
 
   // Count by operation type
   const counts: Record<string, number> = {};
   for (const e of entries) {
-    const key = e.operation.toLowerCase();
+    const key = (e.operation || "unknown").toLowerCase();
     counts[key] = (counts[key] || 0) + 1;
   }
 
