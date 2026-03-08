@@ -27,6 +27,7 @@ import ReflectTimeline from "@/components/ReflectTimeline";
 import UsageView from "@/components/UsageView";
 import AuditTrailView from "@/components/AuditTrailView";
 import RollbackHistoryView from "@/components/RollbackHistoryView";
+import NovyxErrorBoundary from "@/components/NovyxErrorBoundary";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
 import ImportPrompt from "@/components/ImportPrompt";
@@ -757,22 +758,30 @@ export default function AppShell() {
       }}
       activeNote={activeNote}
     />
-    <MemoryDashboard
-      isOpen={isMemoryOpen}
-      onClose={() => setIsMemoryOpen(false)}
-    />
-    <UsageView
-      isOpen={isUsageOpen}
-      onClose={() => setIsUsageOpen(false)}
-    />
-    <AuditTrailView
-      isOpen={isAuditTrailOpen}
-      onClose={() => setIsAuditTrailOpen(false)}
-    />
-    <RollbackHistoryView
-      isOpen={isRollbackHistoryOpen}
-      onClose={() => setIsRollbackHistoryOpen(false)}
-    />
+    <NovyxErrorBoundary fallbackTitle="Memory Dashboard failed to load">
+      <MemoryDashboard
+        isOpen={isMemoryOpen}
+        onClose={() => setIsMemoryOpen(false)}
+      />
+    </NovyxErrorBoundary>
+    <NovyxErrorBoundary fallbackTitle="Usage data failed to load">
+      <UsageView
+        isOpen={isUsageOpen}
+        onClose={() => setIsUsageOpen(false)}
+      />
+    </NovyxErrorBoundary>
+    <NovyxErrorBoundary fallbackTitle="Audit Trail failed to load">
+      <AuditTrailView
+        isOpen={isAuditTrailOpen}
+        onClose={() => setIsAuditTrailOpen(false)}
+      />
+    </NovyxErrorBoundary>
+    <NovyxErrorBoundary fallbackTitle="Rollback History failed to load">
+      <RollbackHistoryView
+        isOpen={isRollbackHistoryOpen}
+        onClose={() => setIsRollbackHistoryOpen(false)}
+      />
+    </NovyxErrorBoundary>
     <NewNoteModal
       isOpen={newNoteFolder !== null}
       folderPath={newNoteFolder || ""}
