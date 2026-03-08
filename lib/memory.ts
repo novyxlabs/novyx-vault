@@ -312,10 +312,14 @@ export async function getAuditLog(
   if (!nx) return [];
   try {
     const entries = await nx.audit({ limit });
+    if (entries.length > 0) {
+      console.log("[novyx] audit entry sample keys:", Object.keys(entries[0]));
+      console.log("[novyx] audit entry sample:", JSON.stringify(entries[0]).slice(0, 500));
+    }
     return entries.map((e) => ({
-      timestamp: e.timestamp as string,
-      operation: e.operation as string,
-      artifact_id: e.artifact_id as string | undefined,
+      timestamp: (e.timestamp ?? e.created_at ?? e.time) as string,
+      operation: (e.operation ?? e.action ?? e.event ?? e.type ?? e.op) as string,
+      artifact_id: (e.artifact_id ?? e.memory_id ?? e.id) as string | undefined,
       details: e,
     }));
   } catch (e) {
