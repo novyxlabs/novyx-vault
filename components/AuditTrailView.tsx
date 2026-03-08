@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Shield, Lock, ArrowUpRight, Filter } from "lucide-react";
+import { X, Shield, Lock, ArrowUpRight, Filter, CheckCircle2, Link2 } from "lucide-react";
 
 interface AuditEntry {
   timestamp: string;
@@ -93,6 +93,8 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
   const [error, setError] = useState(false);
   const [filter, setFilter] = useState<OpFilter>("all");
   const [tier, setTier] = useState<string>("free");
+  const [chainHead, setChainHead] = useState<string | null>(null);
+  const [chainLength, setChainLength] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -105,6 +107,8 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
     ])
       .then(([auditData, usageData]) => {
         setEntries(auditData.entries || []);
+        setChainHead(auditData.chain_head || null);
+        setChainLength(auditData.chain_length || 0);
         setTier(usageData?.gating?.tier || usageData?.usage?.tier || "free");
       })
       .catch(() => setError(true))
@@ -142,6 +146,12 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
                 <p className="text-[11px] text-muted">{entries.length} operations</p>
               )}
             </div>
+            {!loading && !error && !isLocked && chainHead && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-400/10 border border-emerald-400/20 mr-auto">
+                <CheckCircle2 size={12} className="text-emerald-400" />
+                <span className="text-[10px] font-medium text-emerald-400">Chain intact</span>
+              </div>
+            )}
           </div>
           <button onClick={onClose} className="p-1 rounded text-muted hover:text-foreground">
             <X size={18} />
@@ -285,6 +295,21 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Chain head footer */}
+          {!loading && !error && !isLocked && chainHead && (
+            <div className="px-6 py-3 border-t border-sidebar-border/50">
+              <div className="flex items-center gap-2 text-[11px] text-muted">
+                <Link2 size={11} className="text-emerald-400/60" />
+                <span>Chain head</span>
+                <span className="font-mono text-emerald-400/70 truncate max-w-[200px]" title={chainHead}>
+                  #{chainHead.replace(/^sha256:/, "").slice(0, 16)}
+                </span>
+                <span className="text-muted/30">·</span>
+                <span>{chainLength} hashed entries</span>
+              </div>
             </div>
           )}
         </div>

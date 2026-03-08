@@ -10,7 +10,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const entries = await getAuditLog(limit, apiKey ?? undefined);
-    return Response.json({ entries });
+
+    // Derive chain verification from entry hashes
+    const hashes = entries.map((e) => e.entry_hash).filter(Boolean);
+    const chain_head = hashes[0] || null;
+    const chain_length = hashes.length;
+
+    return Response.json({ entries, chain_head, chain_length });
   } catch (e) {
     if (e instanceof Response) return e;
     return Response.json({ error: "Failed to fetch audit log" }, { status: 500 });
