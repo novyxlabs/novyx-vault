@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Shield, Lock, ArrowUpRight, Filter, CheckCircle2, Link2 } from "lucide-react";
+import { X, Shield, Lock, ArrowUpRight, Filter, CheckCircle2, AlertTriangle, Link2 } from "lucide-react";
 
 interface AuditEntry {
   timestamp: string;
@@ -95,6 +95,7 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
   const [tier, setTier] = useState<string>("free");
   const [chainHead, setChainHead] = useState<string | null>(null);
   const [chainLength, setChainLength] = useState(0);
+  const [chainVerified, setChainVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -109,6 +110,7 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
         setEntries(auditData.entries || []);
         setChainHead(auditData.chain_head || null);
         setChainLength(auditData.chain_length || 0);
+        setChainVerified(auditData.chain_verified ?? null);
         setTier(usageData?.gating?.tier || usageData?.usage?.tier || "free");
       })
       .catch(() => setError(true))
@@ -146,10 +148,16 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
                 <p className="text-[11px] text-muted">{entries.length} operations</p>
               )}
             </div>
-            {!loading && !error && !isLocked && chainHead && (
+            {!loading && !error && !isLocked && chainVerified === true && (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-400/10 border border-emerald-400/20 mr-auto">
                 <CheckCircle2 size={12} className="text-emerald-400" />
                 <span className="text-[10px] font-medium text-emerald-400">Chain intact</span>
+              </div>
+            )}
+            {!loading && !error && !isLocked && chainVerified === false && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-400/10 border border-red-400/20 mr-auto">
+                <AlertTriangle size={12} className="text-red-400" />
+                <span className="text-[10px] font-medium text-red-400">Chain broken</span>
               </div>
             )}
           </div>
