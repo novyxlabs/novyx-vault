@@ -25,6 +25,7 @@ import ClipRemix from "@/components/ClipRemix";
 import WeeklyReview from "@/components/WeeklyReview";
 import ReflectTimeline from "@/components/ReflectTimeline";
 import UsageView from "@/components/UsageView";
+import AuditTrailView from "@/components/AuditTrailView";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
 import ImportPrompt from "@/components/ImportPrompt";
@@ -67,6 +68,7 @@ export default function AppShell() {
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isReflectOpen, setIsReflectOpen] = useState(false);
   const [isUsageOpen, setIsUsageOpen] = useState(false);
+  const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
   const [recentNotes, setRecentNotes] = useState<string[]>([]);
   const [pinnedNotes, setPinnedNotes] = useState<string[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
@@ -658,6 +660,7 @@ export default function AppShell() {
         onOpenWeeklyReview={() => setIsWeeklyReviewOpen(true)}
         onOpenReflect={() => setIsReflectOpen(true)}
         onOpenUsage={() => setIsUsageOpen(true)}
+        onOpenAuditTrail={() => setIsAuditTrailOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
           clearUserLocalStorage();
@@ -758,6 +761,10 @@ export default function AppShell() {
     <UsageView
       isOpen={isUsageOpen}
       onClose={() => setIsUsageOpen(false)}
+    />
+    <AuditTrailView
+      isOpen={isAuditTrailOpen}
+      onClose={() => setIsAuditTrailOpen(false)}
     />
     <NewNoteModal
       isOpen={newNoteFolder !== null}

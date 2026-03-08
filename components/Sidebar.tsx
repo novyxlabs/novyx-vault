@@ -39,6 +39,7 @@ import {
   LogOut,
   User,
   Gauge,
+  Shield,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
@@ -79,6 +80,7 @@ interface SidebarProps {
   onOpenWeeklyReview: () => void;
   onOpenReflect: () => void;
   onOpenUsage: () => void;
+  onOpenAuditTrail: () => void;
   onOpenSettings: () => void;
   onSignOut?: () => void;
   onGoHome: () => void;
@@ -480,6 +482,7 @@ export default function Sidebar({
   onOpenWeeklyReview,
   onOpenReflect,
   onOpenUsage,
+  onOpenAuditTrail,
   onOpenSettings,
   onSignOut,
   onGoHome,
@@ -980,6 +983,14 @@ export default function Sidebar({
             >
               <Gauge size={13} />
               <span className="text-[10px] leading-none font-medium">Usage & Limits</span>
+            </button>
+            <button
+              onClick={onOpenAuditTrail}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
+              title="Audit trail"
+            >
+              <Shield size={13} />
+              <span className="text-[10px] leading-none font-medium">Audit Trail</span>
             </button>
           </div>
           {/* Vault Tools */}
