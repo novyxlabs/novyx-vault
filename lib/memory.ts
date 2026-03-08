@@ -43,11 +43,11 @@ export async function rememberExchange(
   const nx = resolveClient(apiKey);
   if (!nx) return;
   try {
-    const tags = userTag(userId);
+    const tags = withUserTag(userId, ["source:vault"]);
     await nx.remember(userMessage, {
       auto_link: true,
       context: aiResponse ? aiResponse.slice(0, 1000) : undefined,
-      ...(tags.length > 0 && { tags }),
+      tags,
     });
   } catch (e) {
     console.warn("[novyx] rememberExchange failed:", e);

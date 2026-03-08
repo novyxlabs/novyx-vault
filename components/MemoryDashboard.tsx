@@ -91,6 +91,22 @@ function timeAgo(dateStr: string): string {
   return `${months}mo ago`;
 }
 
+const SOURCE_STYLES: Record<string, { label: string; className: string }> = {
+  vault: { label: "Vault", className: "bg-accent/10 text-accent/70" },
+  mcp: { label: "MCP", className: "bg-blue-400/10 text-blue-400/70" },
+  api: { label: "API", className: "bg-emerald-400/10 text-emerald-400/70" },
+};
+
+function getSource(tags: string[]): { label: string; className: string } | null {
+  for (const tag of tags) {
+    if (tag.startsWith("source:")) {
+      const key = tag.slice(7);
+      return SOURCE_STYLES[key] || { label: key, className: "bg-muted-bg text-muted" };
+    }
+  }
+  return null;
+}
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   const now = new Date();
@@ -585,11 +601,19 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                         <div className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${imp.color}`} title={`Importance: ${imp.label}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
-                          <div className="flex items-center gap-3 mt-2">
+                          <div className="flex items-center gap-3 mt-2 flex-wrap">
                             <span className="text-xs text-muted">{timeAgo(mem.created_at)}</span>
-                            {mem.tags.length > 0 && (
+                            {(() => {
+                              const source = getSource(mem.tags);
+                              return source ? (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${source.className}`}>
+                                  {source.label}
+                                </span>
+                              ) : null;
+                            })()}
+                            {mem.tags.filter((t: string) => !t.startsWith("user:") && !t.startsWith("source:")).length > 0 && (
                               <div className="flex gap-1">
-                                {mem.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 3).map((tag: string) => (
+                                {mem.tags.filter((t: string) => !t.startsWith("user:") && !t.startsWith("source:")).slice(0, 3).map((tag: string) => (
                                   <span
                                     key={tag}
                                     className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent/70"
@@ -664,9 +688,17 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                             className="bg-card-bg border border-sidebar-border rounded-lg px-3 py-2.5 hover:border-accent/20 transition-colors"
                           >
                             <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
-                            <div className="flex items-center gap-2 mt-1.5">
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                               <span className="text-[10px] text-muted">{time}</span>
-                              {mem.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 2).map((tag: string) => (
+                              {(() => {
+                                const source = getSource(mem.tags);
+                                return source ? (
+                                  <span className={`text-[10px] px-1 py-0.5 rounded font-medium ${source.className}`}>
+                                    {source.label}
+                                  </span>
+                                ) : null;
+                              })()}
+                              {mem.tags.filter((t: string) => !t.startsWith("user:") && !t.startsWith("source:")).slice(0, 2).map((tag: string) => (
                                 <span key={tag} className="text-[10px] px-1 py-0.5 rounded bg-accent/10 text-accent/60">
                                   {tag}
                                 </span>
@@ -751,7 +783,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                           <span className="text-xs text-muted">{timeAgo(insight.created_at)}</span>
                           {insight.tags.length > 0 && (
                             <div className="flex gap-1">
-                              {insight.tags.filter((t: string) => !t.startsWith("user:")).slice(0, 3).map((tag: string) => (
+                              {insight.tags.filter((t: string) => !t.startsWith("user:") && !t.startsWith("source:")).slice(0, 3).map((tag: string) => (
                                 <span
                                   key={tag}
                                   className="text-xs px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400/70"
