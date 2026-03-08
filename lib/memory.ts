@@ -301,7 +301,22 @@ export interface AuditEntry {
   timestamp: string;
   operation: string;
   artifact_id?: string;
+  entry_hash?: string;
   details?: Record<string, unknown>;
+}
+
+function inferOperation(method?: string, endpoint?: string): string {
+  const m = (method || "").toUpperCase();
+  const ep = (endpoint || "").toLowerCase();
+  if (ep.includes("rollback")) return "rollback";
+  if (m === "POST" && ep.includes("memories")) return "store";
+  if (m === "GET" && ep.includes("memories")) return "recall";
+  if (m === "DELETE" && ep.includes("memories")) return "delete";
+  if (m === "PUT" || m === "PATCH") return "update";
+  if (m === "POST") return "store";
+  if (m === "GET") return "recall";
+  if (m === "DELETE") return "delete";
+  return m || "unknown";
 }
 
 export async function getAuditLog(
@@ -312,14 +327,11 @@ export async function getAuditLog(
   if (!nx) return [];
   try {
     const entries = await nx.audit({ limit });
-    if (entries.length > 0) {
-      console.log("[novyx] audit entry sample keys:", Object.keys(entries[0]));
-      console.log("[novyx] audit entry sample:", JSON.stringify(entries[0]).slice(0, 500));
-    }
     return entries.map((e) => ({
-      timestamp: (e.timestamp ?? e.created_at ?? e.time) as string,
-      operation: (e.operation ?? e.action ?? e.event ?? e.type ?? e.op) as string,
-      artifact_id: (e.artifact_id ?? e.memory_id ?? e.id) as string | undefined,
+      timestamp: e.timestamp as string,
+      operation: inferOperation(e.method as string, e.endpoint as string),
+      artifact_id: (e.key_id ?? e.tenant_id) as string | undefined,
+      entry_hash: e.entry_hash as string | undefined,
       details: e,
     }));
   } catch (e) {

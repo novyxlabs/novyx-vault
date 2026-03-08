@@ -7,6 +7,7 @@ interface AuditEntry {
   timestamp: string;
   operation: string;
   artifact_id?: string;
+  entry_hash?: string;
   details?: Record<string, unknown>;
 }
 
@@ -68,15 +69,20 @@ function formatFullTime(ts: string): string {
 function extractPreview(entry: AuditEntry): string | null {
   const d = entry.details;
   if (!d) return null;
+  // Audit entries have method + endpoint, not content
+  const method = d.method as string | undefined;
+  const endpoint = d.endpoint as string | undefined;
+  if (method && endpoint) return `${method} ${endpoint}`;
   const obs = d.observation || d.content || d.memory || d.preview;
   if (typeof obs === "string") return obs.length > 120 ? obs.slice(0, 120) + "…" : obs;
   return null;
 }
 
 function extractHash(entry: AuditEntry): string | null {
+  if (entry.entry_hash) return entry.entry_hash;
   const d = entry.details;
   if (!d) return null;
-  const hash = d.hash || d.integrity_hash || d.verification_hash || d.checksum;
+  const hash = d.entry_hash || d.hash || d.integrity_hash;
   if (typeof hash === "string") return hash;
   return null;
 }
@@ -253,23 +259,23 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
                             {preview}
                           </p>
                         )}
-                        <div className="flex items-center gap-2 text-[11px] text-muted">
+                        <div className="flex items-center gap-2 text-[11px] text-muted flex-wrap">
                           <span title={formatFullTime(entry.timestamp)}>
                             {formatTime(entry.timestamp)}
                           </span>
-                          {entry.artifact_id && (
+                          {typeof entry.details?.status === "number" && (
                             <>
                               <span className="text-muted/30">·</span>
-                              <span className="font-mono truncate max-w-[120px]" title={entry.artifact_id}>
-                                {entry.artifact_id.slice(0, 8)}
+                              <span className={`font-mono ${entry.details.status < 300 ? "text-green-400/70" : "text-red-400/70"}`}>
+                                {entry.details.status}
                               </span>
                             </>
                           )}
                           {hash && (
                             <>
                               <span className="text-muted/30">·</span>
-                              <span className="font-mono text-emerald-400/60 truncate max-w-[100px]" title={`Hash: ${hash}`}>
-                                #{hash.slice(0, 8)}
+                              <span className="font-mono text-emerald-400/60 truncate max-w-[120px]" title={hash}>
+                                #{hash.replace(/^sha256:/, "").slice(0, 10)}
                               </span>
                             </>
                           )}

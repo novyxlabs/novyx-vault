@@ -112,6 +112,8 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
   const [tier, setTier] = useState<string>("free");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rawUsage, setRawUsage] = useState<any>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -123,22 +125,24 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
       .then((data) => {
         const raw = data.usage || {};
         const gating = data.gating;
-        const t = gating?.tier || raw.tier || raw.plan || "free";
-        // Debug: log raw keys so we can see what the API actually returns
-        console.log("[usage] raw keys:", Object.keys(raw));
-        console.log("[usage] raw data:", JSON.stringify(raw).slice(0, 500));
-        console.log("[usage] gating:", JSON.stringify(gating).slice(0, 500));
+        const t = gating?.tier || raw.tier || "free";
         setTier(t);
+        // Counts are nested objects: { current, used, limit, unlimited }
+        const mem = raw.memories || {};
+        const api = raw.api_calls || {};
+        const rb = raw.rollbacks || {};
         setUsage({
           tier: t,
-          memories_count: raw.memories_count ?? raw.memory_count ?? raw.memories ?? gating?.usage?.memories_count ?? 0,
-          memories_limit: raw.memories_limit ?? raw.memory_limit ?? gating?.usage?.memories_limit ?? 0,
-          api_calls_used: raw.api_calls_used ?? raw.api_calls ?? raw.calls_used ?? raw.requests ?? 0,
-          api_calls_limit: raw.api_calls_limit ?? raw.calls_limit ?? raw.request_limit ?? 0,
-          rollbacks_used: raw.rollbacks_used ?? raw.rollbacks ?? 0,
-          rollbacks_limit: raw.rollbacks_limit ?? raw.rollback_limit ?? 0,
-          billing_reset_date: raw.billing_reset_date ?? raw.reset_date ?? raw.billing_cycle_end ?? null,
+          memories_count: mem.current ?? mem.used ?? gating?.usage?.memories_count ?? 0,
+          memories_limit: mem.unlimited ? 0 : (mem.limit ?? gating?.usage?.memories_limit ?? 0),
+          api_calls_used: api.current ?? api.used ?? 0,
+          api_calls_limit: api.unlimited ? 0 : (api.limit ?? 0),
+          rollbacks_used: rb.current ?? rb.used ?? 0,
+          rollbacks_limit: rb.unlimited ? 0 : (rb.limit ?? 0),
+          billing_reset_date: raw.resets_at ?? null,
         });
+        // Store extra data for display
+        setRawUsage(raw);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -284,6 +288,39 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
                   </div>
                 )}
               </div>
+
+              {/* Extra stats from raw usage */}
+              {rawUsage && (
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  {rawUsage.period && (
+                    <div className="rounded-lg border border-sidebar-border bg-card-bg/50 px-3 py-2.5">
+                      <div className="text-[10px] uppercase tracking-widest text-muted/50 font-medium mb-0.5">Period</div>
+                      <span className="text-sm text-foreground">{rawUsage.period}</span>
+                    </div>
+                  )}
+                  {rawUsage.usage_pressure_level && (
+                    <div className="rounded-lg border border-sidebar-border bg-card-bg/50 px-3 py-2.5">
+                      <div className="text-[10px] uppercase tracking-widest text-muted/50 font-medium mb-0.5">Pressure</div>
+                      <span className={`text-sm capitalize ${
+                        rawUsage.usage_pressure_level === "low" ? "text-green-400" :
+                        rawUsage.usage_pressure_level === "medium" ? "text-amber-400" : "text-red-400"
+                      }`}>{rawUsage.usage_pressure_level}</span>
+                    </div>
+                  )}
+                  {rawUsage.spend_estimate?.spend_estimate_usd != null && (
+                    <div className="rounded-lg border border-sidebar-border bg-card-bg/50 px-3 py-2.5">
+                      <div className="text-[10px] uppercase tracking-widest text-muted/50 font-medium mb-0.5">Spend</div>
+                      <span className="text-sm text-foreground">${rawUsage.spend_estimate.spend_estimate_usd.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {rawUsage.audit_retention_days && (
+                    <div className="rounded-lg border border-sidebar-border bg-card-bg/50 px-3 py-2.5">
+                      <div className="text-[10px] uppercase tracking-widest text-muted/50 font-medium mb-0.5">Audit Retention</div>
+                      <span className="text-sm text-foreground">{rawUsage.audit_retention_days} days</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Upgrade CTA */}
               {(isLocked || anyHigh) && (

@@ -214,22 +214,26 @@ export async function getFeatureGating(
 
   try {
     const nx = getOrCreateClient(apiKey);
-    const usage = await nx.usage();
-    const tier = (usage as Record<string, unknown>).tier as string || "free";
-
+    const raw = await nx.usage() as Record<string, unknown>;
+    const tier = (raw.tier as string) || "free";
     const isPro = tier === "pro" || tier === "enterprise";
+
+    // Usage counts are nested: { current, used, limit, unlimited }
+    const mem = (raw.memories ?? {}) as Record<string, unknown>;
+    // Also use features from the API if available
+    const apiFeatures = (raw.features ?? {}) as Record<string, boolean>;
 
     const gating: FeatureGating = {
       tier,
       features: {
-        graph: isPro,
-        cortex: isPro,
-        replay: isPro,
-        insights: isPro,
+        graph: apiFeatures.knowledge_graph ?? isPro,
+        cortex: apiFeatures.cortex ?? isPro,
+        replay: apiFeatures.replay ?? isPro,
+        insights: apiFeatures.cortex ?? isPro,
       },
       usage: {
-        memories_count: (usage as Record<string, unknown>).memories_count as number | undefined,
-        memories_limit: (usage as Record<string, unknown>).memories_limit as number | undefined,
+        memories_count: (mem.current ?? mem.used) as number | undefined,
+        memories_limit: mem.unlimited ? undefined : (mem.limit as number | undefined),
       },
     };
 

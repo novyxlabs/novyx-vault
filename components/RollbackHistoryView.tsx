@@ -3,16 +3,21 @@
 import { useState, useEffect } from "react";
 import { X, History, Lock, ArrowUpRight, RotateCcw } from "lucide-react";
 
+interface RollbackMetadata {
+  target_timestamp?: string;
+  artifacts_restored?: number;
+  artifacts_removed?: number;
+  operations_undone?: number;
+}
+
 interface TimelineEntry {
   timestamp: string;
   operation: string;
   memory_id?: string;
   observation_preview?: string;
   importance?: number;
-  // Extended fields if API returns before/after state
-  before?: string;
-  after?: string;
-  memories_affected?: number;
+  content_hash?: string;
+  metadata?: RollbackMetadata | null;
 }
 
 interface RollbackHistoryViewProps {
@@ -120,7 +125,11 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
   }
 
   // Count total memories affected
-  const totalAffected = entries.reduce((sum, e) => sum + (e.memories_affected || 1), 0);
+  const totalAffected = entries.reduce((sum, e) => {
+    const restored = e.metadata?.artifacts_restored || 0;
+    const removed = e.metadata?.artifacts_removed || 0;
+    return sum + (restored + removed || 1);
+  }, 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
@@ -243,9 +252,9 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
                                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-amber-400/10 text-amber-400">
                                   Rollback
                                 </span>
-                                {entry.memories_affected && entry.memories_affected > 1 && (
+                                {entry.metadata?.operations_undone && (
                                   <span className="text-[10px] text-muted bg-muted-bg px-1.5 py-0.5 rounded">
-                                    {entry.memories_affected} memories
+                                    {entry.metadata.operations_undone} op{entry.metadata.operations_undone !== 1 ? "s" : ""} undone
                                   </span>
                                 )}
                               </div>
@@ -261,25 +270,30 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
                               </p>
                             )}
 
-                            {/* Before/After (if available) */}
-                            {(entry.before || entry.after) && (
+                            {/* Rollback metadata stats */}
+                            {entry.metadata && (entry.metadata.artifacts_restored || entry.metadata.artifacts_removed) && (
                               <div className="grid grid-cols-2 gap-2 mt-2">
-                                {entry.before && (
-                                  <div className="rounded-md bg-red-400/5 border border-red-400/10 p-2">
-                                    <div className="text-[9px] uppercase tracking-widest text-red-400/60 font-medium mb-1">Before</div>
-                                    <p className="text-xs text-foreground/60 line-clamp-3 leading-relaxed">
-                                      {truncate(entry.before, 100)}
-                                    </p>
-                                  </div>
-                                )}
-                                {entry.after && (
+                                {entry.metadata.artifacts_restored != null && entry.metadata.artifacts_restored > 0 && (
                                   <div className="rounded-md bg-green-400/5 border border-green-400/10 p-2">
-                                    <div className="text-[9px] uppercase tracking-widest text-green-400/60 font-medium mb-1">After</div>
-                                    <p className="text-xs text-foreground/60 line-clamp-3 leading-relaxed">
-                                      {truncate(entry.after, 100)}
-                                    </p>
+                                    <div className="text-[9px] uppercase tracking-widest text-green-400/60 font-medium mb-0.5">Restored</div>
+                                    <span className="text-sm font-mono text-green-400">{entry.metadata.artifacts_restored}</span>
+                                    <span className="text-[10px] text-muted ml-1">memories</span>
                                   </div>
                                 )}
+                                {entry.metadata.artifacts_removed != null && entry.metadata.artifacts_removed > 0 && (
+                                  <div className="rounded-md bg-red-400/5 border border-red-400/10 p-2">
+                                    <div className="text-[9px] uppercase tracking-widest text-red-400/60 font-medium mb-0.5">Removed</div>
+                                    <span className="text-sm font-mono text-red-400">{entry.metadata.artifacts_removed}</span>
+                                    <span className="text-[10px] text-muted ml-1">memories</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Target timestamp */}
+                            {entry.metadata?.target_timestamp && (
+                              <div className="mt-2 text-[11px] text-muted">
+                                Rolled back to {formatFullTime(entry.metadata.target_timestamp)}
                               </div>
                             )}
 
@@ -294,6 +308,14 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
                                 <>
                                   {entry.memory_id && <span className="text-muted/30">·</span>}
                                   <span>importance {entry.importance.toFixed(1)}</span>
+                                </>
+                              )}
+                              {entry.content_hash && (
+                                <>
+                                  <span className="text-muted/30">·</span>
+                                  <span className="font-mono text-amber-400/50 truncate max-w-[100px]" title={entry.content_hash}>
+                                    #{entry.content_hash.replace(/^sha256:/, "").slice(0, 8)}
+                                  </span>
                                 </>
                               )}
                             </div>
