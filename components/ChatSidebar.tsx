@@ -467,7 +467,7 @@ export default function ChatSidebar({
           </div>
         ))}
 
-        {memoriesRecalled > 0 && isStreaming && (
+        {memoriesRecalled > 0 && (
           <div className="flex items-center gap-1.5 ml-8 mb-1">
             <Brain size={12} className="text-accent/70" />
             <span className="text-xs text-accent/70">
