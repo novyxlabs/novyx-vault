@@ -381,18 +381,11 @@ export interface DashboardData {
   period: string;
 }
 
-// TODO: swap to nx.dashboard() once novyx SDK ships the method
-const NOVYX_API_BASE = "https://novyx-ram-api.fly.dev";
-
 export async function getDashboard(apiKey?: string): Promise<DashboardData | null> {
-  const key = apiKey || process.env.NOVYX_MEMORY_API_KEY;
-  if (!key) return null;
+  const nx = resolveClient(apiKey);
+  if (!nx) return null;
   try {
-    const res = await fetch(`${NOVYX_API_BASE}/v1/dashboard`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    if (!res.ok) return null;
-    return await res.json();
+    return await nx.dashboard() as DashboardData;
   } catch (e) {
     console.warn("[novyx] getDashboard failed:", e);
     return null;
