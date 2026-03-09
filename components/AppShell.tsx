@@ -711,6 +711,7 @@ export default function AppShell() {
             >
               <MorningBriefing
                 recentNotes={recentNotes}
+                noteCount={notes.length}
                 onSelectNote={handleSelectNote}
                 onCreateNote={() => handleCreateNote("")}
                 onDailyNote={handleDailyNote}

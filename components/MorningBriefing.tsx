@@ -70,6 +70,7 @@ interface InsightsData {
 
 interface MorningBriefingProps {
   recentNotes: string[];
+  noteCount?: number;
   onSelectNote: (path: string) => void;
   onCreateNote: () => void;
   onDailyNote: () => void;
@@ -150,6 +151,7 @@ function extractThemes(
 
 export default function MorningBriefing({
   recentNotes,
+  noteCount = 0,
   onSelectNote,
   onCreateNote,
   onOpenBrainDump,
@@ -282,7 +284,7 @@ export default function MorningBriefing({
       {/* ============================================================= */}
       {/*  0. Onboarding — shown when no notes exist                    */}
       {/* ============================================================= */}
-      {recentNotes.length === 0 && (
+      {noteCount === 0 && (
         <div className="ghost-fade-in rounded-xl border border-accent/20 bg-accent/5 p-5 space-y-4">
           <div className="flex items-center gap-2.5">
             <Rocket size={18} className="text-accent" />
