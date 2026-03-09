@@ -95,14 +95,14 @@ export default function HeroDemo() {
 
   return (
     <div
-      className={`mx-auto max-w-2xl rounded-2xl border border-[#27272a] bg-[#0f0f0f] overflow-hidden shadow-2xl transition-opacity duration-500 ${isFading ? "opacity-40" : "opacity-100"}`}
+      className={`mx-auto max-w-2xl rounded-2xl border border-sidebar-border bg-background overflow-hidden shadow-2xl transition-opacity duration-500 ${isFading ? "opacity-40" : "opacity-100"}`}
     >
       {/* Window chrome */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#161618] border-b border-[#27272a]">
-        <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]/60" />
-        <span className="w-2.5 h-2.5 rounded-full bg-[#eab308]/60" />
-        <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e]/60" />
-        <span className="ml-auto text-[11px] text-[#71717a] font-medium tracking-wide">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-card-bg border-b border-sidebar-border">
+        <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+        <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+        <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+        <span className="ml-auto text-[11px] text-muted font-medium tracking-wide">
           Novyx Vault
         </span>
       </div>
@@ -110,8 +110,8 @@ export default function HeroDemo() {
       {/* Body */}
       <div className="flex h-[220px] sm:h-[260px] md:h-[300px] relative">
         {/* Sidebar */}
-        <div className="hidden sm:flex flex-col w-[120px] md:w-[140px] border-r border-[#27272a] bg-[#161618] p-2 shrink-0">
-          <span className="text-[10px] text-[#71717a] uppercase tracking-wider font-medium px-1.5 mb-2">
+        <div className="hidden sm:flex flex-col w-[120px] md:w-[140px] border-r border-sidebar-border bg-card-bg p-2 shrink-0">
+          <span className="text-[10px] text-muted uppercase tracking-wider font-medium px-1.5 mb-2">
             Notes
           </span>
           {NOTES.map((note, i) => (
@@ -119,8 +119,8 @@ export default function HeroDemo() {
               key={note.name}
               className={`text-[11px] px-1.5 py-1 rounded-md truncate ${
                 note.active
-                  ? "bg-[#8b5cf6]/15 text-[#e4e4e7]"
-                  : "text-[#71717a]"
+                  ? "bg-accent/15 text-foreground"
+                  : "text-muted"
               }`}
               style={{ position: "relative" }}
               data-note-index={i}
@@ -132,11 +132,11 @@ export default function HeroDemo() {
 
         {/* Editor */}
         <div className="flex-1 flex flex-col p-3 sm:p-4 overflow-hidden relative">
-          <div className="text-sm sm:text-base font-bold text-[#e4e4e7] mb-2 font-[var(--font-geist-mono),monospace]">
+          <div className="text-sm sm:text-base font-bold text-foreground mb-2 font-mono">
             # Meeting Notes
           </div>
           <div
-            className={`text-xs sm:text-sm text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace] transition-opacity duration-300 ${
+            className={`text-xs sm:text-sm text-muted leading-relaxed font-mono transition-opacity duration-300 ${
               isRollback ? "opacity-70" : ""
             }`}
           >
@@ -147,20 +147,20 @@ export default function HeroDemo() {
           {/* AI Memory Card */}
           {showMemory && !isRollback && (
             <div
-              className={`mt-auto rounded-lg border-l-2 border-[#8b5cf6] bg-[#1c1c1f] p-2.5 sm:p-3 ${
+              className={`mt-auto rounded-lg border-l-2 border-accent bg-card-bg p-2.5 sm:p-3 ${
                 showMemory ? "hero-card-in" : ""
               } ${phase === PHASE_MEMORY ? "hero-glow" : ""}`}
             >
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-4 h-4 rounded-full bg-[#8b5cf6]/20 flex items-center justify-center text-[8px]">
+                <span className="w-4 h-4 rounded-full bg-accent/20 flex items-center justify-center text-[8px]">
                   🧠
                 </span>
-                <span className="text-[10px] text-[#8b5cf6] font-medium">
+                <span className="text-[10px] text-accent font-medium">
                   AI Memory
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-[#a1a1aa] leading-snug">
-                Related to your <span className="text-[#8b5cf6]">Q3 Review</span> notes —
+              <p className="text-[10px] sm:text-[11px] text-muted leading-snug">
+                Related to your <span className="text-accent">Q3 Review</span> notes —
                 you previously discussed launching AI features as a top priority.
               </p>
             </div>
@@ -181,24 +181,24 @@ export default function HeroDemo() {
       </div>
 
       {/* Timeline bar */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-[#161618] border-t border-[#27272a]">
-        <span className="text-[9px] text-[#71717a]">Memory Timeline</span>
-        <div className="flex-1 h-1 rounded-full bg-[#27272a] relative mx-2">
+      <div className="flex items-center gap-2 px-4 py-2 bg-card-bg border-t border-sidebar-border">
+        <span className="text-[9px] text-muted">Memory Timeline</span>
+        <div className="flex-1 h-1 rounded-full bg-sidebar-border relative mx-2">
           {/* Dots */}
           {[15, 35, 55, 75, 95].map((pos) => (
             <div
               key={pos}
-              className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#3f3f46]"
+              className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-muted-bg"
               style={{ left: `${pos}%` }}
             />
           ))}
           {/* Thumb */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-[#8b5cf6] shadow-sm transition-[left] duration-100"
+            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-accent shadow-sm transition-[left] duration-100"
             style={{ left: `${timelinePos}%`, transform: "translate(-50%, -50%)" }}
           />
         </div>
-        <span className="text-[9px] text-[#71717a] tabular-nums w-8 text-right">
+        <span className="text-[9px] text-muted tabular-nums w-8 text-right">
           {isRollback ? "−3d" : "now"}
         </span>
       </div>
