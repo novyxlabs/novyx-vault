@@ -351,26 +351,20 @@ export async function getMemoryUsage(apiKey?: string): Promise<Record<string, un
   }
 }
 
-const NOVYX_API_BASE = "https://novyx-ram-api.fly.dev";
-
 export async function verifyAuditChain(
   apiKey?: string
 ): Promise<{ integrity_guarantee: boolean; status: string } | null> {
-  const key = apiKey || process.env.NOVYX_MEMORY_API_KEY;
-  if (!key) return null;
+  const nx = resolveClient(apiKey);
+  if (!nx) return null;
   try {
-    const res = await fetch(`${NOVYX_API_BASE}/v1/audit/verify`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    // 403 means free/starter tier — not an error, just unsupported
-    if (res.status === 403) return null;
-    if (!res.ok) return null;
-    const data = await res.json();
+    const data = await nx.auditVerify();
     return {
       integrity_guarantee: !!data.integrity_guarantee,
       status: data.status || "unknown",
     };
-  } catch (e) {
+  } catch (e: unknown) {
+    // 403 means free/starter tier — not an error, just unsupported
+    if (e && typeof e === "object" && "status" in e && (e as { status: number }).status === 403) return null;
     console.warn("[novyx] verifyAuditChain failed:", e);
     return null;
   }
