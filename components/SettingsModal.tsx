@@ -38,6 +38,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [showAllProviders, setShowAllProviders] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [prevOpen, setPrevOpen] = useState(false);
+  const [testStatus, setTestStatus] = useState<Record<string, "idle" | "testing" | "ok" | "fail">>({});
   const apiKeyRef = useRef<HTMLInputElement>(null);
 
   // Novyx key state
@@ -193,6 +194,25 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const setActive = (id: string) => {
     handleSave({ ...settings, activeProviderId: id });
+  };
+
+  const testProvider = async (provider: ProviderConfig) => {
+    setTestStatus((s) => ({ ...s, [provider.id]: "testing" }));
+    try {
+      const res = await fetch("/api/chat/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseURL: provider.baseURL,
+          apiKey: provider.apiKey,
+          model: provider.model,
+        }),
+      });
+      const data = await res.json();
+      setTestStatus((s) => ({ ...s, [provider.id]: data.ok ? "ok" : "fail" }));
+    } catch {
+      setTestStatus((s) => ({ ...s, [provider.id]: "fail" }));
+    }
   };
 
   const handleNovyxSave = async () => {
@@ -582,6 +602,28 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                               placeholder={preset?.apiKeyPlaceholder || "Enter API key..."}
                               className="w-full bg-card-bg border border-sidebar-border rounded-md px-3 py-1.5 text-sm text-foreground font-mono outline-none focus:border-accent/50"
                             />
+                          </div>
+                        )}
+                        {/* Test Connection */}
+                        {(preset?.isLocal || provider.apiKey) && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => testProvider(provider)}
+                              disabled={testStatus[provider.id] === "testing"}
+                              className="text-xs px-3 py-1.5 rounded-md border border-sidebar-border hover:border-accent/40 hover:bg-accent/5 text-muted hover:text-foreground transition-all disabled:opacity-50"
+                            >
+                              {testStatus[provider.id] === "testing" ? "Testing..." : "Test Connection"}
+                            </button>
+                            {testStatus[provider.id] === "ok" && (
+                              <span className="flex items-center gap-1 text-xs text-green-400">
+                                <Check size={12} /> Working
+                              </span>
+                            )}
+                            {testStatus[provider.id] === "fail" && (
+                              <span className="text-xs text-red-400">
+                                Failed — check your key and model
+                              </span>
+                            )}
                           </div>
                         )}
                         <div>

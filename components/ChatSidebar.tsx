@@ -127,7 +127,13 @@ export default function ChatSidebar({
     const provider = getActiveProvider(settings);
 
     if (!provider) {
-      setError("No AI provider configured. Open settings to add one.");
+      setError("No AI provider configured. Open Settings to add one.");
+      return;
+    }
+
+    const isLocal = provider.baseURL.includes("localhost") || provider.baseURL.includes("127.0.0.1");
+    if (!isLocal && !provider.apiKey) {
+      setError("No API key set for " + (provider.name || "this provider") + ". Open Settings to add your key.");
       return;
     }
 
@@ -274,7 +280,12 @@ export default function ChatSidebar({
             {activeProvider ? (
               <>
                 <div className="text-xs text-muted">{activeProvider.name}</div>
-                <div className="text-sm font-mono truncate">{activeProvider.model}</div>
+                <div className="text-sm font-mono truncate flex items-center gap-1.5">
+                  {activeProvider.model}
+                  {!activeProvider.apiKey && !activeProvider.baseURL.includes("localhost") && (
+                    <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full font-sans">No key</span>
+                  )}
+                </div>
               </>
             ) : (
               <div className="text-sm text-muted">No model selected</div>
@@ -481,8 +492,16 @@ export default function ChatSidebar({
 
       {/* Error */}
       {error && (
-        <div className="mx-4 mb-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">
-          {error}
+        <div className="mx-4 mb-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2">
+          <span className="text-xs text-red-400 flex-1">{error}</span>
+          {(error.includes("Settings") || error.includes("API key") || error.includes("provider")) && (
+            <button
+              onClick={onOpenSettings}
+              className="text-[10px] font-medium text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-2 py-1 rounded transition-colors shrink-0"
+            >
+              Open Settings
+            </button>
+          )}
         </div>
       )}
 

@@ -317,14 +317,26 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof OpenAI.APIError) {
       console.error(`[Chat API] ${err.status} from ${provider.baseURL}:`, err.message, err.error);
+      let userMessage: string;
+      if (err.status === 401) {
+        userMessage = "Invalid API key. Open Settings to check your key.";
+      } else if (err.status === 403) {
+        userMessage = "API key doesn't have access to this model. Check your plan or try a different model.";
+      } else if (err.status === 429) {
+        userMessage = "Rate limited by your AI provider. Wait a moment and try again.";
+      } else if (err.status === 404) {
+        userMessage = `Model "${provider.model}" not found. Try a different model in Settings.`;
+      } else {
+        userMessage = `AI provider error (${err.status}). Check Settings if this persists.`;
+      }
       return new Response(
-        JSON.stringify({ error: `AI provider error (${err.status})` }),
+        JSON.stringify({ error: userMessage }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
     console.error(`[Chat API] Error:`, err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: "AI request failed" }),
+      JSON.stringify({ error: "AI request failed. Check your connection and try again." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
