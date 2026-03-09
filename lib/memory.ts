@@ -370,6 +370,35 @@ export async function verifyAuditChain(
   }
 }
 
+export interface DashboardData {
+  memory_count: number;
+  tier: string;
+  features: Record<string, boolean>;
+  usage_percent: Record<string, number>;
+  pressure: string;
+  api_calls_today: number;
+  limits: Record<string, number>;
+  period: string;
+}
+
+// TODO: swap to nx.dashboard() once novyx SDK ships the method
+const NOVYX_API_BASE = "https://novyx-ram-api.fly.dev";
+
+export async function getDashboard(apiKey?: string): Promise<DashboardData | null> {
+  const key = apiKey || process.env.NOVYX_MEMORY_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(`${NOVYX_API_BASE}/v1/dashboard`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn("[novyx] getDashboard failed:", e);
+    return null;
+  }
+}
+
 export async function getContextNow(apiKey?: string): Promise<ContextNow | null> {
   const nx = resolveClient(apiKey);
   if (!nx) return null;
