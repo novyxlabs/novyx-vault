@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { isCloudMode } from "@/lib/auth";
 
 export async function POST() {
+  if (!isCloudMode()) {
+    return NextResponse.json({ success: true });
+  }
+
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
