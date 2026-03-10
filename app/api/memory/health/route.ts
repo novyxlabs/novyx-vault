@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { Novyx } from "novyx";
 
 export async function GET() {
   try {
-    // Health check doesn't need auth — use a throwaway client
-    const nx = new Novyx({ apiKey: "health-check" });
-    const data = await nx.health();
+    const res = await fetch("https://novyx-ram-api.fly.dev/health", {
+      signal: AbortSignal.timeout(5000),
+    });
+    const data = await res.json();
     if (data && (data.status === "ok" || data.status === "healthy")) {
       return NextResponse.json({ status: "ok" });
     }
