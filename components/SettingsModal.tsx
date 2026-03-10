@@ -754,7 +754,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           )}
 
           {/* Import */}
-          <ObsidianImport />
+          <div className="rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3">
+            <ObsidianImport />
+          </div>
         </div>
 
         {/* Footer — Sign Out only */}

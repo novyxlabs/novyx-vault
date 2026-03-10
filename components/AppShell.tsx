@@ -437,8 +437,8 @@ export default function AppShell() {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
       }
-      // Ctrl+Shift+N or Cmd+Shift+N — quick capture
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "N") {
+      // Ctrl+Shift+N — quick capture (avoid Cmd+Shift+N which Chrome intercepts)
+      if (e.ctrlKey && !e.metaKey && e.shiftKey && e.key === "N") {
         e.preventDefault();
         setIsQuickCaptureOpen(true);
       }

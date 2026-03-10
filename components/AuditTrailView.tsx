@@ -160,6 +160,12 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
                 <span className="text-[10px] font-medium text-red-400">Chain broken</span>
               </div>
             )}
+            {!loading && !error && !isLocked && chainVerified === null && chainHead && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-400/10 border border-amber-400/20 mr-auto">
+                <Shield size={12} className="text-amber-400" />
+                <span className="text-[10px] font-medium text-amber-400">Chain present</span>
+              </div>
+            )}
           </div>
           <button onClick={onClose} className="p-1 rounded text-muted hover:text-foreground">
             <X size={18} />

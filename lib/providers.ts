@@ -467,6 +467,22 @@ export async function syncSettingsToCloud(): Promise<void> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ settings }),
     });
+
+    // Also sync encrypted provider API keys (server-side encryption)
+    if (ai) {
+      const parsed: AISettings = JSON.parse(ai);
+      const keys: Record<string, string> = {};
+      for (const p of parsed.providers) {
+        if (p.apiKey) keys[p.id] = p.apiKey;
+      }
+      if (Object.keys(keys).length > 0) {
+        await fetch("/api/settings/keys", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keys }),
+        }).catch(() => {}); // best-effort
+      }
+    }
   } catch {
     // fail silently — cloud sync is best-effort
   }
@@ -475,32 +491,63 @@ export async function syncSettingsToCloud(): Promise<void> {
 /** Load cloud settings and merge into localStorage (cloud fills gaps, doesn't overwrite) */
 export async function loadCloudSettings(): Promise<void> {
   try {
-    const res = await fetch("/api/settings");
-    if (!res.ok) return;
+    // Fetch settings and encrypted keys in parallel
+    const [settingsRes, keysRes] = await Promise.all([
+      fetch("/api/settings"),
+      fetch("/api/settings/keys").catch(() => null),
+    ]);
 
-    const { settings } = (await res.json()) as { settings: CloudSettings | null };
-    if (!settings) return;
+    const { settings } = settingsRes.ok
+      ? ((await settingsRes.json()) as { settings: CloudSettings | null })
+      : { settings: null };
 
-    // Merge cloud AI settings with local API keys
-    if (settings.aiSettings) {
+    // Decrypt server-side provider keys
+    const serverKeys: Record<string, string> =
+      keysRes && keysRes.ok ? (await keysRes.json()).keys || {} : {};
+
+    // Merge cloud AI settings with local API keys + server-side keys
+    if (settings?.aiSettings) {
       const localRaw = localStorage.getItem("noctivault-ai-settings");
       if (!localRaw) {
-        // No local settings — use cloud (keys will be empty, user re-enters)
-        localStorage.setItem("noctivault-ai-settings", JSON.stringify(settings.aiSettings));
+        // No local settings — use cloud config and restore server-side keys
+        const restored: AISettings = {
+          ...settings.aiSettings,
+          providers: settings.aiSettings.providers.map((p) => ({
+            ...p,
+            apiKey: serverKeys[p.id] || p.apiKey,
+          })),
+        };
+        localStorage.setItem("noctivault-ai-settings", JSON.stringify(restored));
       } else {
-        // Merge: keep local API keys, adopt cloud provider config/model selections
+        // Merge: prefer local keys, fall back to server-side keys, then cloud (empty)
         const local: AISettings = JSON.parse(localRaw);
         const localKeyMap = new Map(local.providers.map((p) => [p.id, p.apiKey]));
         const merged: AISettings = {
           ...settings.aiSettings,
           providers: settings.aiSettings.providers.map((p) => ({
             ...p,
-            apiKey: localKeyMap.get(p.id) || p.apiKey,
+            apiKey: localKeyMap.get(p.id) || serverKeys[p.id] || p.apiKey,
+          })),
+        };
+        localStorage.setItem("noctivault-ai-settings", JSON.stringify(merged));
+      }
+    } else if (Object.keys(serverKeys).length > 0) {
+      // No cloud AI settings but we have server keys — restore into existing local settings
+      const localRaw = localStorage.getItem("noctivault-ai-settings");
+      if (localRaw) {
+        const local: AISettings = JSON.parse(localRaw);
+        const merged: AISettings = {
+          ...local,
+          providers: local.providers.map((p) => ({
+            ...p,
+            apiKey: p.apiKey || serverKeys[p.id] || "",
           })),
         };
         localStorage.setItem("noctivault-ai-settings", JSON.stringify(merged));
       }
     }
+
+    if (!settings) return;
 
     if (settings.pinnedNotes && !localStorage.getItem("noctivault-pinned")) {
       localStorage.setItem("noctivault-pinned", JSON.stringify(settings.pinnedNotes));

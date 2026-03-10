@@ -60,7 +60,7 @@ const shortcuts: { category: string; items: Shortcut[] }[] = [
     items: [
       { keys: `${mod}+N`, label: "Create new note" },
       { keys: `${mod}+D`, label: "Open today's daily note" },
-      { keys: `${mod}+Shift+N`, label: "Quick capture" },
+      { keys: "Ctrl+Shift+N", label: "Quick capture" },
       { keys: `${mod}+Shift+F`, label: "Toggle focus mode" },
       { keys: `${mod}+Enter`, label: "Save (in Quick Capture)" },
     ],
