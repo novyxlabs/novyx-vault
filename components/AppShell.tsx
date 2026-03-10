@@ -759,25 +759,25 @@ export default function AppShell() {
       }}
       activeNote={activeNote}
     />
-    <NovyxErrorBoundary fallbackTitle="Memory Dashboard failed to load">
+    <NovyxErrorBoundary fallbackTitle="Memory Dashboard failed to load" onClose={() => setIsMemoryOpen(false)}>
       <MemoryDashboard
         isOpen={isMemoryOpen}
         onClose={() => setIsMemoryOpen(false)}
       />
     </NovyxErrorBoundary>
-    <NovyxErrorBoundary fallbackTitle="Usage data failed to load">
+    <NovyxErrorBoundary fallbackTitle="Usage data failed to load" onClose={() => setIsUsageOpen(false)}>
       <UsageView
         isOpen={isUsageOpen}
         onClose={() => setIsUsageOpen(false)}
       />
     </NovyxErrorBoundary>
-    <NovyxErrorBoundary fallbackTitle="Audit Trail failed to load">
+    <NovyxErrorBoundary fallbackTitle="Audit Trail failed to load" onClose={() => setIsAuditTrailOpen(false)}>
       <AuditTrailView
         isOpen={isAuditTrailOpen}
         onClose={() => setIsAuditTrailOpen(false)}
       />
     </NovyxErrorBoundary>
-    <NovyxErrorBoundary fallbackTitle="Rollback History failed to load">
+    <NovyxErrorBoundary fallbackTitle="Rollback History failed to load" onClose={() => setIsRollbackHistoryOpen(false)}>
       <RollbackHistoryView
         isOpen={isRollbackHistoryOpen}
         onClose={() => setIsRollbackHistoryOpen(false)}

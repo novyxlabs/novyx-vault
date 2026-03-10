@@ -9,17 +9,17 @@ export default defineConfig({
   timeout: 180_000,
   expect: { timeout: 10_000 },
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3001",
     viewport: { width: 1440, height: 900 },
     launchOptions: {
       slowMo: 0,
     },
   },
   webServer: {
-    command: "STORAGE_MODE= npm run dev",
-    url: "http://localhost:3000",
+    command: "STORAGE_MODE= npx next dev --port 3001",
+    url: "http://localhost:3001",
     reuseExistingServer: true,
-    timeout: 30_000,
+    timeout: 60_000,
   },
   projects: [
     {

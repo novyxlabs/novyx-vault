@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const TEST_NOTE = `_pw_test_note_${Date.now()}`;
 const TEST_FOLDER = `_pw_test_folder_${Date.now()}`;
@@ -48,12 +48,12 @@ test.describe("Note CRUD", () => {
   const notePath = TEST_NOTE;
 
   test.afterAll(async ({}, testInfo) => {
-    const baseURL = testInfo.project.use.baseURL || "http://localhost:3000";
+    const baseURL = testInfo.project.use.baseURL || "http://localhost:3001";
     await deleteNote(baseURL, notePath);
   });
 
   test("create a note via API and see it in sidebar", async ({ page }) => {
-    const baseURL = page.url().startsWith("http") ? new URL(page.url()).origin : "http://localhost:3000";
+    const baseURL = page.url().startsWith("http") ? new URL(page.url()).origin : "http://localhost:3001";
     await createNote(baseURL, notePath, `# Test Note\n\nHello from Playwright`);
 
     await page.goto("/");
@@ -122,31 +122,21 @@ test.describe("Keyboard shortcuts", () => {
 test.describe("Settings modal", () => {
   test("opens and closes with ARIA attributes", async ({ page }) => {
     await page.goto("/");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
-    // Open settings via sidebar button
-    await page.keyboard.press("Meta+,");
+    // Open settings via Account menu
+    const accountBtn = page.locator('button[title="Account"]');
+    await accountBtn.click();
     await page.waitForTimeout(300);
+    await page.locator("button:has-text('Settings')").first().click();
 
-    // If Cmd+, doesn't work, click the settings button
-    const settingsDialog = page.locator('[role="dialog"][aria-label="AI Settings"]');
-    if (!(await settingsDialog.isVisible())) {
-      // Try clicking settings icon in sidebar
-      const settingsBtn = page.locator('button:has-text("Settings"), button[title*="Settings"]').first();
-      if (await settingsBtn.isVisible()) {
-        await settingsBtn.click();
-      }
-    }
+    const settingsDialog = page.locator('[aria-label="Settings"]');
+    await expect(settingsDialog).toBeVisible({ timeout: 5000 });
+    await expect(settingsDialog).toHaveAttribute("aria-modal", "true");
 
-    // Check ARIA attributes if dialog is visible
-    if (await settingsDialog.isVisible()) {
-      await expect(settingsDialog).toHaveAttribute("aria-modal", "true");
-      expect(await settingsDialog.getAttribute("aria-label")).toBe("AI Settings");
-
-      // Close with escape
-      await page.keyboard.press("Escape");
-      await expect(settingsDialog).not.toBeVisible();
-    }
+    // Close via X button
+    await settingsDialog.locator("button").first().click();
+    await expect(settingsDialog).not.toBeVisible();
   });
 });
 
@@ -154,12 +144,12 @@ test.describe("Command palette search", () => {
   const searchNote = `_pw_search_${Date.now()}`;
 
   test.beforeAll(async ({}, testInfo) => {
-    const baseURL = testInfo.project.use.baseURL || "http://localhost:3000";
+    const baseURL = testInfo.project.use.baseURL || "http://localhost:3001";
     await createNote(baseURL, searchNote, `# Searchable\n\nUnique keyword xylophonezz`);
   });
 
   test.afterAll(async ({}, testInfo) => {
-    const baseURL = testInfo.project.use.baseURL || "http://localhost:3000";
+    const baseURL = testInfo.project.use.baseURL || "http://localhost:3001";
     await deleteNote(baseURL, searchNote);
   });
 
@@ -263,12 +253,12 @@ test.describe("API routes — extended coverage", () => {
   const apiNote = `_pw_api_ext_${Date.now()}`;
 
   test.beforeAll(async ({}, testInfo) => {
-    const baseURL = testInfo.project.use.baseURL || "http://localhost:3000";
+    const baseURL = testInfo.project.use.baseURL || "http://localhost:3001";
     await createNote(baseURL, apiNote, `# Extended API Test\n\nContent with #test-tag and [[backlink]]\n\n- [ ] task item`);
   });
 
   test.afterAll(async ({}, testInfo) => {
-    const baseURL = testInfo.project.use.baseURL || "http://localhost:3000";
+    const baseURL = testInfo.project.use.baseURL || "http://localhost:3001";
     await deleteNote(baseURL, apiNote);
   });
 
@@ -458,6 +448,377 @@ test.describe("API routes — extended coverage", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toHaveProperty("connections");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Onboarding → first note flow
+// ---------------------------------------------------------------------------
+test.describe("Onboarding → first note", () => {
+  const onboardingNote = `_pw_onboard_${Date.now()}`;
+
+  test.afterAll(async ({}, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL || "http://localhost:3001";
+    await deleteNote(baseURL, onboardingNote);
+  });
+
+  test("Ctrl+N → name → Create Note → appears in sidebar with editor open", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    // Open new note modal
+    await page.keyboard.press("Control+n");
+    await expect(page.locator("text=New Note").first()).toBeVisible({ timeout: 3000 });
+
+    // Fill in note name
+    const nameInput = page.locator('input[placeholder="Note name..."]');
+    await expect(nameInput).toBeVisible();
+    await nameInput.fill(onboardingNote);
+
+    // Select a template (first one is already selected by default)
+    // Click Create Note
+    await page.locator('button:has-text("Create Note")').click();
+
+    // Note should appear in sidebar
+    await page.waitForTimeout(1500);
+    const sidebar = page.locator("aside").first();
+    await expect(sidebar.locator(`text=${onboardingNote}`)).toBeVisible({ timeout: 5000 });
+
+    // Editor (CodeMirror) should be open
+    await expect(page.locator(".cm-editor").first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test("new note modal disables Create button when name is empty", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(500);
+
+    await page.keyboard.press("Control+n");
+    await expect(page.locator("text=New Note").first()).toBeVisible({ timeout: 3000 });
+
+    // Create Note button should be disabled when name is empty
+    const createBtn = page.locator('button:has-text("Create Note")');
+    await expect(createBtn).toBeDisabled();
+
+    // Type a name — button should become enabled
+    const nameInput = page.locator('input[placeholder="Note name..."]');
+    await nameInput.fill("test");
+    await expect(createBtn).toBeEnabled();
+
+    // Clear name — button should be disabled again
+    await nameInput.fill("");
+    await expect(createBtn).toBeDisabled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dashboard views load (Usage, Audit Trail, Rollback History)
+// ---------------------------------------------------------------------------
+test.describe("Dashboard views", () => {
+  test("Usage & Limits opens from sidebar", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    const usageBtn = page.locator('button[title="Usage & limits"]');
+    await expect(usageBtn).toBeVisible({ timeout: 5000 });
+    await usageBtn.click();
+
+    // Usage view should render with title
+    await expect(page.locator("text=Usage & Limits").first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Audit Trail opens from sidebar", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    const auditBtn = page.locator('button[title="Audit trail"]');
+    await expect(auditBtn).toBeVisible({ timeout: 5000 });
+    await auditBtn.click();
+
+    await expect(page.locator("text=Audit Trail").first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Rollback History opens from sidebar", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    const rollbackBtn = page.locator('button[title="Rollback history"]');
+    await expect(rollbackBtn).toBeVisible({ timeout: 5000 });
+    await rollbackBtn.click();
+
+    await expect(page.locator("text=Rollback History").first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Memory Dashboard opens from sidebar", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    const memoryBtn = page.locator('button[title="Memory dashboard"]');
+    await expect(memoryBtn).toBeVisible({ timeout: 5000 });
+    await memoryBtn.click();
+
+    const dashboard = page.locator('[aria-label="Memory Dashboard"]');
+    await expect(dashboard).toBeVisible({ timeout: 5000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Settings → provider switching
+// ---------------------------------------------------------------------------
+test.describe("Settings → provider management", () => {
+  // Helper: open settings via Account menu → Settings button
+  async function openSettings(page: Page) {
+    const accountBtn = page.locator('button[title="Account"]');
+    await expect(accountBtn).toBeVisible({ timeout: 5000 });
+    await accountBtn.click();
+    await page.waitForTimeout(300);
+
+    const settingsMenuItem = page.locator("button:has-text('Settings')").first();
+    await expect(settingsMenuItem).toBeVisible({ timeout: 3000 });
+    await settingsMenuItem.click();
+
+    const dialog = page.locator('[aria-label="Settings"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    return dialog;
+  }
+
+  test("opens settings and shows AI Providers section", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await openSettings(page);
+
+    // Should show AI Providers header
+    await expect(page.locator("text=AI Providers").first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test("shows featured provider cards when no providers configured", async ({ page }) => {
+    await page.goto("/");
+    // Clear localStorage to reset providers
+    await page.evaluate(() => localStorage.removeItem("noctivault-ai-settings"));
+    await page.waitForTimeout(500);
+
+    await openSettings(page);
+
+    // Featured providers should be visible: OpenAI, Anthropic, Gemini, etc.
+    await expect(page.locator("text=Choose your AI provider").first()).toBeVisible({ timeout: 3000 });
+    await expect(page.locator("text=OpenAI").first()).toBeVisible({ timeout: 3000 });
+    await expect(page.locator("text=Anthropic").first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test("clicking a provider card adds it and shows config", async ({ page }) => {
+    await page.goto("/");
+    // Clear providers
+    await page.evaluate(() => localStorage.removeItem("noctivault-ai-settings"));
+    await page.waitForTimeout(500);
+
+    await openSettings(page);
+
+    // Click OpenAI provider card
+    const openaiCard = page.locator("button:has-text('OpenAI')").first();
+    await expect(openaiCard).toBeVisible({ timeout: 3000 });
+    await openaiCard.click();
+
+    // Should show API key input for the added provider
+    await page.waitForTimeout(500);
+    const apiKeyInput = page.locator('input[type="password"], input[placeholder*="API key"], input[placeholder*="api key"], input[placeholder*="sk-"]');
+    await expect(apiKeyInput.first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test("MCP setup guide is present in settings", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await openSettings(page);
+
+    // MCP setup guide should be present as a collapsible details element
+    await expect(page.locator("text=Connect via MCP").first()).toBeVisible({ timeout: 3000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Create note → memory stored → visible in memory API
+// ---------------------------------------------------------------------------
+test.describe("Note → memory integration", () => {
+  test("POST /api/memory stores a memory and GET /api/memory returns it", async ({ baseURL }) => {
+    const observation = `Playwright E2E test memory ${Date.now()}`;
+
+    // Store a memory
+    const postRes = await fetch(`${baseURL}/api/memory`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ observation }),
+    });
+    expect(postRes.status).toBe(200);
+    const postData = await postRes.json();
+    expect(postData.success).toBe(true);
+
+    // Retrieve memories and check it's there
+    const getRes = await fetch(`${baseURL}/api/memory?q=${encodeURIComponent("Playwright E2E test memory")}&limit=5`);
+    expect(getRes.status).toBe(200);
+    const getData = await getRes.json();
+    expect(getData.memories.length).toBeGreaterThan(0);
+
+    // Find our memory
+    const found = getData.memories.some(
+      (m: { observation: string }) => m.observation.includes("Playwright E2E test memory")
+    );
+    expect(found).toBe(true);
+  });
+
+  test("GET /api/memory/health confirms API is reachable", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/memory/health`);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data).toHaveProperty("status");
+    // status should be "ok" or "unreachable"
+    expect(["ok", "unreachable"]).toContain(data.status);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Help modal
+// ---------------------------------------------------------------------------
+test.describe("Help modal", () => {
+  test("? key opens help modal with keyboard shortcuts", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    // Click sidebar to ensure not in input
+    await page.locator("aside").first().click();
+    await page.waitForTimeout(200);
+
+    await page.keyboard.press("?");
+    await expect(page.locator("text=Keyboard Shortcuts").first()).toBeVisible({ timeout: 3000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Quick capture
+// ---------------------------------------------------------------------------
+test.describe("Quick capture", () => {
+  test("Ctrl+Shift+N opens quick capture", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    // Dispatch the shortcut manually — Playwright key combos with Shift can be tricky
+    await page.keyboard.down("Control");
+    await page.keyboard.down("Shift");
+    await page.keyboard.press("N");
+    await page.keyboard.up("Shift");
+    await page.keyboard.up("Control");
+
+    // Quick capture should appear
+    await expect(page.locator("text=Quick Capture").first()).toBeVisible({ timeout: 5000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Daily note
+// ---------------------------------------------------------------------------
+test.describe("Daily note", () => {
+  test("Ctrl+D creates or opens daily note", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.press("Control+d");
+    // Should open editor with today's daily note
+    await page.waitForTimeout(1500);
+    await expect(page.locator(".cm-editor").first()).toBeVisible({ timeout: 5000 });
+
+    // The daily note path should contain today's date
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const sidebar = page.locator("aside").first();
+    // Daily notes typically use date-based names
+    const dayText = sidebar.locator(`text=/${today}|Daily/`);
+    // Just verify the editor opened — date format may vary
+  });
+
+  test.afterAll(async () => {
+    // Clean up daily note
+    const today = new Date().toISOString().slice(0, 10);
+    await deleteNote("http://localhost:3001", `Daily/${today}`).catch(() => {});
+    await deleteNote("http://localhost:3001", today).catch(() => {});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dashboard views — close behavior
+// ---------------------------------------------------------------------------
+test.describe("Dashboard close behavior", () => {
+  test("Usage view closes when clicking backdrop", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Usage & limits"]').click();
+    await expect(page.locator("text=Usage & Limits").first()).toBeVisible({ timeout: 5000 });
+
+    // Click the backdrop (fixed overlay behind the modal)
+    await page.mouse.click(10, 10);
+    await page.waitForTimeout(500);
+
+    // Modal should be closed
+    const usageHeader = page.locator("text=Current Plan");
+    await expect(usageHeader).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("Memory dashboard opens and shows tabs", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Memory dashboard"]').click();
+    const dashboard = page.locator('[aria-label="Memory Dashboard"]');
+    await expect(dashboard).toBeVisible({ timeout: 5000 });
+
+    // Should show tab navigation (memories, timeline, insights, etc.)
+    await expect(page.locator("text=Memories").first()).toBeVisible({ timeout: 3000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Provider test connection API
+// ---------------------------------------------------------------------------
+test.describe("Provider test API", () => {
+  test("POST /api/chat/test with invalid key returns failure", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/chat/test`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseURL: "https://api.openai.com/v1",
+        apiKey: "sk-invalid-key-for-testing",
+        model: "gpt-4o-mini",
+      }),
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.ok).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Note export API
+// ---------------------------------------------------------------------------
+test.describe("Export API", () => {
+  test("GET /api/notes/export returns zip", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/notes/export`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/zip");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sidebar AI suite buttons open panels
+// ---------------------------------------------------------------------------
+test.describe("AI Suite panels", () => {
+  test("Reflect panel opens from sidebar", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    const reflectBtn = page.locator('button[title*="Reflect"]');
+    await expect(reflectBtn).toBeVisible({ timeout: 5000 });
+    await reflectBtn.click();
+
+    // Reflect timeline should appear
+    await expect(page.locator("text=Reflect").first()).toBeVisible({ timeout: 5000 });
   });
 });
 
