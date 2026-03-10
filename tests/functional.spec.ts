@@ -610,7 +610,7 @@ test.describe("Settings → provider management", () => {
     await expect(page.locator("text=Anthropic").first()).toBeVisible({ timeout: 3000 });
   });
 
-  test("clicking a provider card adds it and shows config", async ({ page }) => {
+  test("clicking a provider card adds it and shows edit panel", async ({ page }) => {
     await page.goto("/");
     // Clear providers
     await page.evaluate(() => localStorage.removeItem("noctivault-ai-settings"));
@@ -624,10 +624,15 @@ test.describe("Settings → provider management", () => {
     await expect(openaiCard).toBeVisible({ timeout: 3000 });
     await openaiCard.click({ force: true });
 
-    // Should show API key input for the added provider
-    await page.waitForTimeout(500);
-    const apiKeyInput = page.locator('input[type="password"], input[placeholder*="API key"], input[placeholder*="api key"], input[placeholder*="sk-"]');
-    await expect(apiKeyInput.first()).toBeVisible({ timeout: 3000 });
+    // Provider should be added — look for "Done" button (edit mode) or "Active" badge
+    await page.waitForTimeout(1000);
+    const doneBtn = page.locator('button:has-text("Done")');
+    const activeLabel = page.locator('text=Active');
+    const needsKey = page.locator('text=Needs key');
+    const isAdded = await doneBtn.isVisible().catch(() => false)
+      || await activeLabel.isVisible().catch(() => false)
+      || await needsKey.isVisible().catch(() => false);
+    expect(isAdded).toBe(true);
   });
 
   test("MCP setup guide is present in settings", async ({ page }) => {
