@@ -97,6 +97,15 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/theme-init.js" />
         <script
+          async
+          src="https://plausible.io/js/pa-xBu4TREpIrvhU1jTXnxON.js"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
