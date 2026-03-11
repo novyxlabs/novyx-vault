@@ -12,8 +12,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "TAURI=1 tauri build",
+    "tauri:dev": "STORAGE_MODE= NEXT_PUBLIC_SUPABASE_URL= tauri dev",
+    "tauri:build": "STORAGE_MODE= NEXT_PUBLIC_SUPABASE_URL= TAURI=1 tauri build",
     "test": "npx playwright test --project=functional",
     "test:unit": "vitest run",
     "test:demo": "npx playwright test --project=demo"

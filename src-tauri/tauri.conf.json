@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "identifier": "com.novyxlabs.vault",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev -- -p 3333",
+    "devUrl": "http://localhost:3333",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../.next/standalone"
   },

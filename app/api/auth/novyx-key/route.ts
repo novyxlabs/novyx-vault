@@ -5,8 +5,11 @@ import { storeNovyxKey } from "@/lib/novyx";
 
 /** GET — return masked Novyx key for current user */
 export async function GET() {
+  // Desktop mode — read from env var
   if (!isCloudMode()) {
-    return Response.json({ key: null, masked: null });
+    const key = process.env.NOVYX_MEMORY_API_KEY || null;
+    const masked = key ? key.slice(0, 8) + "..." + key.slice(-4) : null;
+    return Response.json({ hasKey: !!key, masked });
   }
 
   try {
@@ -32,18 +35,20 @@ export async function GET() {
 
 /** PUT — update Novyx key for current user */
 export async function PUT(req: NextRequest) {
+  const { key } = await req.json();
+
+  if (!key || typeof key !== "string" || key.trim().length < 8) {
+    return Response.json({ error: "Invalid API key" }, { status: 400 });
+  }
+
+  // Desktop mode — store in process.env (persists for this server session)
   if (!isCloudMode()) {
+    process.env.NOVYX_MEMORY_API_KEY = key.trim();
     return Response.json({ success: true });
   }
 
   try {
     const ctx = await getStorageContext();
-    const { key } = await req.json();
-
-    if (!key || typeof key !== "string" || key.trim().length < 8) {
-      return Response.json({ error: "Invalid API key" }, { status: 400 });
-    }
-
     await storeNovyxKey(ctx.userId!, key.trim());
     return Response.json({ success: true });
   } catch (e) {

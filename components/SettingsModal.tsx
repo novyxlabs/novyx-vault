@@ -70,7 +70,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   // Fetch Novyx key status when modal opens
   useEffect(() => {
-    if (isOpen && isCloud) {
+    if (isOpen) {
       fetch("/api/auth/novyx-key")
         .then((r) => r.ok ? r.json() : null)
         .then((data) => {
@@ -81,7 +81,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         })
         .catch(() => {});
     }
-  }, [isOpen, isCloud]);
+  }, [isOpen]);
 
   // Fetch digest settings when modal opens
   useEffect(() => {
@@ -286,8 +286,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {/* Novyx Memory Key Section (cloud mode only) */}
-          {isCloud && (
+          {/* Novyx Memory Key Section */}
+          {(
             <div className="rounded-lg overflow-hidden border border-purple-500/20" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(168,85,247,0.02) 100%)" }}>
               <div className="px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -387,7 +387,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     )}
                   </div>
                   <p className="text-[10px] text-muted/60 leading-relaxed">
-                    Powers memory, recall, insights, and knowledge graph. Stored securely server-side.
+                    Powers memory, recall, insights, and knowledge graph.{isCloud ? " Stored securely server-side." : " Persists for this session. Set NOVYX_MEMORY_API_KEY in .env.local for permanence."}
                   </p>
                 </div>
               )}
