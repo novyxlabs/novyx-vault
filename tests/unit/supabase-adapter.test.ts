@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // Mock Supabase before import
 vi.mock("@/lib/supabase", () => ({
@@ -142,5 +142,138 @@ describe("SupabaseAdapter.listNotes — buildTree", () => {
     await adapter.listNotes();
     // from() should only be called once (single query)
     expect(mockSupa.from).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("SupabaseAdapter.deleteNote — folder trash preserves child paths", () => {
+  it("sets each child's own path as original_path when trashing a folder", async () => {
+    const updateCalls: { data: Record<string, unknown>; id: string }[] = [];
+
+    const mockSupa = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockImplementation(function (this: unknown, _col: string, val: string) {
+            // Return folder target on first chain, children on second
+            const self = this as { _eqCount?: number };
+            if (!self._eqCount) self._eqCount = 0;
+            self._eqCount++;
+            return {
+              eq: vi.fn().mockReturnThis(),
+              or: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "folder-1", is_folder: true, path: "projects" },
+                  error: null,
+                }),
+              }),
+              like: vi.fn().mockResolvedValue({
+                data: [
+                  { id: "child-1", path: "projects/note-a" },
+                  { id: "child-2", path: "projects/sub/note-b" },
+                ],
+                error: null,
+              }),
+              single: vi.fn().mockResolvedValue({
+                data: { id: "folder-1", is_folder: true, path: "projects" },
+                error: null,
+              }),
+            };
+          }),
+        }),
+        update: vi.fn().mockImplementation((data: Record<string, unknown>) => ({
+          eq: vi.fn().mockImplementation((_col: string, id: string) => {
+            updateCalls.push({ data, id });
+            return Promise.resolve({ error: null });
+          }),
+        })),
+      }),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.deleteNote("projects");
+
+    // Verify each child got its own path as original_path
+    const childUpdates = updateCalls.filter(
+      (c) => c.id === "child-1" || c.id === "child-2"
+    );
+    expect(childUpdates).toHaveLength(2);
+
+    const child1 = childUpdates.find((c) => c.id === "child-1");
+    const child2 = childUpdates.find((c) => c.id === "child-2");
+    expect(child1?.data.original_path).toBe("projects/note-a");
+    expect(child2?.data.original_path).toBe("projects/sub/note-b");
+  });
+});
+
+describe("SupabaseAdapter.restoreFromTrash — folder restore includes children", () => {
+  it("restores a trashed folder and all its trashed children", async () => {
+    const updateCalls: { data: Record<string, unknown>; id: string }[] = [];
+
+    const mockSupa = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockImplementation(function (this: unknown) {
+            return {
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: {
+                      id: "folder-1",
+                      original_path: "projects",
+                      path: "projects",
+                      is_folder: true,
+                    },
+                    error: null,
+                  }),
+                }),
+                or: vi.fn().mockResolvedValue({
+                  data: [
+                    { id: "child-1", original_path: "projects/note-a", path: "projects/note-a" },
+                    { id: "child-2", original_path: "projects/sub/note-b", path: "projects/sub/note-b" },
+                  ],
+                  error: null,
+                }),
+              }),
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  id: "folder-1",
+                  original_path: "projects",
+                  path: "projects",
+                  is_folder: true,
+                },
+                error: null,
+              }),
+            };
+          }),
+        }),
+        update: vi.fn().mockImplementation((data: Record<string, unknown>) => ({
+          eq: vi.fn().mockImplementation((_col: string, id: string) => {
+            updateCalls.push({ data, id });
+            return Promise.resolve({ error: null });
+          }),
+        })),
+      }),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const restored = await adapter.restoreFromTrash("folder-1");
+
+    expect(restored).toBe("projects");
+
+    // Should have restored the folder + 2 children = 3 updates
+    expect(updateCalls.length).toBeGreaterThanOrEqual(3);
+
+    // Verify children were restored with their own original paths
+    const child1 = updateCalls.find((c) => c.id === "child-1");
+    const child2 = updateCalls.find((c) => c.id === "child-2");
+    expect(child1).toBeDefined();
+    expect(child2).toBeDefined();
+    expect(child1?.data.is_trashed).toBe(false);
+    expect(child2?.data.is_trashed).toBe(false);
+    expect(child1?.data.path).toBe("projects/note-a");
+    expect(child2?.data.path).toBe("projects/sub/note-b");
   });
 });

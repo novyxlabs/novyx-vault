@@ -106,8 +106,24 @@ export class FsAdapter implements StorageAdapter {
   }
 
   async renameNote(oldPath: string, newPath: string): Promise<void> {
-    const fullOldPath = sanitizePath(oldPath);
-    const fullNewPath = sanitizePath(newPath);
+    let fullOldPath = sanitizePath(oldPath);
+    let fullNewPath = sanitizePath(newPath);
+
+    // Check if old path is a file (not a folder)
+    const stat = await fs.stat(fullOldPath).catch(() => null);
+    if (!stat) {
+      // Try with .md extension
+      fullOldPath = fullOldPath + ".md";
+      await fs.stat(fullOldPath); // throws if truly not found
+    }
+
+    const oldStat = stat ?? await fs.stat(fullOldPath);
+
+    // If renaming a file, ensure .md extension is preserved
+    if (!oldStat.isDirectory() && !fullNewPath.endsWith(".md")) {
+      fullNewPath = fullNewPath + ".md";
+    }
+
     await ensureDir(path.dirname(fullNewPath));
     await fs.rename(fullOldPath, fullNewPath);
   }

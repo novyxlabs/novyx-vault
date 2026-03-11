@@ -3,7 +3,7 @@ import { createServiceSupabase } from "@/lib/supabase";
 
 function verifyCron(req: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) return true; // No secret configured = allow
+  if (!cronSecret) return false; // No secret configured = deny (prevent unauthenticated access)
   const authHeader = req.headers.get("authorization");
   return authHeader === `Bearer ${cronSecret}`;
 }

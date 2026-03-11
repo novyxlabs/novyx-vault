@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { getStorageContext } from "@/lib/auth";
-import { validateProviderBaseURL } from "@/lib/providers";
+import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface SlashAIRequest {
@@ -92,6 +92,14 @@ export async function POST(req: NextRequest) {
   if (urlError) {
     return new Response(
       JSON.stringify({ error: urlError }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const dnsError = await resolveAndValidateHost(provider.baseURL);
+  if (dnsError) {
+    return new Response(
+      JSON.stringify({ error: dnsError }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }

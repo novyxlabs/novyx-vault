@@ -206,17 +206,26 @@ export class SupabaseAdapter implements StorageAdapter {
     const now = new Date().toISOString();
 
     if (target.is_folder) {
-      // Trash the folder and all children
-      await this.supabase
+      // Trash the folder and all children — each child keeps its own path as original_path
+      const { data: children } = await this.supabase
         .from("notes")
-        .update({
-          is_trashed: true,
-          trashed_at: now,
-          original_path: target.path,
-        })
+        .select("id, path")
         .eq("user_id", this.userId)
         .eq("is_trashed", false)
         .like("path", `${target.path}/%`);
+
+      if (children) {
+        for (const child of children) {
+          await this.supabase
+            .from("notes")
+            .update({
+              is_trashed: true,
+              trashed_at: now,
+              original_path: child.path,
+            })
+            .eq("id", child.id);
+        }
+      }
     }
 
     // Trash the note/folder itself
@@ -302,7 +311,7 @@ export class SupabaseAdapter implements StorageAdapter {
   async restoreFromTrash(id: string): Promise<string> {
     const { data, error } = await this.supabase
       .from("notes")
-      .select("id, original_path, path")
+      .select("id, original_path, path, is_folder")
       .eq("id", id)
       .eq("user_id", this.userId)
       .eq("is_trashed", true)
@@ -312,6 +321,7 @@ export class SupabaseAdapter implements StorageAdapter {
 
     const restorePath = data.original_path ?? data.path;
 
+    // Restore the item itself
     const { error: updateError } = await this.supabase
       .from("notes")
       .update({
@@ -322,6 +332,31 @@ export class SupabaseAdapter implements StorageAdapter {
       .eq("id", id);
 
     if (updateError) throw new Error(updateError.message);
+
+    // If it's a folder, restore all trashed children that belonged to this folder
+    if (data.is_folder) {
+      const { data: children } = await this.supabase
+        .from("notes")
+        .select("id, original_path, path")
+        .eq("user_id", this.userId)
+        .eq("is_trashed", true)
+        .or(`original_path.like.${restorePath}/%,path.like.${restorePath}/%`);
+
+      if (children) {
+        for (const child of children) {
+          const childRestore = child.original_path ?? child.path;
+          await this.supabase
+            .from("notes")
+            .update({
+              is_trashed: false,
+              trashed_at: null,
+              path: childRestore,
+            })
+            .eq("id", child.id);
+        }
+      }
+    }
+
     return restorePath;
   }
 

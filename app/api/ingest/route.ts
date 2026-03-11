@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchUrlMetadata, formatAsMarkdown, summarizeWithAI } from "@/lib/ingest";
 import { getStorageContext } from "@/lib/auth";
-import { validateProviderBaseURL } from "@/lib/providers";
+import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface IngestRequest {
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const result = await fetchUrlMetadata(url);
 
     let summary: string | undefined;
-    if (summarize && provider?.apiKey && provider?.model && !validateProviderBaseURL(provider.baseURL)) {
+    if (summarize && provider?.apiKey && provider?.model && !validateProviderBaseURL(provider.baseURL) && !(await resolveAndValidateHost(provider.baseURL))) {
       const textToSummarize = result.articleText || result.description || "";
       if (textToSummarize.length > 50) {
         try {

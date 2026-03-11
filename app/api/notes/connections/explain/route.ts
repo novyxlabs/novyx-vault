@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getStorageContext } from "@/lib/auth";
-import { validateProviderBaseURL } from "@/lib/providers";
+import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ExplainRequest {
@@ -37,6 +37,11 @@ export async function POST(req: NextRequest) {
 
   const urlError = validateProviderBaseURL(provider.baseURL);
   if (urlError) {
+    return NextResponse.json({ explanation: "" });
+  }
+
+  const dnsError = await resolveAndValidateHost(provider.baseURL);
+  if (dnsError) {
     return NextResponse.json({ explanation: "" });
   }
 

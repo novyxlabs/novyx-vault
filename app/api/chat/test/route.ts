@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
-import { validateProviderBaseURL } from "@/lib/providers";
+import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
 import { getStorageContext } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
@@ -15,6 +15,11 @@ export async function POST(req: NextRequest) {
     const urlError = validateProviderBaseURL(baseURL);
     if (urlError) {
       return Response.json({ ok: false, error: urlError });
+    }
+
+    const dnsError = await resolveAndValidateHost(baseURL);
+    if (dnsError) {
+      return Response.json({ ok: false, error: dnsError });
     }
 
     const isLocal = baseURL.includes("localhost") || baseURL.includes("127.0.0.1");

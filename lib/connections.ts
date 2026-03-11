@@ -2,6 +2,7 @@ import path from "path";
 import { readNote, type StorageContext } from "./notes";
 import { recallMemories } from "./memory";
 import { searchNotes, getCachedNotes } from "./search";
+import { getUserNovyxKey } from "./novyx";
 
 export interface GhostConnection {
   notePath: string;
@@ -95,7 +96,16 @@ async function findSemanticConnections(
   limit: number,
   ctx?: StorageContext
 ): Promise<GhostConnection[]> {
-  const memories = await recallMemories(summary);
+  // Resolve Novyx API key from user context so semantic recall works in cloud mode
+  let apiKey: string | undefined;
+  if (ctx?.userId) {
+    try {
+      apiKey = (await getUserNovyxKey(ctx.userId, ctx.cookieHeader)) ?? undefined;
+    } catch {
+      // fall through — will try env var fallback
+    }
+  }
+  const memories = await recallMemories(summary, ctx?.userId, apiKey);
   if (memories.length === 0) return [];
 
   const results: GhostConnection[] = [];

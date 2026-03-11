@@ -6,7 +6,7 @@ import type { NoteEntry } from "@/lib/notes";
 import { recallMemories, rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
-import { validateProviderBaseURL } from "@/lib/providers";
+import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ChatMessage {
@@ -179,6 +179,15 @@ export async function POST(req: NextRequest) {
   if (urlError) {
     return new Response(
       JSON.stringify({ error: urlError }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // DNS resolution check — catch domains that resolve to private IPs (e.g. nip.io, sslip.io)
+  const dnsError = await resolveAndValidateHost(provider.baseURL);
+  if (dnsError) {
+    return new Response(
+      JSON.stringify({ error: dnsError }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }

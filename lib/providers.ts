@@ -333,6 +333,17 @@ const PRIVATE_IP_RE =
   /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.|169\.254\.)/;
 
 /**
+ * Check if an IP address is private/internal (RFC1918, loopback, link-local, etc.)
+ */
+function isPrivateIP(ip: string): boolean {
+  return PRIVATE_IP_RE.test(ip)
+    || ip === "::1" || ip === "[::1]"
+    || ip === "0.0.0.0"
+    || ip.startsWith("fc") || ip.startsWith("fd") // IPv6 ULA
+    || ip.startsWith("fe80"); // IPv6 link-local
+}
+
+/**
  * Validate that a provider baseURL is safe for server-side requests.
  * Returns null if valid, or an error message string if blocked.
  */
@@ -352,7 +363,7 @@ export function validateProviderBaseURL(baseURL: string): string | null {
   }
 
   // Block private/internal IPs
-  if (PRIVATE_IP_RE.test(host) || host === "[::1]" || host === "::1" || host === "0.0.0.0") {
+  if (isPrivateIP(host)) {
     return "Private network addresses are not allowed";
   }
 
@@ -366,12 +377,70 @@ export function validateProviderBaseURL(baseURL: string): string | null {
     return null;
   }
 
-  // Allow any HTTPS host (custom OpenAI-compatible endpoints)
-  if (parsed.protocol === "https:") {
+  // Require HTTPS for custom endpoints
+  if (parsed.protocol !== "https:") {
+    return "Only HTTPS URLs are allowed for remote providers";
+  }
+
+  // Block custom hosts that look like internal services
+  if (host.endsWith(".internal") || host.endsWith(".local") || !host.includes(".")) {
+    return "Internal hostnames are not allowed";
+  }
+
+  return null;
+}
+
+/**
+ * Resolve a hostname and verify none of its addresses are private.
+ * Call this at request time (after validateProviderBaseURL passes) to catch
+ * DNS rebinding attacks (e.g. 127.0.0.1.nip.io, attacker-controlled DNS).
+ * Returns null if safe, or an error message if blocked.
+ */
+export async function resolveAndValidateHost(baseURL: string): Promise<string | null> {
+  let parsed: URL;
+  try {
+    parsed = new URL(baseURL);
+  } catch {
+    return "Invalid provider URL";
+  }
+
+  const host = parsed.hostname;
+
+  // Skip DNS check for known provider hosts and localhost
+  if (ALLOWED_HOSTS.has(host) || host === "localhost" || host === "127.0.0.1") {
     return null;
   }
 
-  return "Only HTTPS URLs are allowed for remote providers";
+  try {
+    const dns = await import("dns");
+    const { resolve4, resolve6 } = dns.promises;
+
+    // Check both A and AAAA records
+    const [v4Result, v6Result] = await Promise.allSettled([
+      resolve4(host),
+      resolve6(host),
+    ]);
+
+    const addresses: string[] = [];
+    if (v4Result.status === "fulfilled") addresses.push(...v4Result.value);
+    if (v6Result.status === "fulfilled") addresses.push(...v6Result.value);
+
+    // If DNS returned no records at all, block
+    if (addresses.length === 0) {
+      return "Could not resolve provider hostname";
+    }
+
+    for (const addr of addresses) {
+      if (isPrivateIP(addr)) {
+        return "Provider hostname resolves to a private network address";
+      }
+    }
+  } catch {
+    // DNS resolution failed — block as a precaution
+    return "Could not resolve provider hostname";
+  }
+
+  return null;
 }
 
 const STORAGE_KEY = "noctivault-ai-settings";

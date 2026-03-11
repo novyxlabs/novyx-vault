@@ -8,7 +8,7 @@ import { getStorage } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 import OpenAI from "openai";
-import { validateProviderBaseURL } from "@/lib/providers";
+import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 const TASK_REGEX = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/;
@@ -180,6 +180,14 @@ export async function POST(req: NextRequest) {
   if (urlError) {
     return new Response(
       JSON.stringify({ error: urlError }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const dnsError = await resolveAndValidateHost(provider.baseURL);
+  if (dnsError) {
+    return new Response(
+      JSON.stringify({ error: dnsError }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }

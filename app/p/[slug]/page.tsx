@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServiceSupabase } from "@/lib/supabase";
+import { escapeHtml, formatInlineMarkdown } from "@/lib/sanitize";
 import type { Metadata } from "next";
 
 interface Props {
@@ -95,17 +96,8 @@ function renderMarkdown(content: string): string {
   return html.join("\n");
 }
 
-function esc(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function fmt(s: string) {
-  return esc(s)
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, "<code>$1</code>")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-}
+const esc = escapeHtml;
+const fmt = formatInlineMarkdown;
 
 export default async function PublishedNotePage({ params }: Props) {
   const { slug } = await params;
