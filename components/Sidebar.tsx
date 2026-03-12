@@ -40,6 +40,7 @@ import {
   User,
   Gauge,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
@@ -82,6 +83,7 @@ interface SidebarProps {
   onOpenUsage: () => void;
   onOpenAuditTrail: () => void;
   onOpenRollbackHistory: () => void;
+  onOpenControl: () => void;
   onOpenSettings: () => void;
   onSignOut?: () => void;
   onGoHome: () => void;
@@ -485,6 +487,7 @@ export default function Sidebar({
   onOpenUsage,
   onOpenAuditTrail,
   onOpenRollbackHistory,
+  onOpenControl,
   onOpenSettings,
   onSignOut,
   onGoHome,
@@ -1001,6 +1004,14 @@ export default function Sidebar({
             >
               <History size={13} />
               <span className="text-[10px] leading-none font-medium">Rollback History</span>
+            </button>
+            <button
+              onClick={onOpenControl}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-blue-400/60 hover:bg-blue-400/10 hover:text-blue-400 transition-all text-left"
+              title="Control — governed actions"
+            >
+              <ShieldCheck size={13} />
+              <span className="text-[10px] leading-none font-medium">Control</span>
             </button>
           </div>
           {/* Vault Tools */}
