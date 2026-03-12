@@ -1,12 +1,24 @@
 import { Novyx } from "novyx";
 import { getNovyxForKey } from "./novyx";
 
+const NOVYX_TIMEOUT_MS = 8000;
+
 /** Resolve a Novyx client from an explicit apiKey or fall back to env var */
 function resolveClient(apiKey?: string): Novyx | null {
   if (apiKey) return getNovyxForKey(apiKey);
   // Desktop fallback
   const envKey = process.env.NOVYX_MEMORY_API_KEY;
   return envKey ? getNovyxForKey(envKey) : null;
+}
+
+/** Race a Novyx SDK call against a timeout to prevent hanging */
+function withTimeout<T>(promise: Promise<T>, ms = NOVYX_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Novyx API timeout")), ms)
+    ),
+  ]);
 }
 
 /** Build the user-scoping tag for multi-user memory isolation */
@@ -26,7 +38,7 @@ export async function recallMemories(query: string, userId?: string, apiKey?: st
   if (!nx) return [];
   try {
     const tags = userTag(userId);
-    const results = await nx.recall(query, tags.length > 0 ? { tags } : undefined);
+    const results = await withTimeout(nx.recall(query, tags.length > 0 ? { tags } : undefined));
     return results.memories.map((m) => m.observation);
   } catch (e) {
     console.warn("[novyx] recallMemories failed:", e);
@@ -44,11 +56,11 @@ export async function rememberExchange(
   if (!nx) return;
   try {
     const tags = withUserTag(userId, ["source:vault"]);
-    await nx.remember(userMessage, {
+    await withTimeout(nx.remember(userMessage, {
       auto_link: true,
       context: aiResponse ? aiResponse.slice(0, 1000) : undefined,
       tags,
-    });
+    }));
   } catch (e) {
     console.warn("[novyx] rememberExchange failed:", e);
   }
@@ -76,7 +88,7 @@ export async function listMemories(
   try {
     const tags = userTag(userId);
     if (query && query.trim()) {
-      const results = await nx.recall(query, { limit, ...(tags.length > 0 && { tags }) });
+      const results = await withTimeout(nx.recall(query, { limit, ...(tags.length > 0 && { tags }) }));
       return {
         memories: results.memories.map((m) => ({
           uuid: m.uuid,
@@ -90,7 +102,7 @@ export async function listMemories(
         total: results.total_results,
       };
     }
-    const results = await nx.list({ limit, offset, ...(tags.length > 0 && { tags }) });
+    const results = await withTimeout(nx.list({ limit, offset, ...(tags.length > 0 && { tags }) }));
     return {
       memories: results.memories.map((m) => ({
         uuid: m.uuid,
@@ -112,7 +124,7 @@ export async function forgetMemory(id: string, apiKey?: string): Promise<boolean
   const nx = resolveClient(apiKey);
   if (!nx) return false;
   try {
-    return await nx.forget(id);
+    return await withTimeout(nx.forget(id));
   } catch (e) {
     console.warn("[novyx] forgetMemory failed:", e);
     return false;
@@ -134,7 +146,7 @@ export async function getCortexInsights(
   const nx = resolveClient(apiKey);
   if (!nx) return { insights: [], total: 0 };
   try {
-    const results = await nx.cortexInsights({ limit });
+    const results = await withTimeout(nx.cortexInsights({ limit }));
     return {
       insights: results.insights.map((i) => ({
         uuid: i.uuid,
@@ -160,7 +172,7 @@ export async function runCortex(apiKey?: string): Promise<{
   const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
-    return await nx.cortexRun();
+    return await withTimeout(nx.cortexRun());
   } catch (e) {
     console.warn("[novyx] runCortex failed:", e);
     return null;
@@ -196,10 +208,10 @@ export async function getKnowledgeGraph(apiKey?: string): Promise<{
   const nx = resolveClient(apiKey);
   if (!nx) return { nodes: [], edges: [] };
   try {
-    const [entityResult, tripleResult] = await Promise.all([
+    const [entityResult, tripleResult] = await withTimeout(Promise.all([
       nx.entities({ limit: 200 }),
       nx.triples({ limit: 500 }),
-    ]);
+    ]));
 
     const nodes: KGNode[] = entityResult.entities.map((e) => ({
       id: e.entity_id,
@@ -237,7 +249,7 @@ export async function getReplayTimeline(
   const nx = resolveClient(apiKey);
   if (!nx) return { entries: [], total: 0 };
   try {
-    const result = await nx.replayTimeline({ limit });
+    const result = await withTimeout(nx.replayTimeline({ limit }));
     return {
       entries: result.entries.map((e) => ({
         timestamp: e.timestamp,
@@ -274,7 +286,7 @@ export async function getMemoryDrift(
   const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
-    const result = await nx.replayDrift(from, to);
+    const result = await withTimeout(nx.replayDrift(from, to));
     return {
       memoryCountFrom: result.memory_count_from,
       memoryCountTo: result.memory_count_to,
@@ -326,7 +338,7 @@ export async function getAuditLog(
   const nx = resolveClient(apiKey);
   if (!nx) return [];
   try {
-    const entries = await nx.audit({ limit });
+    const entries = await withTimeout(nx.audit({ limit }));
     return entries.map((e) => ({
       timestamp: e.timestamp as string,
       operation: inferOperation(e.method as string, e.endpoint as string),
@@ -344,7 +356,7 @@ export async function getMemoryUsage(apiKey?: string): Promise<Record<string, un
   const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
-    return await nx.usage();
+    return await withTimeout(nx.usage());
   } catch (e) {
     console.warn("[novyx] getMemoryUsage failed:", e);
     return null;
@@ -357,7 +369,7 @@ export async function verifyAuditChain(
   const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
-    const data = await nx.auditVerify();
+    const data = await withTimeout(nx.auditVerify());
     return {
       integrity_guarantee: !!data.integrity_guarantee,
       status: data.status || "unknown",
@@ -385,7 +397,7 @@ export async function getDashboard(apiKey?: string): Promise<DashboardData | nul
   const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
-    return await nx.dashboard() as DashboardData;
+    return await withTimeout(nx.dashboard()) as DashboardData;
   } catch (e) {
     console.warn("[novyx] getDashboard failed:", e);
     return null;
@@ -396,7 +408,7 @@ export async function getContextNow(apiKey?: string): Promise<ContextNow | null>
   const nx = resolveClient(apiKey);
   if (!nx) return null;
   try {
-    const result = await nx.contextNow();
+    const result = await withTimeout(nx.contextNow());
     const mapMem = (m: { uuid: string; observation: string; tags: string[]; importance: number; confidence: number; created_at: string }) => ({
       uuid: m.uuid,
       observation: m.observation,
