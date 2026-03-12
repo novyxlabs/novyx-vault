@@ -56,4 +56,26 @@ describe("published note link sanitization", () => {
     const result = sanitizeHref("JaVaScRiPt:alert(1)");
     expect(result).toBe("");
   });
+
+  it("escapes double quotes in href to prevent attribute breakout", () => {
+    const payload = 'https://example.com" onmouseover="alert(1)';
+    const result = sanitizeHref(payload);
+    expect(result).not.toContain('"');
+    expect(result).toContain("&quot;");
+  });
+
+  it("escapes single quotes in href", () => {
+    const payload = "https://example.com' onmouseover='alert(1)";
+    const result = sanitizeHref(payload);
+    expect(result).not.toContain("'");
+    expect(result).toContain("&#39;");
+  });
+
+  it("produces safe HTML when link has quote injection payload", () => {
+    const md = '[click](https://example.com" onmouseover="alert(1))';
+    const html = formatInlineMarkdown(md);
+    // The " should be escaped so onmouseover stays inside the href value, not a real attribute
+    expect(html).not.toMatch(/" onmouseover="/);
+    expect(html).toContain("&quot;");
+  });
 });

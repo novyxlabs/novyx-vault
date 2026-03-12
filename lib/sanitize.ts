@@ -6,14 +6,16 @@
 export function sanitizeHref(url: string): string {
   const decoded = url.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
   const trimmed = decoded.trim().toLowerCase();
+  let safe = "";
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("mailto:")) {
-    return url;
+    safe = url;
+  } else if ((trimmed.startsWith("/") || trimmed.startsWith("#")) && !trimmed.startsWith("//")) {
+    // Allow relative paths and anchors, but block protocol-relative URLs (//evil.example)
+    safe = url;
   }
-  // Allow relative paths and anchors, but block protocol-relative URLs (//evil.example)
-  if ((trimmed.startsWith("/") || trimmed.startsWith("#")) && !trimmed.startsWith("//")) {
-    return url;
-  }
-  return "";
+  if (!safe) return "";
+  // Escape characters that could break out of an HTML attribute
+  return safe.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 /** HTML-escape a string for safe insertion into HTML */

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStorageContext } from "@/lib/auth";
+import { getStorageContext, isCloudMode } from "@/lib/auth";
 import { createServerSupabase } from "@/lib/supabase";
 
 function slugify(text: string): string {
@@ -15,6 +15,9 @@ function slugify(text: string): string {
 // GET — check publish status
 export async function GET(req: NextRequest) {
   try {
+    if (!isCloudMode()) {
+      return NextResponse.json({ isPublished: false, slug: null, publishedAt: null });
+    }
     const ctx = await getStorageContext();
     const { searchParams } = new URL(req.url);
     const path = searchParams.get("path");
@@ -45,6 +48,9 @@ export async function GET(req: NextRequest) {
 // POST — publish or unpublish
 export async function POST(req: NextRequest) {
   try {
+    if (!isCloudMode()) {
+      return NextResponse.json({ error: "Publishing requires cloud mode" }, { status: 400 });
+    }
     const ctx = await getStorageContext();
     const { path, publish, slug: customSlug } = await req.json();
     if (!path) return NextResponse.json({ error: "Path required" }, { status: 400 });

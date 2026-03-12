@@ -13,7 +13,9 @@ async function ensureDir(dir: string) {
 
 function sanitizePath(inputPath: string): string {
   const resolved = path.resolve(NOTES_DIR, inputPath);
-  if (!resolved.startsWith(NOTES_DIR)) {
+  // Use NOTES_DIR + separator to prevent sibling-prefix bypass
+  // (e.g. /Users/.../SecondBrain-backup matching /Users/.../SecondBrain)
+  if (resolved !== NOTES_DIR && !resolved.startsWith(NOTES_DIR + path.sep)) {
     throw new Error("Invalid path: outside notes directory");
   }
   return resolved;
