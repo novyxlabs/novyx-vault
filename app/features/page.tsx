@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  Brain, FileText, Network, GitBranch, History, Sparkles, BarChart3,
-  Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight,
+  Brain, FileText, Network, GitBranch, History, Sparkles,
+  Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight, Link2,
 } from "lucide-react";
 import {
   MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
@@ -11,9 +11,9 @@ import {
 } from "@/components/FeatureDemos";
 
 export const metadata: Metadata = {
-  title: "Features",
+  title: "Features — Novyx Vault",
   description:
-    "Explore Novyx Vault features: persistent AI memory, wiki-style linking, knowledge graph, Ghost Connections, memory rollback, multi-provider AI, and more.",
+    "Markdown notes, wiki-links, knowledge graph, persistent AI memory, Ghost Connections, memory rollback, 18+ AI providers, and more.",
   alternates: { canonical: "/features" },
 };
 
@@ -40,81 +40,52 @@ export default function FeaturesPage() {
             Features
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Everything you need to capture, connect, and recall your knowledge &mdash; with AI that
-            gets smarter the longer you use it.
+            A complete workspace for capturing, connecting, and recalling your knowledge &mdash;
+            with AI that gets smarter the longer you use it.
           </p>
         </section>
 
         {/* Feature Sections */}
         <div className="space-y-20">
+          {/* Notes-first features */}
           <Feature
-            icon={<Brain size={28} />}
-            title="Persistent AI Memory"
-            id="memory"
+            icon={<FileText size={28} />}
+            title="Markdown Editor"
+            id="editor"
           >
             <p>
-              Most AI tools forget everything when you close the tab. Novyx Vault is different. Powered
-              by the Novyx SDK, your AI assistant builds a persistent memory that grows over time. It
-              remembers your projects, preferences, writing style, and the relationships between your ideas.
-            </p>
-            <p>
-              The more notes you write and save to memory, the more useful your AI becomes. Ask it about
-              a project from last month and it responds with full context. Over time, your AI evolves from
-              a generic assistant into something that truly understands how you think.
+              A fast, keyboard-driven editor built on CodeMirror 6. Live preview, syntax highlighting,
+              and familiar shortcuts. Your notes are plain markdown files &mdash; open them in any text
+              editor, sync them with Git, or back them up however you want.
             </p>
             <ul>
-              <li>Memories persist across sessions &mdash; nothing is lost when you close the app</li>
-              <li>AI context improves with every note you save to memory</li>
-              <li>Per-user memory isolation in cloud mode &mdash; your memories are yours alone</li>
+              <li>Live preview with full GitHub-flavored markdown support</li>
+              <li>Slash commands for quick formatting and AI actions</li>
+              <li>Autosave with version history</li>
+              <li>Templates for common note types</li>
             </ul>
-            <MemoryDemo />
           </Feature>
 
           <Feature
-            icon={<FileText size={28} />}
-            title="Wiki-Style Linking &amp; Backlinks"
+            icon={<Link2 size={28} />}
+            title="Wiki-Links & Backlinks"
             id="linking"
           >
             <p>
               Connect your ideas using familiar [[wiki-link]] syntax. Type <code>[[</code> and an
-              autocomplete menu appears, letting you quickly link to any note in your vault. Every link
-              is bidirectional &mdash; when you link note A to note B, note B automatically shows a
-              backlink to note A.
+              autocomplete menu appears, letting you link to any note in your vault. Every link
+              is bidirectional &mdash; backlinks appear automatically below each note.
             </p>
             <p>
-              Backlinks appear in a dedicated panel below each note, giving you instant visibility into
-              how your ideas are connected. This creates an organic web of knowledge that grows naturally
-              as you write.
+              This creates an organic web of knowledge that grows naturally as you write. No need
+              to plan your structure upfront &mdash; just write and link.
             </p>
             <ul>
               <li>Autocomplete wiki-link insertion with <code>[[</code> trigger</li>
               <li>Automatic bidirectional backlinks</li>
-              <li>Clickable links in both editor and preview modes</li>
+              <li>Clickable links in both editor and preview</li>
             </ul>
             <WikiLinkDemo />
-          </Feature>
-
-          <Feature
-            icon={<Network size={28} />}
-            title="Ghost Connections"
-            id="ghost-connections"
-          >
-            <p>
-              Ghost Connections are AI-discovered relationships between your notes that you never
-              explicitly created. When you open a note, Novyx Vault analyzes its content and finds
-              related notes across your vault &mdash; even when they share no keywords or explicit links.
-            </p>
-            <p>
-              Each Ghost Connection includes a colored badge showing how the relationship was discovered:
-              shared tags, content similarity, semantic meaning, or entity overlap. Click any connection
-              to navigate directly to the related note.
-            </p>
-            <ul>
-              <li>Automatic discovery &mdash; no manual tagging or linking required</li>
-              <li>Multiple discovery methods: semantic, keyword, tag, and entity matching</li>
-              <li>Updates dynamically as you navigate between notes</li>
-            </ul>
-            <GhostConnectionsDemo />
           </Feature>
 
           <Feature
@@ -123,14 +94,13 @@ export default function FeaturesPage() {
             id="knowledge-graph"
           >
             <p>
-              See your entire vault as an interactive, force-directed graph. Every note is a node, every
-              wiki-link is an edge. Zoom, pan, and drag to explore the structure of your knowledge.
-              Click any node to open the note directly.
+              See your entire vault as an interactive, force-directed graph. Every note is a node,
+              every wiki-link is an edge. Zoom, pan, and drag to explore how your ideas connect.
+              Click any node to open the note.
             </p>
             <p>
-              The graph visualization reveals clusters of related ideas, orphaned notes that need
-              connections, and the overall topology of your thinking. It is a bird&apos;s-eye view of
-              everything you know.
+              The graph reveals clusters of related ideas, orphaned notes that need connections,
+              and the overall shape of your thinking.
             </p>
             <ul>
               <li>Interactive force-directed layout</li>
@@ -140,43 +110,82 @@ export default function FeaturesPage() {
             <KnowledgeGraphDemo />
           </Feature>
 
+          {/* AI-powered features */}
+          <Feature
+            icon={<Brain size={28} />}
+            title="Persistent AI Memory"
+            id="memory"
+          >
+            <p>
+              Most AI tools forget everything when you close the tab. Novyx Vault is different.
+              Your AI assistant builds a persistent memory that grows over time. It remembers your
+              projects, your preferences, your writing style, and the relationships between your ideas.
+            </p>
+            <p>
+              Ask about a project from last month and it responds with full context. The more you
+              use it, the more useful it becomes &mdash; like an assistant that actually knows you.
+            </p>
+            <ul>
+              <li>Memories persist across sessions &mdash; nothing is lost when you close the app</li>
+              <li>AI context improves with every note you save</li>
+              <li>Your memories are yours alone &mdash; fully private and portable</li>
+            </ul>
+            <MemoryDemo />
+          </Feature>
+
+          <Feature
+            icon={<Network size={28} />}
+            title="Ghost Connections"
+            id="ghost-connections"
+          >
+            <p>
+              Ghost Connections are AI-discovered relationships between your notes that you never
+              explicitly created. When you open a note, Vault analyzes its content and finds related
+              notes across your vault &mdash; even without shared keywords or links.
+            </p>
+            <p>
+              Each connection includes a badge showing how it was discovered: shared tags, content
+              similarity, semantic meaning, or entity overlap. Click any connection to jump to the
+              related note.
+            </p>
+            <ul>
+              <li>Automatic discovery &mdash; no manual tagging required</li>
+              <li>Multiple discovery methods: semantic, keyword, tag, and entity matching</li>
+              <li>Updates dynamically as you navigate</li>
+            </ul>
+            <GhostConnectionsDemo />
+          </Feature>
+
           <Feature
             icon={<History size={28} />}
-            title="Memory Rollback &amp; Timeline"
+            title="Memory Timeline & Rollback"
             id="memory-rollback"
           >
             <p>
-              Every memory your AI stores is timestamped and versioned. The Memory Dashboard lets you
-              browse your AI&apos;s memory timeline, see exactly what it remembers, and roll back to
-              previous states if needed.
+              Every memory your AI stores is timestamped and versioned. Browse the full timeline,
+              see exactly what your AI remembers, and roll back to previous states if needed.
             </p>
             <p>
-              Accidentally told your AI something wrong? Travel back to before that memory was stored
-              and restore a clean state. You have full control over what your AI knows and when it
-              learned it.
+              Told your AI something wrong? Travel back to before that memory was stored and restore
+              a clean state. You always have full control over what your AI knows.
             </p>
             <ul>
               <li>Full memory timeline with timestamps</li>
               <li>One-click rollback to any previous state</li>
-              <li>Memory audit log for transparency</li>
+              <li>Audit trail for complete transparency</li>
             </ul>
             <MemoryRollbackDemo />
           </Feature>
 
           <Feature
             icon={<Sparkles size={28} />}
-            title="Cortex Insights &amp; Entity Extraction"
+            title="Insights & Entity Extraction"
             id="cortex"
           >
             <p>
-              As your vault grows, Cortex Insights analyzes your accumulated knowledge and surfaces
-              emerging themes, patterns, and connections you may not have noticed. It is like having a
-              research assistant that reads everything you write and highlights the bigger picture.
-            </p>
-            <p>
-              Entity Extraction automatically identifies people, projects, concepts, and relationships
-              in your notes. These entities build a semantic knowledge graph &mdash; a structured map
-              of everything in your vault that makes AI recall even more powerful.
+              As your vault grows, Vault analyzes your accumulated knowledge and surfaces
+              emerging themes, patterns, and connections you may not have noticed. It&apos;s like
+              having a research assistant that reads everything you write and highlights the bigger picture.
             </p>
             <ul>
               <li>Automatic theme detection across your vault</li>
@@ -187,15 +196,33 @@ export default function FeaturesPage() {
           </Feature>
 
           <Feature
+            icon={<Zap size={28} />}
+            title="AI Writing Tools"
+            id="writing-tools"
+          >
+            <p>
+              Beyond chat, Vault includes writing tools designed for how you actually think.
+              Brain Dump takes messy thoughts and transforms them into structured notes.
+              Clip Remix takes content from the web and rewrites it in your voice.
+            </p>
+            <ul>
+              <li>Brain Dump &mdash; raw thoughts to structured notes</li>
+              <li>Clip Remix &mdash; rewrite clipped content in your voice</li>
+              <li>Slash commands for inline AI help</li>
+              <li>Weekly Review &mdash; AI summary of your writing activity</li>
+            </ul>
+            <WritingToolsDemo />
+          </Feature>
+
+          <Feature
             icon={<Key size={28} />}
-            title="Bring Your Own AI Key"
+            title="Bring Your Own AI"
             id="byok"
           >
             <p>
-              Novyx Vault works with the AI provider you already use and trust. Connect your own API
-              key and choose from over a dozen providers. Your API keys are stored in your browser&apos;s
-              local storage only &mdash; they are sent to our server solely to proxy the request and are
-              never persisted.
+              Novyx Vault works with the AI provider you already use. Connect your own API key
+              and choose from 18+ providers. Your keys are stored in your browser only &mdash;
+              they never touch our servers.
             </p>
             <Providers />
             <BYOKDemo />
@@ -203,18 +230,13 @@ export default function FeaturesPage() {
 
           <Feature
             icon={<WifiOff size={28} />}
-            title="Local-First Architecture"
+            title="Desktop App — Local & Offline"
             id="local-first"
           >
             <p>
-              In desktop mode, your notes are plain markdown files stored in a folder on your machine.
-              No database, no cloud dependency, no account required. Open them in any text editor,
-              sync them with Git, or back them up however you want.
-            </p>
-            <p>
-              This local-first approach means Novyx Vault works offline, starts instantly, and gives
-              you complete ownership of your data. If you ever stop using Novyx Vault, your notes are
-              already in a universal format.
+              In desktop mode, your notes are plain markdown files in a folder on your machine.
+              No database, no cloud, no account required. Works offline, starts instantly, and gives
+              you complete ownership of your data.
             </p>
             <ul>
               <li>Plain markdown files on disk</li>
@@ -230,36 +252,15 @@ export default function FeaturesPage() {
             id="cloud-sync"
           >
             <p>
-              For cross-device access, enable cloud mode with Supabase-powered storage. Your notes are
-              stored in a Postgres database with row-level security, ensuring only you can access your
-              data. Authentication supports email/password, Google, and GitHub.
+              For cross-device access, cloud mode syncs your notes securely. Settings, themes,
+              and pinned notes carry over everywhere. Sign in with GitHub or Google.
             </p>
             <ul>
-              <li>Supabase Postgres with row-level security</li>
-              <li>Settings sync across devices (theme, pinned notes, AI providers)</li>
-              <li>OAuth login with Google and GitHub</li>
+              <li>Secure sync across devices</li>
+              <li>Publish notes with a shareable link</li>
+              <li>Daily digest emails with AI-surfaced highlights</li>
             </ul>
             <CloudSyncDemo />
-          </Feature>
-
-          <Feature
-            icon={<Zap size={28} />}
-            title="AI-Powered Writing Tools"
-            id="writing-tools"
-          >
-            <p>
-              Beyond chat, Novyx Vault includes specialized AI writing tools designed for knowledge work.
-              Brain Dump takes unstructured thoughts and transforms them into organized, well-structured
-              notes. Clip Remix takes content you&apos;ve clipped from the web and rewrites it in your
-              personal voice, matching the style of your existing notes.
-            </p>
-            <ul>
-              <li>Brain Dump &mdash; raw thoughts to structured notes</li>
-              <li>Clip Remix &mdash; rewrite clipped content in your voice</li>
-              <li>Slash commands for inline AI assistance</li>
-              <li>Weekly Review &mdash; AI-generated summary of your writing activity</li>
-            </ul>
-            <WritingToolsDemo />
           </Feature>
 
           <Feature
@@ -268,15 +269,14 @@ export default function FeaturesPage() {
             id="open-source"
           >
             <p>
-              Novyx Vault is fully open source. Every line of code is available for inspection. You can
-              contribute features, report bugs, or fork the entire project. The desktop app is built with
-              Tauri for native performance on macOS, Windows, and Linux.
+              Every line of code is on GitHub. Contribute features, report bugs, or fork the project.
+              Self-host with your own infrastructure if you want full control.
             </p>
             <ul>
-              <li>Full source code available on GitHub</li>
-              <li>Self-hostable with your own Supabase instance</li>
-              <li>Desktop apps via Tauri (macOS, Windows, Linux)</li>
-              <li>Built with Next.js, React, TypeScript, Tailwind CSS</li>
+              <li>Full source code on GitHub</li>
+              <li>Self-hostable</li>
+              <li>Desktop apps for macOS, Windows, and Linux</li>
+              <li>Built with Next.js, React, TypeScript, and Tailwind</li>
             </ul>
             <OpenSourceDemo />
           </Feature>
@@ -284,7 +284,7 @@ export default function FeaturesPage() {
 
         {/* CTA */}
         <section className="text-center pt-20 pb-8">
-          <h2 className="text-2xl font-bold mb-4">Ready to build your second brain?</h2>
+          <h2 className="text-2xl font-bold mb-4">Ready to try it?</h2>
           <p className="text-muted mb-8">
             Free to use. No credit card required.
           </p>

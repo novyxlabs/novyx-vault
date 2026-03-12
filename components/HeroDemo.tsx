@@ -3,18 +3,18 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 const NOTES = [
-  { name: "Meeting Notes", active: true },
+  { name: "Reading Notes", active: true },
   { name: "Project Ideas", active: false },
-  { name: "Q3 Review", active: false },
-  { name: "AI Research", active: false },
-  { name: "Weekly Plan", active: false },
+  { name: "Book List", active: false },
+  { name: "Travel Plans", active: false },
+  { name: "Weekly Review", active: false },
 ];
 
 const TYPED_TEXT =
-  "Discussed the Q4 roadmap with the team. Key priorities: launch AI memory features, expand provider support, and ship the desktop app by end of quarter.";
+  "Finished reading chapter on spaced repetition. The key insight: memory works best when you revisit ideas at increasing intervals. Connects to my notes on learning habits.";
 
 const ROLLBACK_TEXT =
-  "Met with the team to review Q3 results. Revenue up 40% from last quarter...";
+  "Started outlining the thesis structure. Three main sections: background, methodology...";
 
 // Phase durations in ms
 const PHASE_TYPING = 0;
@@ -133,7 +133,7 @@ export default function HeroDemo() {
         {/* Editor */}
         <div className="flex-1 flex flex-col p-3 sm:p-4 overflow-hidden relative">
           <div className="text-sm sm:text-base font-bold text-foreground mb-2 font-mono">
-            # Meeting Notes
+            # Reading Notes
           </div>
           <div
             className={`text-xs sm:text-sm text-muted leading-relaxed font-mono transition-opacity duration-300 ${
@@ -160,8 +160,8 @@ export default function HeroDemo() {
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-muted leading-snug">
-                Related to your <span className="text-accent">Q3 Review</span> notes —
-                you previously discussed launching AI features as a top priority.
+                Related to your <span className="text-accent">Learning Habits</span> notes —
+                you wrote about the Feynman technique and active recall last week.
               </p>
             </div>
           )}

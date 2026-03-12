@@ -7,10 +7,12 @@ export default function VerifyEmailPage() {
   const [resending, setResending] = useState(false);
   const [message, setMessage] = useState("");
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  function getSupabase() {
+    return createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
 
   async function handleResend() {
     setResending(true);
@@ -18,9 +20,9 @@ export default function VerifyEmailPage() {
     try {
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await getSupabase().auth.getUser();
       if (user?.email) {
-        const { error } = await supabase.auth.resend({
+        const { error } = await getSupabase().auth.resend({
           type: "signup",
           email: user.email,
         });
@@ -35,7 +37,7 @@ export default function VerifyEmailPage() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    await getSupabase().auth.signOut();
     window.location.href = "/login";
   }
 

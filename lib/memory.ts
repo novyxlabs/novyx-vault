@@ -1,7 +1,7 @@
 import { Novyx } from "novyx";
 import { getNovyxForKey } from "./novyx";
 
-const NOVYX_TIMEOUT_MS = 8000;
+const NOVYX_TIMEOUT_MS = 3000;
 
 /** Resolve a Novyx client from an explicit apiKey or fall back to env var */
 function resolveClient(apiKey?: string): Novyx | null {

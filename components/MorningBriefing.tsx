@@ -237,15 +237,23 @@ export default function MorningBriefing({
   const { text: greeting, subtext, Icon: GreetingIcon } = getGreeting();
   const themes = extractThemes(briefing);
 
-  /* ---- Loading skeleton ---- */
+  /* ---- Loading: show greeting immediately, skeleton only for data sections ---- */
   if (!loaded) {
     return (
       <div className="w-full max-w-2xl mx-auto px-4 py-8 md:px-6 md:py-12">
         <div className="space-y-8">
-          {/* Greeting skeleton */}
+          {/* Show real greeting immediately — no skeleton */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <GreetingIcon size={22} className={greeting.includes("morning") ? "text-amber-400" : greeting.includes("evening") ? "text-indigo-400" : "text-orange-400"} />
+              <h1 className="text-xl font-semibold text-foreground">{greeting}</h1>
+            </div>
+            <p className="text-sm text-muted">{subtext}</p>
+          </div>
+          {/* Skeleton for data sections only */}
           <div className="space-y-3">
-            <div className="h-7 w-64 rounded-lg bg-card-bg animate-pulse" />
-            <div className="h-4 w-80 rounded bg-card-bg animate-pulse" />
+            <div className="h-5 w-40 rounded bg-card-bg animate-pulse" />
+            <div className="h-4 w-72 rounded bg-card-bg animate-pulse" />
           </div>
           {/* Themes skeleton */}
           <div className="flex gap-2">

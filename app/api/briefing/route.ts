@@ -54,14 +54,20 @@ export async function GET() {
   const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
   const nowISO = now.toISOString();
 
-  // Fetch all data in parallel
-  const [context, insights, drift, recentMems, taskData] = await Promise.all([
+  // Fetch all data in parallel — fail gracefully so page loads fast
+  const [contextR, insightsR, driftR, recentMemsR, taskDataR] = await Promise.allSettled([
     getContextNow(nk),
     getCortexInsights(5, nk),
     getMemoryDrift(weekAgo, nowISO, nk),
     listMemories(undefined, 10, 0, ctx.userId, nk),
     scanPendingTasks(ctx.userId, ctx.cookieHeader),
   ]);
+
+  const context = contextR.status === "fulfilled" ? contextR.value : null;
+  const insights = insightsR.status === "fulfilled" ? insightsR.value : { insights: [] };
+  const drift = driftR.status === "fulfilled" ? driftR.value : null;
+  const recentMems = recentMemsR.status === "fulfilled" ? recentMemsR.value : { total: 0 };
+  const taskData = taskDataR.status === "fulfilled" ? taskDataR.value : { taskCount: 0, tasksDue: [], noteCount: 0 };
 
   const filterUserTags = (tags: string[]) => tags.filter((t) => !t.startsWith("user:"));
 

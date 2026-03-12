@@ -38,10 +38,12 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [touched, setTouched] = useState({ email: false, password: false });
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  function getSupabase() {
+    return createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -78,7 +80,7 @@ export default function LoginPage() {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error } = await getSupabase().auth.signInWithPassword({
           email,
           password,
         });
@@ -87,7 +89,7 @@ export default function LoginPage() {
         fetch("/api/auth/provision", { method: "POST" }).catch(() => {});
         window.location.href = "/";
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { error } = await getSupabase().auth.signUp({
           email,
           password,
         });
@@ -114,7 +116,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await getSupabase().auth.signInWithOAuth({
         provider,
         options: { redirectTo: `${window.location.origin}/api/auth/callback` },
       });

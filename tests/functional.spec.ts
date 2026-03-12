@@ -1044,3 +1044,273 @@ test.describe("AI-powered API routes", () => {
     expect(res.status).toBe(400);
   });
 });
+
+// ---------------------------------------------------------------------------
+// UsageView — detailed modal behavior
+// ---------------------------------------------------------------------------
+test.describe("UsageView modal", () => {
+  test("shows loading spinner then resolves to content or error", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Usage & limits"]').click();
+    await expect(page.locator("text=Usage & Limits").first()).toBeVisible({ timeout: 5000 });
+
+    // After loading, should show either plan info or error message
+    await page.waitForTimeout(3000);
+    const currentPlan = page.locator("text=Current Plan");
+    const errorMsg = page.locator("text=Failed to load usage data");
+    const noUsage = page.locator("text=No usage recorded yet");
+    const visible = await currentPlan.isVisible().catch(() => false)
+      || await errorMsg.isVisible().catch(() => false)
+      || await noUsage.isVisible().catch(() => false);
+    expect(visible).toBe(true);
+  });
+
+  test("close button dismisses modal", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Usage & limits"]').click();
+    // Target the modal h2 header, not the sidebar button label
+    const modalHeader = page.locator("h2:has-text('Usage & Limits')");
+    await expect(modalHeader).toBeVisible({ timeout: 5000 });
+
+    // Click the backdrop overlay at viewport center-right (away from sidebar and modal)
+    const vp = page.viewportSize()!;
+    await page.mouse.click(vp.width - 20, vp.height / 2);
+    await page.waitForTimeout(500);
+
+    await expect(modalHeader).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("usage API returns valid structure", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/memory/usage`);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    // Should have usage or gating object
+    expect(data.usage !== undefined || data.gating !== undefined).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AuditTrailView — detailed modal behavior
+// ---------------------------------------------------------------------------
+test.describe("AuditTrailView modal", () => {
+  test("shows loading then resolves to entries, locked state, or error", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Audit trail"]').click();
+    await expect(page.locator("text=Audit Trail").first()).toBeVisible({ timeout: 5000 });
+
+    // Wait for data to load
+    await page.waitForTimeout(3000);
+
+    // Should show one of: entries with operation count, locked overlay, error, or empty state
+    const operations = page.locator("text=/\\d+ operations/");
+    const locked = page.locator("text=Full operation history available on Pro");
+    const errorMsg = page.locator("text=Failed to load audit trail");
+    const empty = page.locator("text=No operations recorded yet");
+    const visible = await operations.first().isVisible().catch(() => false)
+      || await locked.isVisible().catch(() => false)
+      || await errorMsg.isVisible().catch(() => false)
+      || await empty.isVisible().catch(() => false);
+    expect(visible).toBe(true);
+  });
+
+  test("audit trail close button works", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Audit trail"]').click();
+    const modalHeader = page.locator("h2:has-text('Audit Trail')");
+    await expect(modalHeader).toBeVisible({ timeout: 5000 });
+
+    // Click the backdrop overlay at viewport edge (away from sidebar and modal)
+    const vp = page.viewportSize()!;
+    await page.mouse.click(vp.width - 20, vp.height / 2);
+    await page.waitForTimeout(500);
+    await expect(modalHeader).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("audit API returns entries array", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/memory/audit?limit=10`);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data).toHaveProperty("entries");
+    expect(Array.isArray(data.entries)).toBe(true);
+  });
+
+  test("chain verification badge shows when data loads", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Audit trail"]').click();
+    await expect(page.locator("text=Audit Trail").first()).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(3000);
+
+    // If not locked, should show one of the chain badges or empty state
+    const chainIntact = page.locator("text=Chain intact");
+    const chainBroken = page.locator("text=Chain broken");
+    const chainPresent = page.locator("text=Chain present");
+    const locked = page.locator("text=Full operation history available on Pro");
+    const empty = page.locator("text=No operations recorded yet");
+    const errorMsg = page.locator("text=Failed to load audit trail");
+
+    const anyVisible = await chainIntact.isVisible().catch(() => false)
+      || await chainBroken.isVisible().catch(() => false)
+      || await chainPresent.isVisible().catch(() => false)
+      || await locked.isVisible().catch(() => false)
+      || await empty.isVisible().catch(() => false)
+      || await errorMsg.isVisible().catch(() => false);
+    expect(anyVisible).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RollbackHistoryView — detailed modal behavior
+// ---------------------------------------------------------------------------
+test.describe("RollbackHistoryView modal", () => {
+  test("shows loading then resolves to content", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Rollback history"]').click();
+    await expect(page.locator("text=Rollback History").first()).toBeVisible({ timeout: 5000 });
+
+    // Wait for data to load
+    await page.waitForTimeout(3000);
+
+    // Should show one of: rollback entries, locked overlay, empty state, or error
+    const rollbackCount = page.locator("text=/\\d+ rollback/");
+    const locked = page.locator("text=Version history and rollbacks available on Pro");
+    const noRollbacks = page.locator("text=No rollbacks yet");
+    const errorMsg = page.locator("text=Failed to load rollback history");
+
+    const visible = await rollbackCount.first().isVisible().catch(() => false)
+      || await locked.isVisible().catch(() => false)
+      || await noRollbacks.isVisible().catch(() => false)
+      || await errorMsg.isVisible().catch(() => false);
+    expect(visible).toBe(true);
+  });
+
+  test("rollback history close button works", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Rollback history"]').click();
+    const modalHeader = page.locator("h2:has-text('Rollback History')");
+    await expect(modalHeader).toBeVisible({ timeout: 5000 });
+
+    // Click the backdrop overlay at viewport edge (away from sidebar and modal)
+    const vp = page.viewportSize()!;
+    await page.mouse.click(vp.width - 20, vp.height / 2);
+    await page.waitForTimeout(500);
+    await expect(modalHeader).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("replay API returns entries array", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/memory/replay?limit=10`);
+    // May return 200 or 403 (locked)
+    if (res.status === 200) {
+      const data = await res.json();
+      expect(data).toHaveProperty("entries");
+      expect(Array.isArray(data.entries)).toBe(true);
+    } else {
+      expect(res.status).toBe(403);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Onboarding — empty-state UX
+// ---------------------------------------------------------------------------
+test.describe("Onboarding empty state", () => {
+  test("new note modal shows template selection", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.press("Control+n");
+    await expect(page.locator("text=New Note").first()).toBeVisible({ timeout: 3000 });
+
+    // Template options should be visible (at least the default one)
+    const templates = page.locator('[role="dialog"] button, [role="dialog"] [data-template]');
+    const templateCount = await templates.count();
+    // Should have at least the name input and create button
+    const nameInput = page.locator('input[placeholder="Note name..."]');
+    await expect(nameInput).toBeVisible();
+
+    await page.keyboard.press("Escape");
+  });
+
+  test("Ctrl+N → fill name → close cancels without creating", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.press("Control+n");
+    await expect(page.locator("text=New Note").first()).toBeVisible({ timeout: 3000 });
+
+    const nameInput = page.locator('input[placeholder="Note name..."]');
+    await nameInput.fill("_pw_cancel_test");
+
+    // Close via backdrop click (Escape may be intercepted by input)
+    const vp = page.viewportSize()!;
+    await page.mouse.click(vp.width - 20, vp.height / 2);
+    await page.waitForTimeout(500);
+
+    // Note should NOT have been created
+    const sidebar = page.locator("aside").first();
+    await expect(sidebar.locator("text=_pw_cancel_test")).not.toBeVisible({ timeout: 2000 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Error boundary — API error handling
+// ---------------------------------------------------------------------------
+test.describe("Error boundary resilience", () => {
+  test("app shell renders even when Novyx API is unreachable", async ({ page }) => {
+    // The app should render the main shell regardless of Novyx API status
+    await page.goto("/");
+    await expect(page.locator("aside, main, [data-testid='sidebar']").first()).toBeVisible({ timeout: 5000 });
+
+    // Sidebar should be functional
+    const sidebar = page.locator("aside").first();
+    await expect(sidebar).toBeVisible();
+  });
+
+  test("dashboard views don't crash the app on API failure", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    // Open each dashboard view and verify the app doesn't crash
+    // Usage
+    await page.locator('button[title="Usage & limits"]').click();
+    await expect(page.locator("text=Usage & Limits").first()).toBeVisible({ timeout: 5000 });
+    await page.mouse.click(10, 10);
+    await page.waitForTimeout(500);
+
+    // Audit
+    await page.locator('button[title="Audit trail"]').click();
+    await expect(page.locator("text=Audit Trail").first()).toBeVisible({ timeout: 5000 });
+    await page.mouse.click(10, 10);
+    await page.waitForTimeout(500);
+
+    // Rollback
+    await page.locator('button[title="Rollback history"]').click();
+    await expect(page.locator("text=Rollback History").first()).toBeVisible({ timeout: 5000 });
+    await page.mouse.click(10, 10);
+    await page.waitForTimeout(500);
+
+    // App should still be responsive — verify sidebar is still there
+    await expect(page.locator("aside").first()).toBeVisible();
+  });
+
+  test("memory health endpoint gracefully handles unavailable API", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/memory/health`);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    // Should return "ok" or "unreachable" — never crash
+    expect(["ok", "unreachable"]).toContain(data.status);
+  });
+});

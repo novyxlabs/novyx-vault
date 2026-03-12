@@ -1,8 +1,9 @@
 "use client";
 
 import {
-  Brain, FileText, Wifi, WifiOff, Network, GitBranch, Github, ArrowRight,
-  Sparkles, History, BarChart3, Key, Shield, Layers, Zap, BookOpen,
+  Brain, FileText, Network, Github, ArrowRight,
+  Sparkles, History, Key, Search, PenTool, Link2, FolderTree,
+  Download,
 } from "lucide-react";
 import HeroDemo from "./HeroDemo";
 
@@ -14,7 +15,6 @@ export default function LandingPage() {
         <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
         <div className="flex items-center gap-4">
           <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors hidden sm:inline">Features</a>
-          <a href="https://novyx.ai" target="_blank" rel="noopener noreferrer" className="text-sm text-muted hover:text-foreground transition-colors hidden sm:inline">Novyx Core</a>
           <a
             href="https://github.com/novyxlabs"
             target="_blank"
@@ -37,20 +37,12 @@ export default function LandingPage() {
         {/* Hero */}
         <section className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
-            An open-source AI workspace with{" "}
-            <span className="text-accent">persistent memory</span>
+            A notes app where your AI{" "}
+            <span className="text-accent">actually remembers you</span>
           </h1>
-          <p className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-4">
-            Your notes, your AI&apos;s memory, and cryptographic proof that nothing was lost or changed.
-            Built on{" "}
-            <a href="https://novyx.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-              Novyx Core
-            </a>.
-          </p>
-          <p className="text-base text-muted max-w-2xl mx-auto mb-10">
-            Use it as your AI-powered workspace, or install{" "}
-            <code className="text-sm bg-card-bg px-1.5 py-0.5 rounded border border-sidebar-border">novyx-mcp</code>{" "}
-            in Claude Desktop or Cursor and manage your agent&apos;s memories here when you upgrade to cloud.
+          <p className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-10">
+            Markdown notes, wiki-links, and a knowledge graph &mdash; like Obsidian.
+            But with an AI assistant that learns your projects, your writing style, and your ideas over time.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
@@ -61,13 +53,10 @@ export default function LandingPage() {
               <ArrowRight size={18} />
             </a>
             <a
-              href="https://github.com/novyxlabs"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/features"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-sidebar-border text-muted hover:text-foreground hover:border-[var(--text-secondary,#a1a1aa)] transition-colors font-medium"
             >
-              <Github size={18} />
-              View on GitHub
+              See All Features
             </a>
           </div>
           <div className="mt-16 px-2">
@@ -75,125 +64,186 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Features Grid */}
+        {/* The problem */}
+        <section className="max-w-3xl mx-auto px-6 py-16 text-center">
+          <p className="text-lg text-muted leading-relaxed">
+            Every AI assistant starts from zero. Every conversation.
+            You explain your project again. You repeat your preferences.
+            You lose context the moment you close the tab.
+          </p>
+          <p className="text-lg text-foreground font-medium mt-6">
+            Novyx Vault fixes that.
+          </p>
+        </section>
+
+        {/* Core experience — what you get */}
         <section className="max-w-5xl mx-auto px-6 py-16">
           <h2 className="text-2xl font-bold text-center mb-4">
-            Where human thinking meets agent memory
+            Everything you&apos;d expect from a great notes app
           </h2>
           <p className="text-center text-muted mb-12 max-w-2xl mx-auto">
-            One workspace for your notes and your AI&apos;s context. Markdown files, persistent memory,
-            and a verifiable audit trail &mdash; no black boxes.
+            Plain markdown, wiki-links, backlinks, a knowledge graph, and a fast editor.
+            If you&apos;ve used Obsidian, you&apos;ll feel at home.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard
-              icon={<Brain size={24} />}
-              title="Persistent AI Memory"
-              description="Your AI remembers across sessions, tools, and conversations. Memories created via MCP, API, or the Vault UI all live in one place — searchable, auditable, and yours."
-            />
-            <FeatureCard
-              icon={<Shield size={24} />}
-              title="Cryptographic Audit Trail"
-              description="Every memory operation is hash-chained. See exactly what was stored, recalled, or deleted — with cryptographic proof the chain is intact. Nothing lost, nothing changed."
-            />
-            <FeatureCard
               icon={<FileText size={24} />}
-              title="Markdown Workspace"
-              description="A CodeMirror-based editor with live preview, wiki-links, backlinks, and syntax highlighting. Your notes are plain markdown files — no vendor lock-in, no proprietary formats."
+              title="Markdown Editor"
+              description="A fast editor with live preview, syntax highlighting, and keyboard shortcuts. Your notes are plain markdown — no proprietary formats, no lock-in."
+            />
+            <FeatureCard
+              icon={<Link2 size={24} />}
+              title="Wiki-Links & Backlinks"
+              description="Connect ideas with [[wiki-links]]. Every link is bidirectional — backlinks appear automatically. Build a web of knowledge as you write."
             />
             <FeatureCard
               icon={<Network size={24} />}
-              title="Ghost Connections"
-              description="AI discovers hidden relationships between your notes — even without shared keywords or explicit links. Surface connections you never knew existed."
+              title="Knowledge Graph"
+              description="See your vault as an interactive graph. Zoom, pan, and click to explore how your notes connect. Spot clusters, orphans, and patterns at a glance."
             />
             <FeatureCard
-              icon={<History size={24} />}
-              title="Memory Rollback"
-              description="Made a mistake? Roll back your AI's memory to any point in time. See exactly what changed, how many memories were affected, and restore previous states."
+              icon={<FolderTree size={24} />}
+              title="Folders, Tags & Search"
+              description="Organize however you think — nested folders, inline tags, or full-text search. Pin favorites, drag to reorder, and filter instantly."
             />
             <FeatureCard
               icon={<Key size={24} />}
               title="Bring Your Own AI"
               description="Works with 18+ providers — OpenAI, Anthropic, Gemini, Ollama, and more. Your API keys stay in your browser. Switch providers anytime."
             />
+            <FeatureCard
+              icon={<Download size={24} />}
+              title="Local-First & Open Source"
+              description="Desktop app stores files on your machine. Cloud mode syncs across devices. Export everything anytime. Fully open source — inspect every line."
+            />
           </div>
         </section>
 
-        {/* Two paths */}
-        <section className="max-w-5xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-bold text-center mb-12">
-            Two ways in, one workspace
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center mb-4 text-sm font-bold">
-                A
-              </div>
-              <h3 className="font-semibold mb-2">Start with Vault</h3>
-              <p className="text-sm text-muted leading-relaxed mb-3">
-                Sign up, write notes in markdown, and add an AI provider. Your AI gets persistent memory
-                powered by Novyx &mdash; it remembers your projects, preferences, and thinking patterns
-                across every session.
-              </p>
-              <p className="text-xs text-muted leading-relaxed">
-                Best for: developers who want an AI-first notes app that actually remembers them.
-              </p>
-            </div>
-            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center mb-4 text-sm font-bold">
-                B
-              </div>
-              <h3 className="font-semibold mb-2">Start with MCP</h3>
-              <p className="text-sm text-muted leading-relaxed mb-3">
-                Install <code className="text-xs bg-background px-1 py-0.5 rounded border border-sidebar-border">novyx-mcp</code> in
-                Claude Desktop or Cursor. Your agent gets local memory via SQLite. When you upgrade to cloud,
-                open Vault to see, search, and manage those memories alongside your notes.
-              </p>
-              <p className="text-xs text-muted leading-relaxed">
-                Best for: developers already using AI coding agents who want their agent to remember context.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Trust & Proof */}
+        {/* The differentiator — AI Memory */}
         <section className="max-w-5xl mx-auto px-6 py-16">
           <h2 className="text-2xl font-bold text-center mb-4">
-            Trust through transparency
+            Now add AI that <span className="text-accent">never forgets</span>
           </h2>
           <p className="text-center text-muted mb-12 max-w-2xl mx-auto">
-            Most AI tools are black boxes. Novyx Vault gives you a verifiable record of every memory
-            operation &mdash; with hash-chained proof, usage dashboards, and full rollback history.
+            This is what makes Novyx Vault different. Your AI builds persistent memory
+            from your notes and conversations. The longer you use it, the more useful it becomes.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <DiffCard
-              icon={<Shield size={24} />}
-              title="Hash-Chained Audit"
-              description="Every store, recall, and delete is logged with a SHA-256 hash linked to the previous entry. Verify chain integrity anytime. Tamper-evident by design."
-            />
-            <DiffCard
-              icon={<History size={24} />}
-              title="Rollback History"
-              description="See exactly what changed and when. Roll back to any point in time, with counts of memories restored and removed. Full timeline grouped by day."
-            />
-            <DiffCard
-              icon={<BarChart3 size={24} />}
-              title="Usage Dashboard"
-              description="Monitor memory counts, API usage, spend estimates, and pressure levels in real time. Know exactly where you stand against plan limits."
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <Brain size={24} className="text-accent mb-3" />
+              <h3 className="font-semibold mb-2">Persistent Memory</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Your AI remembers your projects, preferences, and thinking patterns across every session.
+                Ask about something from last month and it responds with full context.
+                No more re-explaining yourself.
+              </p>
+            </div>
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <Sparkles size={24} className="text-accent mb-3" />
+              <h3 className="font-semibold mb-2">Ghost Connections</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                AI discovers hidden relationships between your notes &mdash; even without shared keywords
+                or explicit links. Surface connections you never knew existed and see your ideas from a new angle.
+              </p>
+            </div>
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <History size={24} className="text-accent mb-3" />
+              <h3 className="font-semibold mb-2">Memory Timeline & Rollback</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                See exactly what your AI remembers and when it learned it. Made a mistake?
+                Roll back to any point in time. You&apos;re always in control of what your AI knows.
+              </p>
+            </div>
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <PenTool size={24} className="text-accent mb-3" />
+              <h3 className="font-semibold mb-2">Writing Tools</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Brain Dump turns raw thoughts into structured notes. Clip Remix rewrites web content in
+                your voice. Slash commands give you inline AI help. Weekly Review summarizes your writing activity.
+              </p>
+            </div>
           </div>
         </section>
 
-        {/* Bring Your Own AI */}
+        {/* How it compares */}
+        <section className="max-w-4xl mx-auto px-6 py-16">
+          <h2 className="text-2xl font-bold text-center mb-12">
+            How it compares
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-sidebar-border">
+                  <th className="text-left py-3 pr-4 font-medium text-muted" />
+                  <th className="text-center py-3 px-4 font-semibold text-accent">Novyx Vault</th>
+                  <th className="text-center py-3 px-4 font-medium text-muted">Obsidian</th>
+                  <th className="text-center py-3 px-4 font-medium text-muted">Notion</th>
+                </tr>
+              </thead>
+              <tbody className="text-muted">
+                <tr className="border-b border-sidebar-border/50">
+                  <td className="py-3 pr-4">Markdown files</td>
+                  <td className="text-center py-3 px-4 text-accent">Yes</td>
+                  <td className="text-center py-3 px-4">Yes</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                </tr>
+                <tr className="border-b border-sidebar-border/50">
+                  <td className="py-3 pr-4">Wiki-links & backlinks</td>
+                  <td className="text-center py-3 px-4 text-accent">Yes</td>
+                  <td className="text-center py-3 px-4">Yes</td>
+                  <td className="text-center py-3 px-4 text-muted/50">Limited</td>
+                </tr>
+                <tr className="border-b border-sidebar-border/50">
+                  <td className="py-3 pr-4">Knowledge graph</td>
+                  <td className="text-center py-3 px-4 text-accent">Yes</td>
+                  <td className="text-center py-3 px-4">Plugin</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                </tr>
+                <tr className="border-b border-sidebar-border/50">
+                  <td className="py-3 pr-4">AI with persistent memory</td>
+                  <td className="text-center py-3 px-4 text-accent">Built in</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                </tr>
+                <tr className="border-b border-sidebar-border/50">
+                  <td className="py-3 pr-4">AI-discovered connections</td>
+                  <td className="text-center py-3 px-4 text-accent">Built in</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                </tr>
+                <tr className="border-b border-sidebar-border/50">
+                  <td className="py-3 pr-4">Memory rollback & audit</td>
+                  <td className="text-center py-3 px-4 text-accent">Built in</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                </tr>
+                <tr className="border-b border-sidebar-border/50">
+                  <td className="py-3 pr-4">Bring your own AI provider</td>
+                  <td className="text-center py-3 px-4 text-accent">18+</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                </tr>
+                <tr>
+                  <td className="py-3 pr-4">Open source</td>
+                  <td className="text-center py-3 px-4 text-accent">Yes</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                  <td className="text-center py-3 px-4 text-muted/50">No</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Providers */}
         <section className="max-w-4xl mx-auto px-6 py-16">
           <div className="p-8 rounded-2xl border border-sidebar-border bg-card-bg">
             <div className="flex items-center gap-3 mb-4">
               <Key size={24} className="text-accent" />
-              <h2 className="text-2xl font-bold">Bring your own AI</h2>
+              <h2 className="text-2xl font-bold">Works with the AI you already use</h2>
             </div>
             <p className="text-muted mb-6 max-w-xl">
-              Novyx Vault works with the AI provider you already use. Connect your own API key and
-              choose from over a dozen providers. Your keys stay in your browser &mdash; they never
-              touch our servers.
+              Connect your own API key. Your keys stay in your browser &mdash; they never touch our servers.
+              Switch providers anytime without losing your memory or notes.
             </p>
             <div className="flex flex-wrap gap-2">
               {["OpenAI", "Anthropic", "DeepSeek", "Ollama", "LM Studio", "Groq", "Together", "Mistral", "Gemini", "Cerebras", "Moonshot"].map((provider) => (
@@ -208,51 +258,31 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Why Novyx Vault */}
-        <section className="max-w-4xl mx-auto px-6 py-16">
+        {/* Desktop + Cloud */}
+        <section className="max-w-5xl mx-auto px-6 py-16">
           <h2 className="text-2xl font-bold text-center mb-12">
-            Why Novyx Vault?
+            Use it your way
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex gap-4">
-              <Shield size={20} className="text-accent shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold mb-1">Privacy by default</h3>
-                <p className="text-sm text-muted leading-relaxed">
-                  Local-first means your data never leaves your machine unless you opt into cloud sync.
-                  API keys are stored in your browser only. We never see your notes or AI conversations.
-                </p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <h3 className="font-semibold mb-2">Desktop App</h3>
+              <p className="text-sm text-muted leading-relaxed mb-3">
+                Free, private, offline. Your notes live as plain markdown files on your machine.
+                No account needed. Works without internet.
+              </p>
+              <p className="text-xs text-muted/60">
+                macOS, Windows, and Linux via Tauri.
+              </p>
             </div>
-            <div className="flex gap-4">
-              <Layers size={20} className="text-accent shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold mb-1">No vendor lock-in</h3>
-                <p className="text-sm text-muted leading-relaxed">
-                  Notes are plain markdown. Memories are portable via the Novyx API. Export everything
-                  anytime. Self-host the entire stack if you want.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <Zap size={20} className="text-accent shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold mb-1">MCP-native</h3>
-                <p className="text-sm text-muted leading-relaxed">
-                  Install novyx-mcp in any MCP-compatible tool. Memories sync to Vault automatically.
-                  One API key connects your agent&apos;s context to your personal workspace.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <BookOpen size={20} className="text-accent shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold mb-1">AI writing tools</h3>
-                <p className="text-sm text-muted leading-relaxed">
-                  Brain Dump converts raw thoughts into structured notes. Clip Remix rewrites content in
-                  your voice. AI chat responds with full context of your vault and memory.
-                </p>
-              </div>
+            <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
+              <h3 className="font-semibold mb-2">Cloud</h3>
+              <p className="text-sm text-muted leading-relaxed mb-3">
+                Sync across devices, publish notes, share with a link, and get daily digest emails.
+                Sign in with GitHub or Google.
+              </p>
+              <p className="text-xs text-muted/60">
+                Free tier available. No credit card required.
+              </p>
             </div>
           </div>
         </section>
@@ -263,8 +293,8 @@ export default function LandingPage() {
             <Github size={32} className="mx-auto mb-4 text-muted" />
             <h2 className="text-2xl font-bold mb-3">Open Source</h2>
             <p className="text-muted mb-6 max-w-lg mx-auto">
-              Novyx Vault is fully open source. Inspect every line of code, contribute features,
-              report issues, or self-host your own instance. Built transparently by Novyx Labs.
+              Inspect every line of code, contribute features, or self-host your own instance.
+              Your notes, your data, your rules.
             </p>
             <a
               href="https://github.com/novyxlabs"
@@ -276,6 +306,23 @@ export default function LandingPage() {
               View on GitHub
             </a>
           </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="max-w-3xl mx-auto px-6 py-16 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Ready to try it?
+          </h2>
+          <p className="text-muted mb-8">
+            Free to use. No credit card. Takes 30 seconds.
+          </p>
+          <a
+            href="/login"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-accent text-white text-lg font-semibold hover:opacity-90 transition-opacity"
+          >
+            Get Started Free
+            <ArrowRight size={20} />
+          </a>
         </section>
       </main>
 
@@ -321,16 +368,6 @@ export default function LandingPage() {
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg hover:border-[var(--text-secondary,#a1a1aa)] transition-colors">
-      <div className="text-accent mb-3">{icon}</div>
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted leading-relaxed">{description}</p>
-    </div>
-  );
-}
-
-function DiffCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
       <div className="text-accent mb-3">{icon}</div>
       <h3 className="font-semibold mb-2">{title}</h3>
       <p className="text-sm text-muted leading-relaxed">{description}</p>
