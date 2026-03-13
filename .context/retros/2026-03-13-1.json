@@ -1,0 +1,35 @@
+{
+  "date": "2026-03-13",
+  "window": "7d",
+  "metrics": {
+    "commits": 50,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 5567,
+    "deletions": 1945,
+    "net_loc": 3622,
+    "test_loc": 1156,
+    "test_ratio": 0.21,
+    "active_days": 7,
+    "sessions": 21,
+    "deep_sessions": 3,
+    "avg_session_minutes": 16,
+    "loc_per_session_hour": 1000,
+    "feat_pct": 0.10,
+    "fix_pct": 0.56,
+    "peak_hour": 20,
+    "ai_assisted_commits": 0
+  },
+  "authors": {
+    "Eden": {
+      "commits": 50,
+      "insertions": 5567,
+      "deletions": 1945,
+      "test_ratio": 0.21,
+      "top_area": "components/"
+    }
+  },
+  "version_range": ["0.1.0", "0.1.0"],
+  "streak_days": 11,
+  "tweetable": "Week of Mar 6: 50 commits, 5.6k LOC (+3.6k net), 21% tests, peak: 8pm PT | Streak: 11d"
+}

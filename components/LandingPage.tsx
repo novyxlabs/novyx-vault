@@ -14,9 +14,9 @@ export default function LandingPage() {
       <nav aria-label="Main navigation" className="flex items-center justify-between max-w-6xl mx-auto px-6 py-5">
         <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
         <div className="flex items-center gap-4">
-          <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors hidden sm:inline">Features</a>
+          <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors">Features</a>
           <a
-            href="https://github.com/novyxlabs"
+            href="https://github.com/novyxlabs/novyx-vault"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub"
@@ -297,7 +297,7 @@ export default function LandingPage() {
               Your notes, your data, your rules.
             </p>
             <a
-              href="https://github.com/novyxlabs"
+              href="https://github.com/novyxlabs/novyx-vault"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-white font-semibold hover:opacity-90 transition-opacity"
@@ -351,7 +351,7 @@ export default function LandingPage() {
               Privacy
             </a>
             <a
-              href="https://github.com/novyxlabs"
+              href="https://github.com/novyxlabs/novyx-vault"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground transition-colors"

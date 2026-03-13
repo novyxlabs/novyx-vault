@@ -57,7 +57,13 @@ export default function LoginPage() {
     }
   }, []);
 
-  const emailError = touched.email && !email.trim() ? "Email is required" : "";
+  const emailError = touched.email
+    ? !email.trim()
+      ? "Email is required"
+      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        ? "Please enter a valid email"
+        : ""
+    : "";
   const passwordError = touched.password && !password ? "Password is required" : "";
 
   async function handleSubmit(e: React.FormEvent) {
@@ -66,13 +72,14 @@ export default function LoginPage() {
     setMessage("");
 
     // Validate
-    if (!email.trim() || !password) {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password) {
       setTouched({ email: true, password: true });
-      if (!email.trim()) {
-        setError("Email is required");
-      } else {
-        setError("Password is required");
-      }
+      return;
+    }
+
+    if (mode === "signup" && !PASSWORD_RULES.every((rule) => rule.test(password))) {
+      setTouched({ email: true, password: true });
+      setError("Password does not meet requirements");
       return;
     }
 
@@ -337,10 +344,10 @@ export default function LoginPage() {
             )}
           </div>
 
-          {mode === "signup" && password.length > 0 && (
+          {mode === "signup" && (
             <div style={{ marginBottom: 12, marginTop: 8 }}>
               {PASSWORD_RULES.map((rule) => {
-                const passed = rule.test(password);
+                const passed = password.length > 0 && rule.test(password);
                 return (
                   <div
                     key={rule.label}
@@ -349,8 +356,9 @@ export default function LoginPage() {
                       alignItems: "center",
                       gap: 6,
                       fontSize: 12,
-                      color: passed ? "#22c55e" : "var(--muted, #a1a1aa)",
+                      color: passed ? "#22c55e" : touched.password && password.length > 0 && !rule.test(password) ? "#ef4444" : "var(--muted, #a1a1aa)",
                       marginBottom: 2,
+                      transition: "color 0.2s",
                     }}
                   >
                     <span style={{ fontSize: 10 }}>{passed ? "\u2713" : "\u2022"}</span>
