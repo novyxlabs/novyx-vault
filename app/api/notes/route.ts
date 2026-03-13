@@ -24,9 +24,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
-    const { path: notePath, content, isFolder } = await req.json();
+    const { path: notePath, content, isFolder, _method } = await req.json();
     if (!notePath) {
       return NextResponse.json({ error: "Path is required" }, { status: 400 });
+    }
+
+    // Support sendBeacon saves (always POST) — treat _method:"PUT" as a save
+    if (_method === "PUT") {
+      if (content === undefined) {
+        return NextResponse.json({ error: "Content required" }, { status: 400 });
+      }
+      await writeNote(notePath, content, ctx);
+      return NextResponse.json({ success: true });
     }
 
     if (isFolder) {

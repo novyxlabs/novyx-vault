@@ -15,6 +15,7 @@ interface NoteEditorProps {
   content: string;
   onChange: (content: string) => void;
   isSaving: boolean;
+  saveError?: string | null;
   onFileDrop?: (fileName: string, content: string) => void;
   onNavigateWikiLink?: (linkText: string) => void;
   onSelectNote?: (path: string) => void;
@@ -55,7 +56,7 @@ function getStats(text: string) {
   return { words, chars, readTime: `${mins} min read` };
 }
 
-export default function NoteEditor({ notePath, content, onChange, isSaving, onFileDrop, onNavigateWikiLink, onSelectNote, onToggleChat, isChatOpen, onRestore, onIngestLink, onPasteUrl, noteModifiedAt }: NoteEditorProps) {
+export default function NoteEditor({ notePath, content, onChange, isSaving, saveError, onFileDrop, onNavigateWikiLink, onSelectNote, onToggleChat, isChatOpen, onRestore, onIngestLink, onPasteUrl, noteModifiedAt }: NoteEditorProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   useEffect(() => {
     if (window.innerWidth < 768) setViewMode("editor");
@@ -325,6 +326,7 @@ ${htmlLines.join("\n")}
           <div className="flex items-center gap-2 text-muted">
             <span className="text-xs">{noteName}</span>
             {isSaving && <span className="text-xs animate-pulse">Saving...</span>}
+            {saveError && <span className="text-xs text-red-400">Save failed</span>}
           </div>
           <button
             onClick={() => setIsFocusMode(false)}
@@ -384,6 +386,9 @@ ${htmlLines.join("\n")}
           {isSaving && (
             <span className="text-xs text-muted animate-pulse shrink-0">Saving...</span>
           )}
+          {saveError && (
+            <span className="text-xs text-red-400 shrink-0" title={saveError}>Save failed</span>
+          )}
           <span className="text-[11px] text-muted tabular-nums ml-1 shrink-0">
             {stats.words.toLocaleString()} words · {stats.readTime}
           </span>
@@ -391,6 +396,9 @@ ${htmlLines.join("\n")}
         <div className="md:hidden flex items-center">
           {isSaving && (
             <span className="text-xs text-muted animate-pulse">Saving...</span>
+          )}
+          {saveError && (
+            <span className="text-xs text-red-400">Save failed</span>
           )}
         </div>
 

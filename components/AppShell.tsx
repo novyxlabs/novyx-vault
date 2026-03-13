@@ -49,6 +49,7 @@ export default function AppShell() {
   const [activeNote, setActiveNote] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isEmptyDragOver, setIsEmptyDragOver] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -112,15 +113,21 @@ export default function AppShell() {
     }
     const pending = pendingSave.current;
     if (pending && pending.content.trim()) {
-      pendingSave.current = null;
       try {
-        await fetch("/api/notes", {
+        const res = await fetch("/api/notes", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ path: pending.path, content: pending.content }),
         });
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "Unknown error");
+          throw new Error(`Save failed (${res.status}): ${msg}`);
+        }
+        pendingSave.current = null;
+        setSaveError(null);
       } catch (err) {
         console.error("Failed to flush save:", err);
+        setSaveError(err instanceof Error ? err.message : "Save failed");
       } finally {
         setIsSaving(false);
       }
@@ -139,14 +146,20 @@ export default function AppShell() {
       }
       pendingSave.current = { path, content: newContent };
       setIsSaving(true);
+      setSaveError(null);
       saveTimeout.current = setTimeout(async () => {
-        pendingSave.current = null;
         try {
-          await fetch("/api/notes", {
+          const res = await fetch("/api/notes", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ path, content: newContent }),
           });
+          if (!res.ok) {
+            const msg = await res.text().catch(() => "Unknown error");
+            throw new Error(`Save failed (${res.status}): ${msg}`);
+          }
+          pendingSave.current = null;
+          setSaveError(null);
           // Record writing activity for streak tracking
           try {
             const today = new Date().toISOString().slice(0, 10);
@@ -171,6 +184,7 @@ export default function AppShell() {
           }
         } catch (err) {
           console.error("Failed to save note:", err);
+          setSaveError(err instanceof Error ? err.message : "Save failed");
         } finally {
           setIsSaving(false);
         }
@@ -178,6 +192,26 @@ export default function AppShell() {
     },
     []
   );
+
+  // Flush pending saves on tab close / navigation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (pendingSave.current) {
+        // Synchronous send — navigator.sendBeacon for reliability
+        const pending = pendingSave.current;
+        navigator.sendBeacon(
+          "/api/notes",
+          new Blob(
+            [JSON.stringify({ path: pending.path, content: pending.content, _method: "PUT" })],
+            { type: "application/json" }
+          )
+        );
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   useEffect(() => {
     loadNotes();
@@ -695,6 +729,7 @@ export default function AppShell() {
               content={content}
               onChange={handleContentChange}
               isSaving={isSaving}
+              saveError={saveError}
               onFileDrop={handleFileDrop}
               onNavigateWikiLink={handleNavigateWikiLink}
               onSelectNote={handleSelectNote}
