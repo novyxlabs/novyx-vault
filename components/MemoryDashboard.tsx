@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock, Check, BookOpen } from "lucide-react";
+import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock, Check, BookOpen, GitPullRequest } from "lucide-react";
 import MemoryGraph from "./MemoryGraph";
+import DraftReview from "./DraftReview";
 
 interface Memory {
   uuid: string;
@@ -48,7 +49,7 @@ interface MemoryDashboardProps {
   onClose: () => void;
 }
 
-type Tab = "memories" | "learned" | "timeline" | "insights" | "context" | "graph" | "replay" | "audit";
+type Tab = "memories" | "learned" | "review" | "timeline" | "insights" | "context" | "graph" | "replay" | "audit";
 
 interface ReplayEntry {
   timestamp: string;
@@ -578,6 +579,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "memories", label: "Memories", icon: <Brain size={14} /> },
     { id: "learned", label: "Learned", icon: <BookOpen size={14} /> },
+    { id: "review", label: "Review", icon: <GitPullRequest size={14} /> },
     { id: "timeline", label: "Timeline", icon: <CalendarDays size={14} /> },
     { id: "insights", label: "Insights", icon: <Sparkles size={14} /> },
     { id: "context", label: "Right Now", icon: <Clock size={14} /> },
@@ -895,6 +897,9 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
             )}
           </div>
         )}
+
+        {/* === REVIEW TAB === */}
+        {tab === "review" && <DraftReview />}
 
         {/* === TIMELINE TAB === */}
         {tab === "timeline" && (
