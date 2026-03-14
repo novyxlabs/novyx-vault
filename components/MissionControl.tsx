@@ -157,7 +157,9 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
     setHealthLoading(true);
     try {
       const res = await fetch("/api/control/health");
+      if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       setHealth(data);
     } catch {
       setHealth(null);
@@ -190,7 +192,15 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
       const es = new EventSource("/api/control/stream");
       eventSourceRef.current = es;
 
-      es.onopen = () => setStreamConnected(true);
+      es.onopen = () => {
+        // Only mark connected after a short delay to avoid false positives
+        // when the stream opens but immediately errors
+        setTimeout(() => {
+          if (eventSourceRef.current === es && es.readyState === EventSource.OPEN) {
+            setStreamConnected(true);
+          }
+        }, 500);
+      };
 
       es.onmessage = (e) => {
         try {
@@ -235,6 +245,16 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
       }
     };
   }, [isOpen, fetchApprovals, fetchHealth, connectStream]);
+
+  // Escape key to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
 
   // Lazy-load sections
   useEffect(() => {
@@ -324,8 +344,8 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
             )}
           </div>
         </div>
-        <button onClick={onClose} className="p-1.5 rounded text-muted hover:text-foreground transition-colors">
-          <X size={16} />
+        <button onClick={onClose} className="p-2 rounded text-muted hover:text-foreground transition-colors" aria-label="Close Mission Control">
+          <X size={18} />
         </button>
       </div>
 
@@ -611,8 +631,8 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
               </div>
             ) : (
               <div className="space-y-3">
-                {policies.map(p => (
-                  <div key={p.id} className="bg-card-bg border border-sidebar-border rounded-lg px-4 py-3">
+                {policies.map((p, i) => (
+                  <div key={p.id || p.name || i} className="bg-card-bg border border-sidebar-border rounded-lg px-4 py-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Shield size={14} className="text-accent" />
