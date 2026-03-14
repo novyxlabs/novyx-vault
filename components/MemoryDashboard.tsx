@@ -378,6 +378,14 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     }
   }, []);
 
+  // Lightweight instrumentation for Learned tab usage
+  const trackLearned = useCallback((action: string, props?: Record<string, string | number>) => {
+    try {
+      const plausible = (window as unknown as { plausible?: (event: string, opts?: { props: Record<string, string | number> }) => void }).plausible;
+      if (plausible) plausible("Learned", { props: { action, ...props } });
+    } catch { /* silent */ }
+  }, []);
+
   const fetchLearned = useCallback(async () => {
     setLearnedLoading(true);
     try {
@@ -388,6 +396,11 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
         (m: Memory) => new Date(m.created_at).getTime() > cutoff
       );
       setLearnedMemories(recent);
+      if (recent.length > 0) {
+        const sourceCounts: Record<string, number> = {};
+        for (const m of recent) { const k = getSourceKey(m.tags); sourceCounts[k] = (sourceCounts[k] || 0) + 1; }
+        trackLearned("shown", { count: recent.length, ...sourceCounts });
+      }
     } catch {
       setLearnedMemories([]);
     } finally {
@@ -396,27 +409,31 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   }, []);
 
   const handleKeep = useCallback((id: string) => {
+    const mem = learnedMemories.find(m => m.uuid === id);
+    trackLearned("keep", { source: mem ? getSourceKey(mem.tags) : "unknown" });
     setDismissedIds(prev => {
       const next = new Set(prev);
       next.add(id);
       saveDismissedIds(next);
       return next;
     });
-  }, []);
+  }, [learnedMemories, trackLearned]);
 
   const handleKeepAll = useCallback(() => {
-    const activeIds = learnedMemories
-      .filter(m => !dismissedIds.has(m.uuid))
-      .map(m => m.uuid);
+    const active = learnedMemories.filter(m => !dismissedIds.has(m.uuid));
+    trackLearned("keep_all", { count: active.length });
+    const activeIds = active.map(m => m.uuid);
     setDismissedIds(prev => {
       const next = new Set(prev);
       activeIds.forEach(id => next.add(id));
       saveDismissedIds(next);
       return next;
     });
-  }, [learnedMemories, dismissedIds]);
+  }, [learnedMemories, dismissedIds, trackLearned]);
 
   const handleForgetLearned = useCallback(async (id: string) => {
+    const mem = learnedMemories.find(m => m.uuid === id);
+    trackLearned("forget", { source: mem ? getSourceKey(mem.tags) : "unknown" });
     setForgettingLearnedId(id);
     try {
       const res = await fetch("/api/memory", {
@@ -432,7 +449,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     } finally {
       setForgettingLearnedId(null);
     }
-  }, []);
+  }, [learnedMemories, trackLearned]);
 
   const learnedCount = learnedMemories.filter(m => !dismissedIds.has(m.uuid)).length;
 
@@ -797,7 +814,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-md text-xs hover:bg-emerald-500/25 transition-colors"
                 >
                   <Check size={12} />
-                  Accept All
+                  Looks Good
                 </button>
               )}
             </div>
@@ -850,7 +867,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                                 <button
                                   onClick={() => handleKeep(mem.uuid)}
                                   className="p-1.5 rounded text-muted hover:text-emerald-400 hover:bg-emerald-400/10 transition-all"
-                                  title="Keep this memory"
+                                  title="Looks good"
                                 >
                                   <Check size={14} />
                                 </button>
@@ -858,7 +875,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                                   onClick={() => handleForgetLearned(mem.uuid)}
                                   disabled={forgettingLearnedId === mem.uuid}
                                   className="p-1.5 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
-                                  title="Forget this memory"
+                                  title="Forget this"
                                 >
                                   {forgettingLearnedId === mem.uuid ? (
                                     <Loader2 size={14} className="animate-spin" />
