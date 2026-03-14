@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock } from "lucide-react";
+import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock, Check, BookOpen } from "lucide-react";
 import MemoryGraph from "./MemoryGraph";
 
 interface Memory {
@@ -48,7 +48,7 @@ interface MemoryDashboardProps {
   onClose: () => void;
 }
 
-type Tab = "memories" | "timeline" | "insights" | "context" | "graph" | "replay" | "audit";
+type Tab = "memories" | "learned" | "timeline" | "insights" | "context" | "graph" | "replay" | "audit";
 
 interface ReplayEntry {
   timestamp: string;
@@ -140,6 +140,64 @@ function importanceLevel(importance: number): { label: string; color: string } {
   return { label: "low", color: "bg-muted" };
 }
 
+const LEARNED_WINDOW_MS = 48 * 60 * 60 * 1000;
+const DISMISSED_KEY = "noctivault-learned-dismissed";
+
+const SOURCE_GROUP_LABELS: Record<string, string> = {
+  vault: "Chat",
+  mcp: "MCP",
+  api: "API",
+};
+
+function getSourceKey(tags: string[]): string {
+  for (const tag of tags) {
+    if (tag.startsWith("source:")) return tag.slice(7);
+  }
+  return "other";
+}
+
+function groupBySource(memories: Memory[]): { source: string; label: string; memories: Memory[] }[] {
+  const groups: Record<string, Memory[]> = {};
+  for (const mem of memories) {
+    const key = getSourceKey(mem.tags);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(mem);
+  }
+  const order = ["vault", "mcp", "api"];
+  return Object.entries(groups)
+    .sort(([a], [b]) => {
+      const ai = order.indexOf(a);
+      const bi = order.indexOf(b);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    })
+    .map(([key, mems]) => ({
+      source: key,
+      label: SOURCE_GROUP_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1),
+      memories: mems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    }));
+}
+
+function loadDismissedIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    if (!raw) return new Set();
+    const entries: { id: string; at: number }[] = JSON.parse(raw);
+    const cutoff = Date.now() - LEARNED_WINDOW_MS;
+    const valid = entries.filter(e => e.at > cutoff);
+    if (valid.length !== entries.length) {
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify(valid));
+    }
+    return new Set(valid.map(e => e.id));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissedIds(ids: Set<string>) {
+  const entries = Array.from(ids).map(id => ({ id, at: Date.now() }));
+  localStorage.setItem(DISMISSED_KEY, JSON.stringify(entries));
+}
+
 export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProps) {
   const [tab, setTab] = useState<Tab>("memories");
 
@@ -196,6 +254,13 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   // Audit state
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
+
+  // Learned tab state
+  const [learnedMemories, setLearnedMemories] = useState<Memory[]>([]);
+  const [learnedLoading, setLearnedLoading] = useState(false);
+  const [learnedFetched, setLearnedFetched] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [forgettingLearnedId, setForgettingLearnedId] = useState<string | null>(null);
 
   const fetchMemories = useCallback(async (query?: string) => {
     setIsLoading(true);
@@ -313,6 +378,64 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     }
   }, []);
 
+  const fetchLearned = useCallback(async () => {
+    setLearnedLoading(true);
+    try {
+      const res = await fetch("/api/memory?limit=200");
+      const data = await res.json();
+      const cutoff = Date.now() - LEARNED_WINDOW_MS;
+      const recent = (data.memories || []).filter(
+        (m: Memory) => new Date(m.created_at).getTime() > cutoff
+      );
+      setLearnedMemories(recent);
+    } catch {
+      setLearnedMemories([]);
+    } finally {
+      setLearnedLoading(false);
+    }
+  }, []);
+
+  const handleKeep = useCallback((id: string) => {
+    setDismissedIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      saveDismissedIds(next);
+      return next;
+    });
+  }, []);
+
+  const handleKeepAll = useCallback(() => {
+    const activeIds = learnedMemories
+      .filter(m => !dismissedIds.has(m.uuid))
+      .map(m => m.uuid);
+    setDismissedIds(prev => {
+      const next = new Set(prev);
+      activeIds.forEach(id => next.add(id));
+      saveDismissedIds(next);
+      return next;
+    });
+  }, [learnedMemories, dismissedIds]);
+
+  const handleForgetLearned = useCallback(async (id: string) => {
+    setForgettingLearnedId(id);
+    try {
+      const res = await fetch("/api/memory", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        setLearnedMemories(prev => prev.filter(m => m.uuid !== id));
+        setMemories(prev => prev.filter(m => m.uuid !== id));
+        setTotal(prev => prev - 1);
+      }
+    } finally {
+      setForgettingLearnedId(null);
+    }
+  }, []);
+
+  const learnedCount = learnedMemories.filter(m => !dismissedIds.has(m.uuid)).length;
+
   const handleRunCortex = async () => {
     setIsRunningCortex(true);
     setCortexResult(null);
@@ -345,6 +468,9 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       setTimelineFetched(false);
       setReplayFetched(false);
       setAuditFetched(false);
+      setLearnedFetched(false);
+      setDismissedIds(loadDismissedIds());
+      fetchLearned();
       fetchMemories();
       fetch("/api/memory/usage").then(r => r.json()).then(d => {
         setUsage(d.usage || null);
@@ -380,7 +506,12 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       setAuditFetched(true);
       fetchAudit();
     }
-  }, [tab, isOpen, insightsFetched, insightsLoading, contextFetched, contextLoading, graphFetched, graphLoading, timelineFetched, timelineLoading, replayFetched, replayLoading, auditFetched, auditLoading, fetchInsights, fetchContext, fetchGraph, fetchTimeline, fetchReplay, fetchAudit]);
+    if (tab === "learned" && !learnedFetched && !learnedLoading) {
+      setLearnedFetched(true);
+      setDismissedIds(loadDismissedIds());
+      fetchLearned();
+    }
+  }, [tab, isOpen, insightsFetched, insightsLoading, contextFetched, contextLoading, graphFetched, graphLoading, timelineFetched, timelineLoading, replayFetched, replayLoading, auditFetched, auditLoading, learnedFetched, learnedLoading, fetchInsights, fetchContext, fetchGraph, fetchTimeline, fetchReplay, fetchAudit, fetchLearned]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
@@ -429,6 +560,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "memories", label: "Memories", icon: <Brain size={14} /> },
+    { id: "learned", label: "Learned", icon: <BookOpen size={14} /> },
     { id: "timeline", label: "Timeline", icon: <CalendarDays size={14} /> },
     { id: "insights", label: "Insights", icon: <Sparkles size={14} /> },
     { id: "context", label: "Right Now", icon: <Clock size={14} /> },
@@ -511,6 +643,11 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
             >
               {t.icon}
               {t.label}
+              {t.id === "learned" && learnedCount > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-accent/20 text-accent font-medium leading-none">
+                  {learnedCount}
+                </span>
+              )}
               {locked && <Lock size={10} className="text-muted/40" />}
             </button>
           );
@@ -644,6 +781,102 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               </div>
             )}
           </>
+        )}
+
+        {/* === LEARNED TAB === */}
+        {tab === "learned" && (
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">See what your AI learned</h3>
+                <p className="text-xs text-muted mt-0.5">Recent memories from the last 48 hours</p>
+              </div>
+              {learnedCount > 0 && (
+                <button
+                  onClick={handleKeepAll}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-md text-xs hover:bg-emerald-500/25 transition-colors"
+                >
+                  <Check size={12} />
+                  Accept All
+                </button>
+              )}
+            </div>
+
+            {learnedLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : learnedCount === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted">
+                <BookOpen size={48} className="text-accent/20 mb-3" />
+                <p className="text-sm">All caught up!</p>
+                <p className="text-xs mt-1">New memories will appear here as your AI learns.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {groupBySource(learnedMemories.filter(m => !dismissedIds.has(m.uuid))).map((group) => (
+                  <div key={group.source}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-medium text-muted uppercase tracking-wide">
+                        {group.label}
+                      </span>
+                      <span className="text-[10px] text-muted/60">{group.memories.length}</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {group.memories.map((mem) => {
+                        const imp = importanceLevel(mem.importance);
+                        return (
+                          <div
+                            key={mem.uuid}
+                            className="group bg-card-bg border border-sidebar-border rounded-lg px-4 py-3 hover:border-accent/20 transition-colors"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 ${imp.color}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-foreground leading-relaxed">{mem.observation}</p>
+                                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                  <span className="text-xs text-muted">{timeAgo(mem.created_at)}</span>
+                                  {mem.tags
+                                    .filter((t: string) => !t.startsWith("user:") && !t.startsWith("source:"))
+                                    .slice(0, 2)
+                                    .map((tag: string) => (
+                                      <span key={tag} className="text-[10px] px-1 py-0.5 rounded bg-accent/10 text-accent/60">
+                                        {tag}
+                                      </span>
+                                    ))}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => handleKeep(mem.uuid)}
+                                  className="p-1.5 rounded text-muted hover:text-emerald-400 hover:bg-emerald-400/10 transition-all"
+                                  title="Keep this memory"
+                                >
+                                  <Check size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleForgetLearned(mem.uuid)}
+                                  disabled={forgettingLearnedId === mem.uuid}
+                                  className="p-1.5 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
+                                  title="Forget this memory"
+                                >
+                                  {forgettingLearnedId === mem.uuid ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : (
+                                    <X size={14} />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* === TIMELINE TAB === */}
