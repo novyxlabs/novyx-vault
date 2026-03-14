@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  isControlConfigured,
   getActions,
   submitDecision,
   getPolicies,
@@ -10,42 +9,9 @@ import {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-describe("isControlConfigured", () => {
-  afterEach(() => {
-    delete process.env.NOVYX_CONTROL_URL;
-  });
-
-  it("returns false when NOVYX_CONTROL_URL is not set", () => {
-    delete process.env.NOVYX_CONTROL_URL;
-    expect(isControlConfigured()).toBe(false);
-  });
-
-  it("returns false when NOVYX_CONTROL_URL is empty string", () => {
-    process.env.NOVYX_CONTROL_URL = "";
-    expect(isControlConfigured()).toBe(false);
-  });
-
-  it("returns true when NOVYX_CONTROL_URL is set", () => {
-    process.env.NOVYX_CONTROL_URL = "https://control.novyxlabs.com";
-    expect(isControlConfigured()).toBe(true);
-  });
-});
-
 describe("getActions", () => {
   beforeEach(() => {
     mockFetch.mockReset();
-    process.env.NOVYX_CONTROL_URL = "https://control.novyxlabs.com";
-  });
-
-  afterEach(() => {
-    delete process.env.NOVYX_CONTROL_URL;
-  });
-
-  it("returns empty when control is not configured", async () => {
-    delete process.env.NOVYX_CONTROL_URL;
-    const result = await getActions({}, "test-key");
-    expect(result).toEqual({ actions: [], total: 0 });
-    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("fetches actions with correct URL and auth header", async () => {
@@ -58,7 +24,7 @@ describe("getActions", () => {
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toContain("https://control.novyxlabs.com/v1/actions");
+    expect(url).toContain("https://novyx-ram-api.fly.dev/v1/actions");
     expect(url).toContain("status=pending");
     expect(url).toContain("limit=10");
     expect(opts.headers.Authorization).toBe("Bearer my-api-key");
@@ -74,7 +40,7 @@ describe("getActions", () => {
 
     await getActions({}, "key");
     const [url] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://control.novyxlabs.com/v1/actions");
+    expect(url).toBe("https://novyx-ram-api.fly.dev/v1/actions");
   });
 
   it("throws on non-OK response", async () => {
@@ -87,16 +53,6 @@ describe("getActions", () => {
 describe("submitDecision", () => {
   beforeEach(() => {
     mockFetch.mockReset();
-    process.env.NOVYX_CONTROL_URL = "https://control.novyxlabs.com";
-  });
-
-  afterEach(() => {
-    delete process.env.NOVYX_CONTROL_URL;
-  });
-
-  it("throws when control is not configured", async () => {
-    delete process.env.NOVYX_CONTROL_URL;
-    await expect(submitDecision("a1", "approved", "key")).rejects.toThrow("Control not configured");
   });
 
   it("posts approval decision with correct body", async () => {
@@ -109,7 +65,7 @@ describe("submitDecision", () => {
 
     expect(mockFetch).toHaveBeenCalledOnce();
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://control.novyxlabs.com/v1/approvals/approval-123/decision");
+    expect(url).toBe("https://novyx-ram-api.fly.dev/v1/approvals/approval-123/decision");
     expect(opts.method).toBe("POST");
     expect(JSON.parse(opts.body)).toEqual({ decision: "approved" });
     expect(opts.headers.Authorization).toBe("Bearer my-key");
@@ -151,18 +107,6 @@ describe("submitDecision", () => {
 describe("getPolicies", () => {
   beforeEach(() => {
     mockFetch.mockReset();
-    process.env.NOVYX_CONTROL_URL = "https://control.novyxlabs.com";
-  });
-
-  afterEach(() => {
-    delete process.env.NOVYX_CONTROL_URL;
-  });
-
-  it("returns empty when control is not configured", async () => {
-    delete process.env.NOVYX_CONTROL_URL;
-    const result = await getPolicies("key");
-    expect(result).toEqual({ policies: [] });
-    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("fetches policies with auth header", async () => {
@@ -180,7 +124,7 @@ describe("getPolicies", () => {
     const result = await getPolicies("my-key");
 
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://control.novyxlabs.com/v1/control/policies");
+    expect(url).toBe("https://novyx-ram-api.fly.dev/v1/control/policies");
     expect(opts.headers.Authorization).toBe("Bearer my-key");
     expect(result.policies).toHaveLength(1);
     expect(result.policies[0].name).toBe("Default");

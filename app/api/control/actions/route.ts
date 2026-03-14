@@ -1,14 +1,10 @@
 import { NextRequest } from "next/server";
-import { getActions, isControlConfigured } from "@/lib/control";
+import { getActions } from "@/lib/control";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 
 export async function GET(req: NextRequest) {
   try {
-    if (!isControlConfigured()) {
-      return Response.json({ actions: [], total: 0, connected: false });
-    }
-
     const ctx = await getStorageContext();
     const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     if (!apiKey) {

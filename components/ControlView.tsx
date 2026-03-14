@@ -290,16 +290,15 @@ export default function ControlView({ isOpen, onClose }: ControlViewProps) {
             </div>
           )}
 
-          {/* Not connected empty state */}
+          {/* No actions empty state */}
           {!loading && !error && connected === false && (
             <div className="text-center py-16 px-6">
               <ShieldAlert size={36} className="text-muted/20 mx-auto mb-4" />
               <p className="text-sm font-medium text-foreground">
-                Connect Control to see governed actions
+                No governed actions yet
               </p>
               <p className="text-xs text-muted mt-2 max-w-xs mx-auto leading-relaxed">
-                Set <code className="px-1.5 py-0.5 bg-muted-bg rounded text-[11px] font-mono">NOVYX_CONTROL_URL</code> in
-                your environment to connect the governed action plane.
+                When agents take actions through Novyx Control, they&apos;ll appear here for review.
               </p>
             </div>
           )}
