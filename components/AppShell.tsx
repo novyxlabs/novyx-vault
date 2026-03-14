@@ -28,6 +28,7 @@ import UsageView from "@/components/UsageView";
 import AuditTrailView from "@/components/AuditTrailView";
 import RollbackHistoryView from "@/components/RollbackHistoryView";
 import ControlView from "@/components/ControlView";
+import MissionControl from "@/components/MissionControl";
 import NovyxErrorBoundary from "@/components/NovyxErrorBoundary";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
@@ -75,6 +76,7 @@ export default function AppShell() {
   const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
   const [isRollbackHistoryOpen, setIsRollbackHistoryOpen] = useState(false);
   const [isControlOpen, setIsControlOpen] = useState(false);
+  const [isMissionControlOpen, setIsMissionControlOpen] = useState(false);
   const closeAllModals = useCallback(() => {
     setIsGraphOpen(false);
     setIsMemoryOpen(false);
@@ -91,6 +93,7 @@ export default function AppShell() {
     setIsAuditTrailOpen(false);
     setIsRollbackHistoryOpen(false);
     setIsControlOpen(false);
+    setIsMissionControlOpen(false);
     setIsHelpOpen(false);
     setIsTrashOpen(false);
     setIsSettingsOpen(false);
@@ -722,7 +725,7 @@ export default function AppShell() {
         onOpenUsage={() => { closeAllModals(); setIsUsageOpen(true); }}
         onOpenAuditTrail={() => { closeAllModals(); setIsAuditTrailOpen(true); }}
         onOpenRollbackHistory={() => { closeAllModals(); setIsRollbackHistoryOpen(true); }}
-        onOpenControl={() => { closeAllModals(); setIsControlOpen(true); }}
+        onOpenControl={() => { closeAllModals(); setIsMissionControlOpen(true); }}
         onOpenSettings={() => { closeAllModals(); setIsSettingsOpen(true); }}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
           clearUserLocalStorage();
@@ -840,6 +843,12 @@ export default function AppShell() {
       <RollbackHistoryView
         isOpen={isRollbackHistoryOpen}
         onClose={() => setIsRollbackHistoryOpen(false)}
+      />
+    </NovyxErrorBoundary>
+    <NovyxErrorBoundary fallbackTitle="Mission Control failed to load" onClose={() => setIsMissionControlOpen(false)}>
+      <MissionControl
+        isOpen={isMissionControlOpen}
+        onClose={() => setIsMissionControlOpen(false)}
       />
     </NovyxErrorBoundary>
     <NovyxErrorBoundary fallbackTitle="Control failed to load" onClose={() => setIsControlOpen(false)}>
