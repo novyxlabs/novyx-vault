@@ -125,11 +125,11 @@ export default function ControlView({ isOpen, onClose }: ControlViewProps) {
 
   const fetchPending = useCallback(async () => {
     try {
-      const res = await fetch("/api/control/actions?status=pending_approval&limit=50");
+      const res = await fetch("/api/control/approvals?status=pending_approval&limit=50");
       if (!res.ok) throw new Error();
       const data = await res.json();
       setConnected(data.connected ?? true);
-      setPending(data.actions || []);
+      setPending(data.approvals || data.actions || []);
     } catch {
       setError(true);
     }

@@ -70,6 +70,21 @@ export async function getActions(
   return res.json();
 }
 
+export async function getApprovals(
+  params: { status?: string; limit?: number },
+  apiKey: string
+): Promise<{ approvals: ControlAction[]; total: number }> {
+  const url = new URL(`${BASE_URL}/v1/approvals`);
+  if (params.status) url.searchParams.set("status", params.status);
+  if (params.limit) url.searchParams.set("limit", String(params.limit));
+
+  const res = await fetchWithTimeout(url.toString(), { headers: headers(apiKey) });
+  if (!res.ok) {
+    throw new Error(`Control API error: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function submitDecision(
   approvalId: string,
   decision: "approved" | "denied",
