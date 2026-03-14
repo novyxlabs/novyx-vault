@@ -75,6 +75,27 @@ export default function AppShell() {
   const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
   const [isRollbackHistoryOpen, setIsRollbackHistoryOpen] = useState(false);
   const [isControlOpen, setIsControlOpen] = useState(false);
+  const closeAllModals = useCallback(() => {
+    setIsGraphOpen(false);
+    setIsMemoryOpen(false);
+    setIsStatsOpen(false);
+    setIsTasksOpen(false);
+    setIsTagsOpen(false);
+    setIsThinkingOpen(false);
+    setIsBrainDumpOpen(false);
+    setIsWritingCoachOpen(false);
+    setIsClipRemixOpen(false);
+    setIsWeeklyReviewOpen(false);
+    setIsReflectOpen(false);
+    setIsUsageOpen(false);
+    setIsAuditTrailOpen(false);
+    setIsRollbackHistoryOpen(false);
+    setIsControlOpen(false);
+    setIsHelpOpen(false);
+    setIsTrashOpen(false);
+    setIsSettingsOpen(false);
+  }, []);
+
   const [recentNotes, setRecentNotes] = useState<string[]>([]);
   const [pinnedNotes, setPinnedNotes] = useState<string[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
@@ -685,24 +706,24 @@ export default function AppShell() {
         onDeleteNote={handleDeleteNote}
         onMoveNote={handleMoveNote}
         onDailyNote={handleDailyNote}
-        onOpenGraph={() => setIsGraphOpen(true)}
-        onOpenMemory={() => setIsMemoryOpen(true)}
-        onOpenHelp={() => setIsHelpOpen(true)}
-        onOpenTrash={() => setIsTrashOpen(true)}
-        onOpenStats={() => setIsStatsOpen(true)}
-        onOpenTasks={() => setIsTasksOpen(true)}
-        onOpenTags={() => setIsTagsOpen(true)}
-        onOpenThinking={() => setIsThinkingOpen(true)}
-        onOpenBrainDump={() => setIsBrainDumpOpen(true)}
-        onOpenWritingCoach={() => setIsWritingCoachOpen(true)}
-        onOpenClipRemix={() => setIsClipRemixOpen(true)}
-        onOpenWeeklyReview={() => setIsWeeklyReviewOpen(true)}
-        onOpenReflect={() => setIsReflectOpen(true)}
-        onOpenUsage={() => setIsUsageOpen(true)}
-        onOpenAuditTrail={() => setIsAuditTrailOpen(true)}
-        onOpenRollbackHistory={() => setIsRollbackHistoryOpen(true)}
-        onOpenControl={() => setIsControlOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenGraph={() => { closeAllModals(); setIsGraphOpen(true); }}
+        onOpenMemory={() => { closeAllModals(); setIsMemoryOpen(true); }}
+        onOpenHelp={() => { closeAllModals(); setIsHelpOpen(true); }}
+        onOpenTrash={() => { closeAllModals(); setIsTrashOpen(true); }}
+        onOpenStats={() => { closeAllModals(); setIsStatsOpen(true); }}
+        onOpenTasks={() => { closeAllModals(); setIsTasksOpen(true); }}
+        onOpenTags={() => { closeAllModals(); setIsTagsOpen(true); }}
+        onOpenThinking={() => { closeAllModals(); setIsThinkingOpen(true); }}
+        onOpenBrainDump={() => { closeAllModals(); setIsBrainDumpOpen(true); }}
+        onOpenWritingCoach={() => { closeAllModals(); setIsWritingCoachOpen(true); }}
+        onOpenClipRemix={() => { closeAllModals(); setIsClipRemixOpen(true); }}
+        onOpenWeeklyReview={() => { closeAllModals(); setIsWeeklyReviewOpen(true); }}
+        onOpenReflect={() => { closeAllModals(); setIsReflectOpen(true); }}
+        onOpenUsage={() => { closeAllModals(); setIsUsageOpen(true); }}
+        onOpenAuditTrail={() => { closeAllModals(); setIsAuditTrailOpen(true); }}
+        onOpenRollbackHistory={() => { closeAllModals(); setIsRollbackHistoryOpen(true); }}
+        onOpenControl={() => { closeAllModals(); setIsControlOpen(true); }}
+        onOpenSettings={() => { closeAllModals(); setIsSettingsOpen(true); }}
         onSignOut={process.env.NEXT_PUBLIC_SUPABASE_URL ? async () => {
           clearUserLocalStorage();
           await fetch("/api/auth/signout", { method: "POST" });
