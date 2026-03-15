@@ -25,10 +25,10 @@ export async function GET() {
     return NextResponse.json({ available: false });
   }
 
-  // Block in hosted deployments — local import only makes sense when the
-  // server IS the user's machine (Tauri desktop → cloud migration).
-  // On Vercel / any shared host, LOCAL_DIR belongs to the host, not the user.
-  if (process.env.VERCEL || process.env.FLY_APP_NAME || process.env.RAILWAY_ENVIRONMENT) {
+  // Only allow when explicitly opted in — local import reads from the server's
+  // filesystem, which is only safe when the server IS the user's machine
+  // (Tauri desktop → cloud migration). Set ALLOW_LOCAL_IMPORT=true in that case.
+  if (process.env.ALLOW_LOCAL_IMPORT !== "true") {
     return NextResponse.json({ available: false });
   }
 
@@ -75,9 +75,9 @@ export async function POST() {
     return NextResponse.json({ error: "Not in cloud mode" }, { status: 400 });
   }
 
-  // Block in hosted deployments — same reason as GET
-  if (process.env.VERCEL || process.env.FLY_APP_NAME || process.env.RAILWAY_ENVIRONMENT) {
-    return NextResponse.json({ error: "Import not available in hosted mode" }, { status: 403 });
+  // Only allow when explicitly opted in — same reason as GET
+  if (process.env.ALLOW_LOCAL_IMPORT !== "true") {
+    return NextResponse.json({ error: "Import not available" }, { status: 403 });
   }
 
   let ctx: { userId?: string; cookieHeader?: string };
