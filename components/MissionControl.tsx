@@ -111,6 +111,7 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
   const [events, setEvents] = useState<StreamEvent[]>([]);
   const [streamConnected, setStreamConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Policies
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -213,8 +214,9 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
         setStreamConnected(false);
         es.close();
         eventSourceRef.current = null;
-        // Reconnect after 5s
-        setTimeout(() => {
+        // Reconnect after 5s — track timer so cleanup can cancel it
+        reconnectTimerRef.current = setTimeout(() => {
+          reconnectTimerRef.current = null;
           if (isOpen) connectStream();
         }, 5000);
       };
@@ -231,6 +233,10 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       setStreamConnected(false);
       return;
     }
@@ -242,6 +248,10 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
+      }
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
       }
     };
   }, [isOpen, fetchApprovals, fetchHealth, connectStream]);
