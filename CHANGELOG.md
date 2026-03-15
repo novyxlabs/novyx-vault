@@ -2,6 +2,26 @@
 
 All notable changes to Novyx Vault are documented here.
 
+## [0.3.0] — 2026-03-15
+
+### Added
+- **Mission Control dashboard** — full-screen overlay with 5 tabs: Approvals (approve/deny agent actions), Activity (real-time SSE event stream), Drafts (review agent memory proposals), Policies (Sentinel policy viewer), Health (memory health score with ring gauge)
+- **Draft Review UI** — git-like review workflow for agent memory drafts: diff view, merge/reject, branch overview, similarity detection, AI recommendation badges
+- **E2E tests for Mission Control** — 8 Playwright tests covering open/close, tab switching, Escape key, empty states, error states, SSE cleanup
+- **E2E tests for Draft Review** — 3 Playwright tests covering tab access, draft list/empty state, close/reopen
+- **TODOS.md** — structured backlog with priority ordering, integrated with gstack `/retro`
+
+### Changed
+- **Control rewired to Core** — dropped `NOVYX_CONTROL_URL` env var; all Control routes now proxy through the Novyx RAM API directly
+- **Import route security** — flipped from platform denylist to positive opt-in (`ALLOW_LOCAL_IMPORT=true`), preventing host filesystem exposure on any hosted deployment
+
+### Fixed
+- **Mission Control Escape key** — full-screen modal now closes on Escape (accessibility requirement)
+- **Health tab empty state** — now shows "Failed to load health data" with retry button instead of blank content on API error
+- **SSE reconnect timer leak** — reconnect `setTimeout` is tracked and cleared when Mission Control closes, preventing background reconnection
+- **Close button accessibility** — larger hit target (p-2) with `aria-label="Close Mission Control"`
+- **Policy key prop warning** — fallback key prevents React console warning when policy IDs are undefined
+
 ## [0.2.0] — 2026-03-13
 
 ### Added

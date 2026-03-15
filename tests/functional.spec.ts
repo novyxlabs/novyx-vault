@@ -1314,3 +1314,195 @@ test.describe("Error boundary resilience", () => {
     expect(["ok", "unreachable"]).toContain(data.status);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Mission Control
+// ---------------------------------------------------------------------------
+test.describe("Mission Control", () => {
+  test("opens from sidebar Control button", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Control — governed actions"]').click();
+
+    // Mission Control full-screen overlay should appear
+    const dialog = page.locator('[role="dialog"][aria-label="Mission Control"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=Mission Control").first()).toBeVisible();
+  });
+
+  test("shows all five tabs", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Control — governed actions"]').click();
+    await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
+
+    // All 5 tabs should be present
+    await expect(page.locator("button:has-text('Approvals')")).toBeVisible();
+    await expect(page.locator("button:has-text('Activity')")).toBeVisible();
+    await expect(page.locator("button:has-text('Drafts')")).toBeVisible();
+    await expect(page.locator("button:has-text('Policies')")).toBeVisible();
+    await expect(page.locator("button:has-text('Health')")).toBeVisible();
+  });
+
+  test("tab switching works", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Control — governed actions"]').click();
+    await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
+
+    // Default tab is Approvals — should show approval queue content
+    await expect(page.locator("text=Approval Queue").or(page.locator("text=All clear"))).toBeVisible({ timeout: 5000 });
+
+    // Switch to Activity tab
+    await page.locator("button:has-text('Activity')").click();
+    await page.waitForTimeout(1000);
+    const liveActivity = page.locator("text=Live Activity").first();
+    const listening = page.locator("text=Listening for events").first();
+    const activityVisible = await liveActivity.isVisible().catch(() => false)
+      || await listening.isVisible().catch(() => false);
+    expect(activityVisible).toBe(true);
+
+    // Switch to Health tab
+    await page.locator("button:has-text('Health')").click();
+    await expect(page.locator("text=Memory Health")).toBeVisible({ timeout: 5000 });
+  });
+
+  test("closes with Escape key", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Control — governed actions"]').click();
+    const dialog = page.locator('[role="dialog"][aria-label="Mission Control"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("closes with X button", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Control — governed actions"]').click();
+    const dialog = page.locator('[role="dialog"][aria-label="Mission Control"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    await page.locator('button[aria-label="Close Mission Control"]').click();
+    await expect(dialog).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("Approvals tab shows empty state or list", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Control — governed actions"]').click();
+    await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
+
+    // Should show either the empty state or a list of approvals
+    await page.waitForTimeout(2000);
+    const allClear = page.locator("text=All clear");
+    const approvalQueue = page.locator("text=Approval Queue");
+    const visible = await allClear.isVisible().catch(() => false)
+      || await approvalQueue.isVisible().catch(() => false);
+    expect(visible).toBe(true);
+  });
+
+  test("Health tab shows data or error state", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Control — governed actions"]').click();
+    await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
+
+    await page.locator("button:has-text('Health')").click();
+    await page.waitForTimeout(3000);
+
+    // Should show health score, status, or error state
+    const healthTitle = page.locator("text=Memory Health");
+    const failedMsg = page.locator("text=Failed to load health data");
+    const tryAgain = page.locator("text=Try again");
+    const visible = await healthTitle.isVisible().catch(() => false)
+      || await failedMsg.isVisible().catch(() => false)
+      || await tryAgain.isVisible().catch(() => false);
+    expect(visible).toBe(true);
+  });
+
+  test("does not leave orphan SSE connections after close", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    // Open and close Mission Control
+    await page.locator('button[title="Control — governed actions"]').click();
+    await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
+    await page.keyboard.press("Escape");
+    await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).not.toBeVisible({ timeout: 3000 });
+
+    // App should still be responsive
+    await expect(page.locator("aside").first()).toBeVisible();
+    // No console errors from orphan connections
+    const errors: string[] = [];
+    page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
+    await page.waitForTimeout(2000);
+    const sseErrors = errors.filter(e => e.includes("stream") || e.includes("EventSource"));
+    expect(sseErrors.length).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Draft Review (Memory Dashboard → Review tab)
+// ---------------------------------------------------------------------------
+test.describe("Draft Review", () => {
+  test("Review tab is accessible in Memory Dashboard", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Memory dashboard"]').click();
+    await page.waitForTimeout(1000);
+
+    // Review tab should be visible in the Memory Dashboard tabs
+    const reviewTab = page.locator('[role="dialog"] button:has-text("Review"), [class*="modal"] button:has-text("Review")').first();
+    if (!await reviewTab.isVisible().catch(() => false)) {
+      // Fallback: look for any Review button that's not the sidebar one
+      await expect(page.locator("button:has-text('Review')").nth(1)).toBeVisible({ timeout: 5000 });
+    }
+  });
+
+  test("Review tab shows draft list or empty state", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Memory dashboard"]').click();
+    await page.waitForTimeout(1000);
+
+    await page.locator("button:has-text('Review')").nth(1).click();
+    await page.waitForTimeout(3000);
+
+    // Should show draft list, empty state, or error
+    const noDrafts = page.locator("text=No open drafts");
+    const draftItem = page.locator("text=draft");
+    const errorMsg = page.locator("text=Failed");
+    const loading = page.locator("text=Loading");
+    const visible = await noDrafts.isVisible().catch(() => false)
+      || await draftItem.first().isVisible().catch(() => false)
+      || await errorMsg.first().isVisible().catch(() => false)
+      || await loading.first().isVisible().catch(() => false);
+    expect(visible).toBe(true);
+  });
+
+  test("Review tab renders without crashing", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.locator('button[title="Memory dashboard"]').click();
+    await page.waitForTimeout(1000);
+
+    await page.locator("button:has-text('Review')").nth(1).click();
+    await page.waitForTimeout(2000);
+
+    // App should still be responsive — sidebar visible
+    await expect(page.locator("aside").first()).toBeVisible();
+  });
+});

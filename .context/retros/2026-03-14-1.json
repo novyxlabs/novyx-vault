@@ -1,0 +1,42 @@
+{
+  "date": "2026-03-14",
+  "window": "24h",
+  "metrics": {
+    "commits": 8,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 2757,
+    "deletions": 337,
+    "net_loc": 2420,
+    "test_loc": 5,
+    "test_ratio": 0.002,
+    "active_days": 2,
+    "sessions": 3,
+    "deep_sessions": 2,
+    "avg_session_minutes": 80,
+    "loc_per_session_hour": 600,
+    "feat_pct": 0.25,
+    "fix_pct": 0.63,
+    "peak_hour": 3,
+    "ai_assisted_commits": 8
+  },
+  "authors": {
+    "Eden": {
+      "commits": 8,
+      "insertions": 2757,
+      "deletions": 337,
+      "test_ratio": 0.002,
+      "top_area": "components/"
+    }
+  },
+  "version_range": ["0.2.0", "0.2.0"],
+  "streak_days": 14,
+  "tweetable": "24h of Mar 14: 8 commits, 2.8k LOC (+2.4k net), 2% tests, 100% AI-assisted, peak: 3am PT | Streak: 14d",
+  "backlog": {
+    "total_open": 8,
+    "p0_p1": 2,
+    "p2": 5,
+    "completed_this_period": 6,
+    "added_this_period": 8
+  }
+}
