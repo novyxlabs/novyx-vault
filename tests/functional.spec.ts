@@ -1354,7 +1354,11 @@ test.describe("Mission Control", () => {
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
 
     // Default tab is Approvals — should show approval queue content
-    await expect(page.locator("text=Approval Queue").or(page.locator("text=All clear"))).toBeVisible({ timeout: 5000 });
+    const approvalQueue = page.locator("text=Approval Queue").first();
+    const allClear = page.locator("text=All clear").first();
+    const approvalsVisible = await approvalQueue.isVisible().catch(() => false)
+      || await allClear.isVisible().catch(() => false);
+    expect(approvalsVisible).toBe(true);
 
     // Switch to Activity tab
     await page.locator("button:has-text('Activity')").click();
