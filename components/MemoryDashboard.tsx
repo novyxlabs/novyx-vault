@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock, Check, BookOpen, GitPullRequest } from "lucide-react";
+import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock, Check, BookOpen, GitPullRequest, RotateCcw } from "lucide-react";
 import MemoryGraph from "./MemoryGraph";
 import DraftReview from "./DraftReview";
 
@@ -256,6 +256,13 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  // Rollback state
+  const [rollbackTarget, setRollbackTarget] = useState<string | null>(null);
+  const [rollbackPreview, setRollbackPreview] = useState<Record<string, unknown> | null>(null);
+  const [rollbackPreviewLoading, setRollbackPreviewLoading] = useState(false);
+  const [rollbackExecuting, setRollbackExecuting] = useState(false);
+  const [rollbackResult, setRollbackResult] = useState<Record<string, unknown> | null>(null);
+
   // Learned tab state
   const [learnedMemories, setLearnedMemories] = useState<Memory[]>([]);
   const [learnedLoading, setLearnedLoading] = useState(false);
@@ -377,6 +384,45 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     } finally {
       setAuditLoading(false);
     }
+  }, []);
+
+  const handleRollbackPreview = useCallback(async (timestamp: string) => {
+    setRollbackTarget(timestamp);
+    setRollbackPreview(null);
+    setRollbackResult(null);
+    setRollbackPreviewLoading(true);
+    try {
+      const res = await fetch(`/api/memory/rollback?target=${encodeURIComponent(timestamp)}`);
+      if (res.ok) {
+        setRollbackPreview(await res.json());
+      }
+    } catch { /* silent */ }
+    setRollbackPreviewLoading(false);
+  }, []);
+
+  const handleRollbackExecute = useCallback(async () => {
+    if (!rollbackTarget) return;
+    setRollbackExecuting(true);
+    try {
+      const res = await fetch("/api/memory/rollback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: rollbackTarget }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setRollbackResult(result);
+        // Refresh replay entries after rollback
+        setReplayFetched(false);
+      }
+    } catch { /* silent */ }
+    setRollbackExecuting(false);
+  }, [rollbackTarget]);
+
+  const handleRollbackCancel = useCallback(() => {
+    setRollbackTarget(null);
+    setRollbackPreview(null);
+    setRollbackResult(null);
   }, []);
 
   // Lightweight instrumentation for Learned tab usage
@@ -1254,6 +1300,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                 <p className="text-xs mt-1">Memory operations will be tracked here.</p>
               </div>
             ) : (
+              <>
               <div className="space-y-1">
                 {replayEntries.map((entry, i) => {
                   const opColor = entry.operation === "create" ? "text-green-400"
@@ -1261,7 +1308,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                     : entry.operation === "update" ? "text-amber-400"
                     : "text-muted";
                   return (
-                    <div key={`${entry.timestamp}-${i}`} className="flex items-start gap-3 py-2 px-3 rounded hover:bg-card-bg transition-colors">
+                    <div key={`${entry.timestamp}-${i}`} className="group flex items-start gap-3 py-2 px-3 rounded hover:bg-card-bg transition-colors">
                       <span className={`text-[10px] font-mono uppercase tracking-wider mt-0.5 w-12 shrink-0 ${opColor}`}>
                         {entry.operation.slice(0, 6)}
                       </span>
@@ -1271,10 +1318,118 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                         )}
                         <span className="text-[10px] text-muted">{timeAgo(entry.timestamp)}</span>
                       </div>
+                      <button
+                        onClick={() => handleRollbackPreview(entry.timestamp)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 px-2 py-1 rounded text-[10px] text-amber-400 hover:bg-amber-400/10 flex items-center gap-1"
+                        title="Rollback to this point"
+                      >
+                        <RotateCcw size={10} />
+                        Rollback
+                      </button>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Rollback confirmation dialog */}
+              {rollbackTarget && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={handleRollbackCancel}>
+                  <div className="fixed inset-0 bg-black/60" />
+                  <div
+                    className="relative w-full max-w-sm mx-4 bg-sidebar-bg border border-sidebar-border rounded-xl shadow-2xl p-6"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {rollbackResult ? (
+                      <div className="text-center">
+                        <div className="w-10 h-10 rounded-full bg-green-400/10 flex items-center justify-center mx-auto mb-3">
+                          <Check size={20} className="text-green-400" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-foreground mb-1">Rollback Complete</h3>
+                        <p className="text-xs text-muted mb-4">
+                          {(rollbackResult as Record<string, number>).artifacts_restored
+                            ? `${(rollbackResult as Record<string, number>).artifacts_restored} memories restored`
+                            : "Memory state has been rolled back."}
+                        </p>
+                        <button
+                          onClick={handleRollbackCancel}
+                          className="px-4 py-2 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent-hover transition-colors"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-md bg-amber-400/10 flex items-center justify-center">
+                            <RotateCcw size={16} className="text-amber-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground">Rollback Memory</h3>
+                            <p className="text-[11px] text-muted">Revert to {new Date(rollbackTarget).toLocaleString()}</p>
+                          </div>
+                        </div>
+
+                        {rollbackPreviewLoading ? (
+                          <div className="flex items-center justify-center py-6">
+                            <Loader2 size={20} className="text-accent animate-spin" />
+                            <span className="text-xs text-muted ml-2">Loading preview...</span>
+                          </div>
+                        ) : rollbackPreview ? (
+                          <div className="rounded-md bg-card-bg border border-sidebar-border p-3 mb-4 space-y-2">
+                            {(rollbackPreview as Record<string, number>).operations_to_undo != null && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted">Operations to undo</span>
+                                <span className="text-foreground font-medium">{(rollbackPreview as Record<string, number>).operations_to_undo}</span>
+                              </div>
+                            )}
+                            {(rollbackPreview as Record<string, number>).memories_to_restore != null && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted">Memories to restore</span>
+                                <span className="text-green-400 font-medium">{(rollbackPreview as Record<string, number>).memories_to_restore}</span>
+                              </div>
+                            )}
+                            {(rollbackPreview as Record<string, number>).memories_to_remove != null && (
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted">Memories to remove</span>
+                                <span className="text-red-400 font-medium">{(rollbackPreview as Record<string, number>).memories_to_remove}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted mb-4">This will undo all memory operations after this point.</p>
+                        )}
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleRollbackCancel}
+                            className="flex-1 px-3 py-2 rounded-md text-sm text-muted hover:text-foreground border border-sidebar-border hover:border-foreground/20 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleRollbackExecute}
+                            disabled={rollbackExecuting}
+                            className="flex-1 px-3 py-2 rounded-md text-sm font-medium bg-amber-500 text-black hover:bg-amber-400 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                          >
+                            {rollbackExecuting ? (
+                              <>
+                                <Loader2 size={12} className="animate-spin" />
+                                Rolling back...
+                              </>
+                            ) : (
+                              <>
+                                <RotateCcw size={12} />
+                                Confirm Rollback
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+              </>
             )}
           </div>
         )}
