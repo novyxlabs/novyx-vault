@@ -90,7 +90,7 @@ export default function WritingCoach({
       return;
     }
     fetchData();
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen]);  
 
   // Escape key to close
   useEffect(() => {

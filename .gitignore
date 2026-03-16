@@ -51,3 +51,7 @@ next-env.d.ts
 
 # demo videos
 /demo-videos/
+demo-record*.mjs
+
+# gstack (QA tool artifacts)
+.gstack/

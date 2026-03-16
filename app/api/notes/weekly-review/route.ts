@@ -8,7 +8,8 @@ import { getStorage } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 import OpenAI from "openai";
-import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 const TASK_REGEX = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/;

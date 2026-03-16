@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { resolveAndValidateHost } from "@/lib/providers.server";
 
 describe("validateProviderBaseURL", () => {
   it("allows known provider HTTPS hosts", () => {
@@ -60,7 +61,7 @@ describe("resolveAndValidateHost", () => {
       },
     }));
 
-    const { resolveAndValidateHost: resolve } = await import("@/lib/providers");
+    const { resolveAndValidateHost: resolve } = await import("@/lib/providers.server");
     const result = await resolve("https://evil.nip.io/v1");
     expect(result).toBe("Provider hostname resolves to a private network address");
 
@@ -75,7 +76,7 @@ describe("resolveAndValidateHost", () => {
       },
     }));
 
-    const { resolveAndValidateHost: resolve } = await import("@/lib/providers");
+    const { resolveAndValidateHost: resolve } = await import("@/lib/providers.server");
     const result = await resolve("https://sneaky.sslip.io/v1");
     expect(result).toBe("Provider hostname resolves to a private network address");
 
@@ -90,7 +91,7 @@ describe("resolveAndValidateHost", () => {
       },
     }));
 
-    const { resolveAndValidateHost: resolve } = await import("@/lib/providers");
+    const { resolveAndValidateHost: resolve } = await import("@/lib/providers.server");
     const result = await resolve("https://ipv6-loopback.example.com/v1");
     expect(result).toBe("Provider hostname resolves to a private network address");
 
@@ -105,7 +106,7 @@ describe("resolveAndValidateHost", () => {
       },
     }));
 
-    const { resolveAndValidateHost: resolve } = await import("@/lib/providers");
+    const { resolveAndValidateHost: resolve } = await import("@/lib/providers.server");
     const result = await resolve("https://ula-host.example.com/v1");
     expect(result).toBe("Provider hostname resolves to a private network address");
 
@@ -120,7 +121,7 @@ describe("resolveAndValidateHost", () => {
       },
     }));
 
-    const { resolveAndValidateHost: resolve } = await import("@/lib/providers");
+    const { resolveAndValidateHost: resolve } = await import("@/lib/providers.server");
     const result = await resolve("https://link-local.example.com/v1");
     expect(result).toBe("Provider hostname resolves to a private network address");
 

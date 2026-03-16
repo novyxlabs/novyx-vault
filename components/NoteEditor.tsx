@@ -60,7 +60,7 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, save
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   useEffect(() => {
     if (window.innerWidth < 768) setViewMode("editor");
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
   const [isDragOver, setIsDragOver] = useState(false);
   const [pastedUrl, setPastedUrl] = useState<string | null>(null);
   const [rememberState, setRememberState] = useState<"idle" | "saving" | "saved">("idle");

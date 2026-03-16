@@ -6,7 +6,8 @@ import type { NoteEntry } from "@/lib/notes";
 import { recallMemories, rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
-import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ChatMessage {

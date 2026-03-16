@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
-import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { resolveAndValidateHost } from "@/lib/providers.server";
 import { getStorageContext } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {

@@ -8,6 +8,10 @@ Built on [Novyx Core](https://novyx.ai) for persistent AI memory.
 
 **[Try it free →](https://vault.novyxlabs.com)**
 
+<p align="center">
+  <img src="docs/hero.png" alt="Novyx Vault" width="800" />
+</p>
+
 ---
 
 ## Features

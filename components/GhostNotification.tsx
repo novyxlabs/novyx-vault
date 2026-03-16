@@ -96,7 +96,7 @@ export default function GhostNotification({
         }, 400);
       }
     }, 300);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   const showNotification = useCallback(
     (n: Notification) => {

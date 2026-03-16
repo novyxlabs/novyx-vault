@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getStorageContext } from "@/lib/auth";
-import { validateProviderBaseURL, resolveAndValidateHost } from "@/lib/providers";
+import { validateProviderBaseURL } from "@/lib/providers";
+import { resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ExplainRequest {
