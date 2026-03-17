@@ -1,0 +1,6 @@
+src-tauri/target
+.next
+.gstack
+tests
+*.spec.ts
+*.test.ts
