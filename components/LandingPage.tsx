@@ -131,7 +131,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
               <Brain size={24} className="text-accent mb-3" />
-              <h3 className="font-semibold mb-2">Persistent Memory</h3>
+              <h3 className="text-lg font-semibold mb-2">Persistent Memory</h3>
               <p className="text-sm text-muted leading-relaxed">
                 Your AI remembers your projects, preferences, and thinking patterns across every session.
                 Ask about something from last month and it responds with full context.
@@ -140,7 +140,7 @@ export default function LandingPage() {
             </div>
             <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
               <Sparkles size={24} className="text-accent mb-3" />
-              <h3 className="font-semibold mb-2">Ghost Connections</h3>
+              <h3 className="text-lg font-semibold mb-2">Ghost Connections</h3>
               <p className="text-sm text-muted leading-relaxed">
                 AI discovers hidden relationships between your notes &mdash; even without shared keywords
                 or explicit links. Surface connections you never knew existed and see your ideas from a new angle.
@@ -148,7 +148,7 @@ export default function LandingPage() {
             </div>
             <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
               <History size={24} className="text-accent mb-3" />
-              <h3 className="font-semibold mb-2">Memory Timeline & Rollback</h3>
+              <h3 className="text-lg font-semibold mb-2">Memory Timeline & Rollback</h3>
               <p className="text-sm text-muted leading-relaxed">
                 See exactly what your AI remembers and when it learned it. Made a mistake?
                 Roll back to any point in time. You&apos;re always in control of what your AI knows.
@@ -156,7 +156,7 @@ export default function LandingPage() {
             </div>
             <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
               <PenTool size={24} className="text-accent mb-3" />
-              <h3 className="font-semibold mb-2">Writing Tools</h3>
+              <h3 className="text-lg font-semibold mb-2">Writing Tools</h3>
               <p className="text-sm text-muted leading-relaxed">
                 Brain Dump turns raw thoughts into structured notes. Clip Remix rewrites web content in
                 your voice. Slash commands give you inline AI help. Weekly Review summarizes your writing activity.
@@ -265,7 +265,7 @@ export default function LandingPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
-              <h3 className="font-semibold mb-2">Desktop App</h3>
+              <h3 className="text-lg font-semibold mb-2">Desktop App</h3>
               <p className="text-sm text-muted leading-relaxed mb-3">
                 Free, private, offline. Your notes live as plain markdown files on your machine.
                 No account needed. Works without internet.
@@ -275,7 +275,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg">
-              <h3 className="font-semibold mb-2">Cloud</h3>
+              <h3 className="text-lg font-semibold mb-2">Cloud</h3>
               <p className="text-sm text-muted leading-relaxed mb-3">
                 Sync across devices, publish notes, share with a link, and get daily digest emails.
                 Sign in with GitHub or Google.
@@ -369,7 +369,7 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
   return (
     <div className="p-6 rounded-xl border border-sidebar-border bg-card-bg hover:border-[var(--text-secondary,#a1a1aa)] transition-colors">
       <div className="text-accent mb-3">{icon}</div>
-      <h3 className="font-semibold mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <p className="text-sm text-muted leading-relaxed">{description}</p>
     </div>
   );
