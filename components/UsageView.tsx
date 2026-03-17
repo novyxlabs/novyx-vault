@@ -324,7 +324,7 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
 
               {/* Upgrade CTA */}
               {(isLocked || anyHigh) && (
-                <div className="mt-6 rounded-lg border border-accent/20 p-4" style={{ background: "linear-gradient(135deg, rgba(var(--accent-rgb, 139,92,246), 0.06) 0%, rgba(var(--accent-rgb, 139,92,246), 0.02) 100%)" }}>
+                <div className="mt-6 rounded-lg border border-emerald-500/20 p-4" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(34,197,94,0.02) 100%)" }}>
                   <p className="text-sm font-medium text-foreground mb-1">
                     {anyHigh && !isLocked
                       ? "Running low on capacity"
@@ -335,15 +335,29 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
                       ? "Upgrade your plan to increase limits and avoid interruptions."
                       : "Pro includes unlimited memories, higher API limits, knowledge graph, insights, and audit trail."}
                   </p>
-                  <a
-                    href="https://novyx.ai/pricing"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent text-white rounded-md text-sm font-medium hover:bg-accent-hover transition-colors"
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("/api/billing", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ tier: "pro" }),
+                        });
+                        const data = await res.json();
+                        if (data.checkout_url) {
+                          window.open(data.checkout_url, "_blank");
+                        } else {
+                          alert(data.error || "Could not start checkout. Please try again.");
+                        }
+                      } catch {
+                        alert("Could not connect to billing. Please try again.");
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-500 text-white rounded-md text-sm font-medium hover:bg-emerald-400 transition-colors"
                   >
                     Upgrade to Pro
                     <ArrowUpRight size={14} />
-                  </a>
+                  </button>
                 </div>
               )}
 
