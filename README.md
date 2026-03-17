@@ -46,10 +46,10 @@ Novyx Vault fixes that. Your AI builds persistent memory from your notes and con
 - **Weekly Review** — Automated summary of your writing activity.
 - **Writing Coach** — AI feedback on clarity, structure, and tone.
 
-### Your AI, Your Way
+### BYOK — Bring Your Own Key
 - **18+ AI Providers** — OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter.
-- **Bring Your Own Key** — API keys stay in your browser. We never store them on our servers.
-- **Switch Anytime** — Change providers without losing your memory or notes.
+- **Your keys, your browser** — API keys are stored in localStorage only. We never store them on our servers.
+- **Switch anytime** — Change providers without losing your memory or notes.
 
 ### Local-First & Open Source
 - **Desktop App** — Native desktop via Tauri (macOS, Windows, Linux). Notes stored as plain markdown files in `~/SecondBrain/`. No account needed, works offline.
