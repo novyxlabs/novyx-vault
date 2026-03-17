@@ -1,10 +1,10 @@
 # Novyx Vault
 
-**An open-source AI workspace with persistent memory.**
+**An open-source notes app where your AI actually remembers you.**
 
-Your notes, your AI's memory, and cryptographic proof that nothing was lost or changed. Write in markdown, link ideas with wiki-style connections, and let AI surface relationships you never knew existed.
+Markdown notes, wiki-links, a knowledge graph, and a fast editor — like Obsidian. But with an AI assistant that learns your projects, your writing style, and your ideas over time.
 
-Built on [Novyx Core](https://novyx.ai) for persistent AI memory.
+Built on [Novyx Core](https://novyxlabs.com) for persistent AI memory.
 
 **[Try it free →](https://vault.novyxlabs.com)**
 
@@ -14,30 +14,71 @@ Built on [Novyx Core](https://novyx.ai) for persistent AI memory.
 
 ---
 
-## Features
+## Why Novyx Vault?
 
-- **Persistent AI Memory** — AI remembers your projects, preferences, and thinking patterns across every session. The more you use it, the smarter it gets.
-- **Memory Rollback & Timeline** — Travel back through your AI's memory. Undo accidental context, restore previous states, see exactly how your AI's understanding evolved.
-- **Ghost Connections** — AI discovers hidden relationships between your notes — even without shared keywords or explicit links.
-- **Knowledge Graph** — Interactive force-directed graph of your entire vault. See how your ideas connect and navigate visually.
-- **Cortex Insights** — AI surfaces emerging themes and patterns from your accumulated knowledge.
-- **Entity Extraction** — People, projects, and concepts are automatically extracted into a semantic knowledge graph.
-- **Wiki-Style Linking** — Connect ideas with `[[wiki-links]]` and automatic bidirectional backlinks.
-- **Bring Your Own AI** — Works with 13+ providers: OpenAI, Anthropic, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, Gemini, Cerebras, SambaNova, Moonshot, MiniMax.
-- **AI Writing Tools** — Brain Dump (raw thoughts → structured notes), Clip Remix (rewrite in your voice), slash commands, Weekly Review.
-- **Local-First** — Notes are plain markdown files on your machine. No lock-in, no proprietary formats.
-- **Cloud Sync** — Optional Supabase-powered cloud with row-level security for cross-device access.
-- **Desktop App** — Native desktop via Tauri (macOS, Windows, Linux).
+Every AI assistant starts from zero. Every conversation. You explain your project again, repeat your preferences, lose context the moment you close the tab.
 
-## Tech Stack
-
-Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · CodeMirror 6 · Novyx SDK · Supabase · Tauri v2
+Novyx Vault fixes that. Your AI builds persistent memory from your notes and conversations. The longer you use it, the more useful it becomes.
 
 ---
 
-## Quick Start (Desktop Mode)
+## Features
 
-Desktop mode stores notes as plain markdown files in `~/SecondBrain/`. No database, no account required.
+### Notes & Editor
+- **Markdown Editor** — Fast editor with live preview, syntax highlighting, and keyboard shortcuts. Notes are plain markdown — no proprietary formats, no lock-in.
+- **Wiki-Links & Backlinks** — Connect ideas with `[[wiki-links]]`. Every link is bidirectional — backlinks appear automatically.
+- **Knowledge Graph** — Interactive force-directed graph of your entire vault. Explore how your ideas connect.
+- **Folders, Tags & Search** — Nested folders, inline tags, full-text search. Pin favorites, drag to reorder, filter instantly.
+
+### AI Memory (powered by Novyx Core)
+- **Persistent Memory** — Your AI remembers your projects, preferences, and thinking patterns across every session. Ask about something from last month and it responds with full context.
+- **Ghost Connections** — AI discovers hidden relationships between your notes — even without shared keywords or explicit links.
+- **Memory Timeline & Rollback** — See exactly what your AI remembers and when it learned it. Roll back to any point in time.
+- **Cortex Insights** — AI surfaces emerging themes and patterns from your accumulated knowledge.
+- **Entity Extraction** — People, projects, and concepts are automatically extracted into a semantic knowledge graph.
+- **Audit Trail** — Every memory operation is logged with hash-chain verification. Full transparency into what your AI knows.
+
+### AI Writing Tools
+- **Voice Capture** — Record meetings, lectures, or voice memos. Transcribe locally on-device or via cloud. AI structures your transcript into clean markdown notes.
+- **Brain Dump** — Paste raw thoughts, get structured notes back.
+- **Clip Remix** — Paste web content, get it rewritten in your voice.
+- **Slash Commands** — Inline AI help anywhere in the editor.
+- **Weekly Review** — Automated summary of your writing activity.
+- **Writing Coach** — AI feedback on clarity, structure, and tone.
+
+### Your AI, Your Way
+- **18+ AI Providers** — OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter.
+- **Bring Your Own Key** — API keys stay in your browser. We never store them on our servers.
+- **Switch Anytime** — Change providers without losing your memory or notes.
+
+### Local-First & Open Source
+- **Desktop App** — Native desktop via Tauri (macOS, Windows, Linux). Notes stored as plain markdown files in `~/SecondBrain/`. No account needed, works offline.
+- **Cloud Sync** — Optional Supabase-powered cloud with row-level security for cross-device access, sharing, and publishing.
+- **MIT Licensed** — Inspect every line of code, contribute features, or self-host your own instance.
+
+---
+
+## How It Compares
+
+| | Novyx Vault | Obsidian | Notion |
+|---|---|---|---|
+| Markdown files | Yes | Yes | No |
+| Wiki-links & backlinks | Yes | Yes | Limited |
+| Knowledge graph | Yes | Plugin | No |
+| AI with persistent memory | Built in | No | No |
+| AI-discovered connections | Built in | No | No |
+| Memory rollback & audit | Built in | No | No |
+| Voice capture & transcription | Built in | No | No |
+| Bring your own AI provider | 18+ | No | No |
+| Open source | Yes | No | No |
+
+---
+
+## Quick Start
+
+### Desktop Mode (no account required)
+
+Desktop mode stores notes as plain markdown files in `~/SecondBrain/`. No database, no account.
 
 ```bash
 git clone https://github.com/novyxlabs/novyx-vault.git
@@ -48,11 +89,10 @@ npm install
 Create `.env.local`:
 
 ```env
-# Only required variable for desktop mode
 NOVYX_MEMORY_API_KEY=your_novyx_api_key
 ```
 
-Get a free Novyx API key at [novyxlabs.com](https://novyxlabs.com).
+Get a free API key at [novyxlabs.com](https://novyxlabs.com).
 
 ```bash
 npm run dev
@@ -64,25 +104,25 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 npm run tauri:dev    # development with hot reload
-npm run tauri:build  # production build (macOS, Windows, Linux)
+npm run tauri:build  # production build
 ```
 
-Requires [Rust](https://rustup.rs/) installed.
+Requires [Rust](https://rustup.rs/).
 
 ---
 
-## Cloud Deployment (Supabase)
+## Cloud Deployment
 
-Cloud mode uses Supabase for storage, auth, and cross-device sync.
+Cloud mode adds auth, cross-device sync, sharing, and publishing via Supabase.
 
 ### 1. Set up Supabase
 
-Create a project at [supabase.com](https://supabase.com). The required tables (`profiles`, `notes`, `note_versions`) use row-level security.
+Create a project at [supabase.com](https://supabase.com). Required tables (`profiles`, `notes`, `note_versions`) use row-level security.
 
 ### 2. Environment Variables
 
 ```env
-# Storage mode
+# Storage
 STORAGE_MODE=supabase
 
 # Supabase
@@ -99,7 +139,7 @@ UPSTASH_REDIS_REST_URL=your_redis_url
 UPSTASH_REDIS_REST_TOKEN=your_redis_token
 ```
 
-### 3. Deploy to Vercel
+### 3. Deploy
 
 ```bash
 npm run build
@@ -109,19 +149,18 @@ Or connect your GitHub repo to [Vercel](https://vercel.com) for automatic deploy
 
 ---
 
-## Environment Variables Reference
+## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `STORAGE_MODE` | Cloud only | Set to `supabase` for cloud mode. Leave empty for desktop. |
 | `NEXT_PUBLIC_SUPABASE_URL` | Cloud only | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cloud only | Supabase anonymous key (safe for browser) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Cloud only | Server-side Supabase key for provisioning. **Never expose to client.** |
-| `NOVYX_MEMORY_API_KEY` | Desktop | Personal Novyx API key. In cloud mode, users get individual keys via provisioning. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cloud only | Supabase anonymous key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Cloud only | Server-side Supabase key. **Never expose to client.** |
+| `NOVYX_MEMORY_API_KEY` | Desktop | Personal Novyx API key. In cloud mode, users get keys via provisioning. |
 | `NOVYX_ADMIN_KEY` | Cloud only | Admin key for provisioning per-user Novyx keys on signup |
-| `UPSTASH_REDIS_REST_URL` | Optional | Redis endpoint for rate limiting |
+| `UPSTASH_REDIS_REST_URL` | Optional | Redis for rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional | Redis auth token |
-| `TEST_ANTHROPIC_API_KEY` | Testing only | Anthropic key for E2E tests |
 
 ---
 
@@ -140,15 +179,22 @@ Or connect your GitHub repo to [Vercel](https://vercel.com) for automatic deploy
 
 ---
 
+## Tech Stack
+
+Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · CodeMirror 6 · Novyx SDK · Supabase · Tauri v2
+
+**51 components · 63 API routes · 18+ AI providers**
+
+---
+
 ## Project Structure
 
 ```
 app/              Next.js app router (pages + API routes)
-components/       React components (34 components)
-lib/              Storage adapters, Novyx client, markdown plugins, search
+components/       React components (51 components)
+lib/              Storage adapters, Novyx client, providers, transcription
 public/           Static assets
 src-tauri/        Tauri desktop app (Rust)
-seo/              SEO content calendar
 tests/            Playwright E2E + Vitest unit tests
 ```
 
@@ -156,25 +202,26 @@ tests/            Playwright E2E + Vitest unit tests
 
 ## Novyx Core
 
-Novyx Vault's persistent AI memory is powered by the [Novyx SDK](https://novyxlabs.com). Novyx Core provides:
+Novyx Vault's AI memory is powered by the [Novyx SDK](https://novyxlabs.com). The free tier includes everything you need to get started. Pro unlocks higher limits.
 
-- **Remember** — Store memories from conversations and notes
-- **Recall** — Retrieve relevant context for AI responses
+**What Novyx Core does:**
+
+- **Remember** — Store context from conversations and notes
+- **Recall** — Retrieve relevant memories for AI responses
 - **Cortex** — Surface emerging themes across your knowledge
-- **Drift** — Track how your AI's understanding evolves over time
+- **Audit** — Hash-chained audit trail for every memory operation
+- **Rollback** — Travel back to any previous memory state
 - **Entities & Triples** — Semantic knowledge graph extraction
 
-Get an API key at [novyx.ai](https://novyx.ai).
+Get a free API key at [novyxlabs.com](https://novyxlabs.com).
 
 ---
 
 ## MCP Integration
 
-Novyx Vault works alongside `novyx-mcp` to give your AI agents persistent memory across any MCP-compatible tool.
+Novyx Vault works alongside `novyx-mcp` to give AI agents persistent memory across any MCP-compatible tool.
 
 ### Setup
-
-Install the MCP server globally:
 
 ```bash
 npm install -g novyx-mcp
@@ -195,22 +242,22 @@ Add to your Claude Desktop config (`~/.claude/claude_desktop_config.json`):
 }
 ```
 
-Works the same way in Cursor, Windsurf, or any MCP-compatible client.
+Works with Claude Code, Cursor, Windsurf, or any MCP-compatible client.
 
 ### How it works
 
-1. **Your agent stores memories** as it works — project context, preferences, code patterns
-2. **Open Vault** to view, search, and manage those memories in a visual dashboard
+1. **Your agent stores memories** as it works — project context, preferences, decisions
+2. **Open Vault** to view, search, and manage those memories visually
 3. **Audit trail** shows every operation with hash-chain verification
 4. **Rollback** to any previous memory state if needed
 
-The same Novyx API key works across Vault, MCP, and the Novyx SDK directly. Memories created via MCP appear in Vault automatically.
+The same Novyx API key works across Vault, MCP, and the SDK. Memories created anywhere appear everywhere.
 
 ---
 
 ## Contributing
 
-Novyx Vault is open source. Contributions are welcome.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 git clone https://github.com/novyxlabs/novyx-vault.git
