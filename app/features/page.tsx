@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Brain, FileText, Network, GitBranch, History, Sparkles,
-  Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight, Link2,
+  Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight, Link2, Mic,
 } from "lucide-react";
 import {
   MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
@@ -204,6 +204,7 @@ export default function FeaturesPage() {
               Beyond chat, Vault includes writing tools designed for how you actually think.
               Brain Dump takes messy thoughts and transforms them into structured notes.
               Clip Remix takes content from the web and rewrites it in your voice.
+              Voice Capture transcribes meetings and podcasts into structured markdown.
             </p>
             <ul>
               <li>Brain Dump &mdash; raw thoughts to structured notes</li>
@@ -215,14 +216,33 @@ export default function FeaturesPage() {
           </Feature>
 
           <Feature
+            icon={<Mic size={28} />}
+            title="Voice Capture"
+            id="voice-capture"
+          >
+            <p>
+              Record meetings, lectures, webinars, or voice memos &mdash; no bot joins your call.
+              Transcribe locally on-device using Whisper or via cloud with any OpenAI-compatible API.
+              AI structures your transcript into clean, organized markdown notes.
+            </p>
+            <ul>
+              <li>Dual transcription: local (on-device, private) or cloud (faster, more accurate)</li>
+              <li>Capture from microphone or system audio</li>
+              <li>Real-time waveform visualization during recording</li>
+              <li>AI structuring &mdash; raw transcript becomes meeting notes, thought capture, or learning notes</li>
+              <li>Save as a new note or merge into an existing one</li>
+            </ul>
+          </Feature>
+
+          <Feature
             icon={<Key size={28} />}
-            title="Bring Your Own AI"
+            title="BYOK — Bring Your Own Key"
             id="byok"
           >
             <p>
               Novyx Vault works with the AI provider you already use. Connect your own API key
               and choose from 18+ providers. Your keys are stored in your browser only &mdash;
-              they never touch our servers.
+              we never store them on our servers. Switch providers anytime without losing your memory or notes.
             </p>
             <Providers />
             <BYOKDemo />
@@ -335,8 +355,9 @@ function Feature({ icon, title, id, children }: { icon: React.ReactNode; title: 
 
 function Providers() {
   const providers = [
-    "OpenAI", "Anthropic", "DeepSeek", "Ollama", "LM Studio", "Groq",
-    "Together", "Mistral", "Gemini", "Cerebras", "SambaNova", "Moonshot", "MiniMax",
+    "OpenAI", "Anthropic", "Google Gemini", "DeepSeek", "Ollama", "LM Studio",
+    "Groq", "Together", "Mistral", "xAI Grok", "Perplexity", "Cohere",
+    "Cerebras", "SambaNova", "Fireworks", "Moonshot", "MiniMax", "OpenRouter",
   ];
   return (
     <div className="flex flex-wrap gap-2 mt-4">
