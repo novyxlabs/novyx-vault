@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Github } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -8,26 +9,34 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0a0a0b",
-        color: "#e4e4e7",
-        fontFamily: "system-ui, sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px" }}>
-        <Link
-          href="/"
-          style={{ color: "#6366f1", textDecoration: "none", fontSize: 14 }}
-        >
-          &larr; Back to Novyx Vault
-        </Link>
+    <div className="min-h-screen bg-background text-foreground font-sans">
+      <nav aria-label="Main navigation" className="flex items-center justify-between max-w-6xl mx-auto px-6 py-5">
+        <Link href="/" className="text-xl font-bold tracking-tight">Novyx Vault</Link>
+        <div className="flex items-center gap-4">
+          <Link href="/features" className="text-sm text-muted hover:text-foreground transition-colors py-3 px-1">Features</Link>
+          <a
+            href="https://github.com/novyxlabs/novyx-vault"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub"
+            className="text-muted hover:text-foreground transition-colors p-2"
+          >
+            <Github size={20} />
+          </a>
+          <Link
+            href="/login"
+            className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            Sign In
+          </Link>
+        </div>
+      </nav>
 
-        <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 24, marginBottom: 8 }}>
+      <main className="max-w-[680px] mx-auto px-6 py-12">
+        <h1 className="text-3xl font-bold mb-2">
           Terms of Service
         </h1>
-        <p style={{ fontSize: 13, color: "#71717a", marginBottom: 32 }}>
+        <p className="text-sm text-muted mb-8">
           Last updated: March 2026
         </p>
 
@@ -94,21 +103,38 @@ export default function TermsPage() {
 
         <Section title="10. Contact">
           Questions? Reach us via{" "}
-          <a href="https://github.com/novyxlabs/novyx-vault/issues" style={{ color: "#6366f1" }}>
+          <a href="https://github.com/novyxlabs/novyx-vault/issues" className="text-accent hover:underline">
             GitHub Issues
           </a>{" "}
           or at the Novyx Labs website.
         </Section>
-      </div>
+      </main>
+
+      <footer className="border-t border-sidebar-border py-8">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted">
+            Built by{" "}
+            <a href="https://novyxlabs.com" target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-accent transition-colors">
+              Novyx Labs
+            </a>
+          </p>
+          <nav aria-label="Footer" className="flex items-center gap-4 text-sm text-muted">
+            <Link href="/features" className="hover:text-foreground transition-colors py-3 px-1">Features</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors py-3 px-1">Terms</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors py-3 px-1">Privacy</Link>
+            <a href="https://github.com/novyxlabs/novyx-vault" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors py-3 px-1">GitHub</a>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 28 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>{title}</h2>
-      <p style={{ fontSize: 15, lineHeight: 1.7, color: "#a1a1aa" }}>{children}</p>
+    <div className="mb-7">
+      <h2 className="text-lg font-semibold mb-2">{title}</h2>
+      <p className="text-[15px] leading-relaxed text-muted">{children}</p>
     </div>
   );
 }
