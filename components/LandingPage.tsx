@@ -78,7 +78,7 @@ export default function LandingPage() {
 
         {/* Core experience — what you get */}
         <section className="max-w-5xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-bold text-center mb-4">
+          <h2 className="text-3xl font-bold text-center mb-4">
             Everything you&apos;d expect from a great notes app
           </h2>
           <p className="text-center text-muted mb-12 max-w-2xl mx-auto">
@@ -121,7 +121,7 @@ export default function LandingPage() {
 
         {/* The differentiator — AI Memory */}
         <section className="max-w-5xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-bold text-center mb-4">
+          <h2 className="text-3xl font-bold text-center mb-4">
             Now add AI that <span className="text-accent">never forgets</span>
           </h2>
           <p className="text-center text-muted mb-12 max-w-2xl mx-auto">
@@ -167,7 +167,7 @@ export default function LandingPage() {
 
         {/* How it compares */}
         <section className="max-w-4xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12">
             How it compares
           </h2>
           <div className="overflow-x-auto">
@@ -239,7 +239,7 @@ export default function LandingPage() {
           <div className="p-8 rounded-2xl border border-sidebar-border bg-card-bg">
             <div className="flex items-center gap-3 mb-4">
               <Key size={24} className="text-accent" />
-              <h2 className="text-2xl font-bold">Works with the AI you already use</h2>
+              <h2 className="text-3xl font-bold">Works with the AI you already use</h2>
             </div>
             <p className="text-muted mb-6 max-w-xl">
               Connect your own API key. Your keys stay in your browser &mdash; they never touch our servers.
@@ -260,7 +260,7 @@ export default function LandingPage() {
 
         {/* Desktop + Cloud */}
         <section className="max-w-5xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12">
             Use it your way
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -291,7 +291,7 @@ export default function LandingPage() {
         <section className="max-w-3xl mx-auto px-6 py-16 text-center">
           <div className="p-8 rounded-2xl border border-sidebar-border bg-card-bg">
             <Github size={32} className="mx-auto mb-4 text-muted" />
-            <h2 className="text-2xl font-bold mb-3">Open Source</h2>
+            <h2 className="text-3xl font-bold mb-3">Open Source</h2>
             <p className="text-muted mb-6 max-w-lg mx-auto">
               Inspect every line of code, contribute features, or self-host your own instance.
               Your notes, your data, your rules.
