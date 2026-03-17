@@ -14,13 +14,13 @@ export default function LandingPage() {
       <nav aria-label="Main navigation" className="flex items-center justify-between max-w-6xl mx-auto px-6 py-5">
         <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
         <div className="flex items-center gap-4">
-          <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors">Features</a>
+          <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors py-3 px-1">Features</a>
           <a
             href="https://github.com/novyxlabs/novyx-vault"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub"
-            className="text-muted hover:text-foreground transition-colors"
+            className="text-muted hover:text-foreground transition-colors p-2"
           >
             <Github size={20} />
           </a>
@@ -340,21 +340,21 @@ export default function LandingPage() {
               Novyx Labs
             </a>
           </p>
-          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted">
-            <a href="/features" className="hover:text-foreground transition-colors">
+          <nav aria-label="Footer" className="flex items-center gap-4 text-sm text-muted">
+            <a href="/features" className="hover:text-foreground transition-colors py-3 px-1">
               Features
             </a>
-            <a href="/terms" className="hover:text-foreground transition-colors">
+            <a href="/terms" className="hover:text-foreground transition-colors py-3 px-1">
               Terms
             </a>
-            <a href="/privacy" className="hover:text-foreground transition-colors">
+            <a href="/privacy" className="hover:text-foreground transition-colors py-3 px-1">
               Privacy
             </a>
             <a
               href="https://github.com/novyxlabs/novyx-vault"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors"
+              className="hover:text-foreground transition-colors py-3 px-1"
             >
               GitHub
             </a>
