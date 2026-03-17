@@ -82,6 +82,7 @@ async function mockGetDisplayMedia(page: Page) {
 
     const combinedStream = new MediaStream([videoTrack, audioTrack]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (navigator.mediaDevices as any).getDisplayMedia = async () => combinedStream;
   });
 }
@@ -89,6 +90,7 @@ async function mockGetDisplayMedia(page: Page) {
 // Helper: mock getDisplayMedia to throw permission denied
 async function mockGetDisplayMediaDenied(page: Page) {
   await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (navigator.mediaDevices as any).getDisplayMedia = async () => {
       throw new DOMException("Permission denied", "NotAllowedError");
     };
