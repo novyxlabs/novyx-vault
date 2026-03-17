@@ -96,6 +96,7 @@ const SOURCE_STYLES: Record<string, { label: string; className: string }> = {
   vault: { label: "Vault", className: "bg-accent/10 text-accent/70" },
   mcp: { label: "MCP", className: "bg-blue-400/10 text-blue-400/70" },
   api: { label: "API", className: "bg-emerald-400/10 text-emerald-400/70" },
+  capture: { label: "Capture", className: "bg-amber-400/10 text-amber-400/70" },
 };
 
 function getSource(tags: string[]): { label: string; className: string } | null {

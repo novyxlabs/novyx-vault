@@ -17,3 +17,11 @@ Uses Novyx SDK for persistent AI memory. Pro-gated features: Graph, Insights, Re
 
 ## Open Source
 This repo is being prepared for open source. Frame it as a reference implementation for building on Novyx, not just a notes app.
+
+## gstack (Claude Code Skills)
+
+Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
+
+Available skills: `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/review`, `/ship`, `/browse`, `/qa`, `/qa-only`, `/qa-design-review`, `/setup-browser-cookies`, `/retro`, `/document-release`
+
+If gstack skills aren't working, run `cd .claude/skills/gstack && ./setup` to build the binary and register skills.

@@ -20,6 +20,7 @@ import TagBrowser from "@/components/TagBrowser";
 import ThinkingEvolution from "@/components/ThinkingEvolution";
 import GhostNotification from "@/components/GhostNotification";
 import BrainDump from "@/components/BrainDump";
+import VoiceCapture from "@/components/VoiceCapture";
 import WritingCoach from "@/components/WritingCoach";
 import ClipRemix from "@/components/ClipRemix";
 import WeeklyReview from "@/components/WeeklyReview";
@@ -68,6 +69,7 @@ export default function AppShell() {
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [isThinkingOpen, setIsThinkingOpen] = useState(false);
   const [isBrainDumpOpen, setIsBrainDumpOpen] = useState(false);
+  const [isVoiceCaptureOpen, setIsVoiceCaptureOpen] = useState(false);
   const [isWritingCoachOpen, setIsWritingCoachOpen] = useState(false);
   const [isClipRemixOpen, setIsClipRemixOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
@@ -85,6 +87,7 @@ export default function AppShell() {
     setIsTagsOpen(false);
     setIsThinkingOpen(false);
     setIsBrainDumpOpen(false);
+    setIsVoiceCaptureOpen(false);
     setIsWritingCoachOpen(false);
     setIsClipRemixOpen(false);
     setIsWeeklyReviewOpen(false);
@@ -718,6 +721,7 @@ export default function AppShell() {
         onOpenTags={() => { closeAllModals(); setIsTagsOpen(true); }}
         onOpenThinking={() => { closeAllModals(); setIsThinkingOpen(true); }}
         onOpenBrainDump={() => { closeAllModals(); setIsBrainDumpOpen(true); }}
+        onOpenVoiceCapture={() => { closeAllModals(); setIsVoiceCaptureOpen(true); }}
         onOpenWritingCoach={() => { closeAllModals(); setIsWritingCoachOpen(true); }}
         onOpenClipRemix={() => { closeAllModals(); setIsClipRemixOpen(true); }}
         onOpenWeeklyReview={() => { closeAllModals(); setIsWeeklyReviewOpen(true); }}
@@ -903,6 +907,13 @@ export default function AppShell() {
     <BrainDump
       isOpen={isBrainDumpOpen}
       onClose={() => setIsBrainDumpOpen(false)}
+      onNoteSaved={(path) => { loadNotes(); setActiveNote(path); }}
+      notes={flatNotes}
+      onOpenSettings={() => setIsSettingsOpen(true)}
+    />
+    <VoiceCapture
+      isOpen={isVoiceCaptureOpen}
+      onClose={() => setIsVoiceCaptureOpen(false)}
       onNoteSaved={(path) => { loadNotes(); setActiveNote(path); }}
       notes={flatNotes}
       onOpenSettings={() => setIsSettingsOpen(true)}

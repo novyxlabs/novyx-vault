@@ -66,6 +66,26 @@ export async function rememberExchange(
   }
 }
 
+export async function rememberCapture(
+  transcript: string,
+  title?: string,
+  userId?: string,
+  apiKey?: string
+): Promise<void> {
+  const nx = resolveClient(apiKey);
+  if (!nx) return;
+  try {
+    const tags = withUserTag(userId, ["source:capture"]);
+    await withTimeout(nx.remember(transcript, {
+      auto_link: true,
+      context: title ? `Voice capture: ${title}` : undefined,
+      tags,
+    }));
+  } catch (e) {
+    console.warn("[novyx] rememberCapture failed:", e);
+  }
+}
+
 export interface MemoryItem {
   uuid: string;
   observation: string;

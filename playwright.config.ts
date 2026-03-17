@@ -31,6 +31,14 @@ export default defineConfig({
       },
     },
     {
+      name: "voice-capture",
+      testMatch: /voice-capture\.spec\.ts/,
+      use: {
+        browserName: "chromium",
+        headless: true,
+      },
+    },
+    {
       name: "demo",
       testMatch: /demo.*\.spec\.ts/,
       use: {

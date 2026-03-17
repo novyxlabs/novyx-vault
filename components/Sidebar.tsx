@@ -41,6 +41,7 @@ import {
   Gauge,
   Shield,
   ShieldCheck,
+  Mic,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
@@ -76,6 +77,7 @@ interface SidebarProps {
   onOpenTags: () => void;
   onOpenThinking: () => void;
   onOpenBrainDump: () => void;
+  onOpenVoiceCapture: () => void;
   onOpenWritingCoach: () => void;
   onOpenClipRemix: () => void;
   onOpenWeeklyReview: () => void;
@@ -480,6 +482,7 @@ export default function Sidebar({
   onOpenTags,
   onOpenThinking,
   onOpenBrainDump,
+  onOpenVoiceCapture,
   onOpenWritingCoach,
   onOpenClipRemix,
   onOpenWeeklyReview,
@@ -935,7 +938,7 @@ export default function Sidebar({
           {/* AI Suite */}
           <div className="px-2 pt-2.5 pb-1">
             <div className="text-[9px] uppercase tracking-[0.15em] text-accent/40 font-medium px-1 mb-1.5">AI Suite</div>
-            <div className="grid grid-cols-5 gap-1">
+            <div className="grid grid-cols-6 gap-1">
               <button
                 onClick={onOpenReflect}
                 className="flex flex-col items-center gap-1 py-2 rounded-lg text-teal-400/70 hover:bg-teal-400/10 hover:text-teal-400 transition-all"
@@ -951,6 +954,14 @@ export default function Sidebar({
               >
                 <Sparkles size={16} />
                 <span className="text-[9px] leading-none font-medium">Dump</span>
+              </button>
+              <button
+                onClick={onOpenVoiceCapture}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-rose-400/70 hover:bg-rose-400/10 hover:text-rose-400 transition-all"
+                title="Voice Capture — record audio, auto-transcribe and structure"
+              >
+                <Mic size={16} />
+                <span className="text-[9px] leading-none font-medium">Voice</span>
               </button>
               <button
                 onClick={onOpenClipRemix}
