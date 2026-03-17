@@ -78,10 +78,10 @@ export default function LandingPage() {
 
         {/* Core experience — what you get */}
         <section className="max-w-5xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-bold text-center mb-4">
+          <h2 className="text-3xl font-bold mb-4">
             Everything you&apos;d expect from a great notes app
           </h2>
-          <p className="text-center text-muted mb-12 max-w-2xl mx-auto">
+          <p className="text-muted mb-12 max-w-2xl">
             Plain markdown, wiki-links, backlinks, a knowledge graph, and a fast editor.
             If you&apos;ve used Obsidian, you&apos;ll feel at home.
           </p>
