@@ -419,7 +419,7 @@ describe("MemoryDashboard SOURCE_STYLES", () => {
     expect(source).toContain('capture:');
 
     // Verify it has amber color styling
-    expect(source).toMatch(/capture.*amber/s);
+    expect(source).toMatch(/capture[\s\S]*amber/);
 
     // Verify the label is "Capture"
     expect(source).toContain('"Capture"');
