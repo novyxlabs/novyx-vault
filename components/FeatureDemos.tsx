@@ -492,7 +492,85 @@ export function WritingToolsDemo() {
   );
 }
 
-/* ========== 11. Open Source ========== */
+/* ========== 11. Voice Capture ========== */
+
+export function VoiceCaptureDemo() {
+  const { ref, inView } = useInView();
+  const [phase, setPhase] = useState<"idle" | "recording" | "transcribing" | "done">("idle");
+
+  useEffect(() => {
+    if (!inView) return;
+    const t1 = setTimeout(() => setPhase("recording"), 400);
+    const t2 = setTimeout(() => setPhase("transcribing"), 2800);
+    const t3 = setTimeout(() => setPhase("done"), 4200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [inView]);
+
+  return (
+    <DemoCard>
+      <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 gap-3 h-full">
+        {/* Left — Recording UI */}
+        <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a]">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[9px] text-[#71717a] font-medium">Voice Capture</p>
+            {phase === "recording" && (
+              <span className="flex items-center gap-1 text-[9px] text-[#ef4444] font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444] demo-sync-pulse" />
+                REC 0:42
+              </span>
+            )}
+            {phase === "transcribing" && (
+              <span className="text-[9px] text-[#eab308] font-medium">Transcribing...</span>
+            )}
+            {phase === "done" && (
+              <span className="text-[9px] text-[#22c55e] font-medium">Done</span>
+            )}
+          </div>
+          {/* Waveform */}
+          <div className="flex items-center justify-center gap-[2px] h-12 mb-2">
+            {Array.from({ length: 32 }).map((_, i) => {
+              const height = phase === "recording"
+                ? 8 + Math.sin(i * 0.7) * 16 + Math.random() * 12
+                : phase === "idle" ? 4 : 6;
+              return (
+                <div
+                  key={i}
+                  className={`w-[3px] rounded-full transition-all duration-300 ${
+                    phase === "recording" ? "bg-[#ef4444]/60" :
+                    phase === "transcribing" ? "bg-[#eab308]/40" :
+                    phase === "done" ? "bg-[#22c55e]/40" : "bg-[#27272a]"
+                  }`}
+                  style={{ height: `${Math.max(4, height)}px` }}
+                />
+              );
+            })}
+          </div>
+          <p className="text-[9px] text-[#71717a] text-center">
+            {phase === "idle" ? "Click to record" :
+             phase === "recording" ? "Listening via microphone..." :
+             phase === "transcribing" ? "Processing with Whisper..." :
+             "Transcript ready"}
+          </p>
+        </div>
+        {/* Right — Structured output */}
+        <div className={`bg-[#161618] rounded-lg p-3 border border-[#27272a] ${phase === "done" ? "demo-fade-in" : "opacity-0"}`}>
+          <p className="text-[9px] text-[#22c55e] font-medium mb-2">Structured Note</p>
+          <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
+            <p className="text-[#e4e4e7] font-medium mb-1"># Team Standup — Mar 17</p>
+            <p className="mb-0.5">## Decisions</p>
+            <p>• Ship voice capture this week</p>
+            <p>• Move to emerald CTA buttons</p>
+            <p className="mt-1 mb-0.5">## Action Items</p>
+            <p>• @blake — update features page</p>
+            <p>• Review PR before EOD</p>
+          </div>
+        </div>
+      </div>
+    </DemoCard>
+  );
+}
+
+/* ========== 12. Open Source ========== */
 
 export function OpenSourceDemo() {
   const { ref, inView } = useInView();

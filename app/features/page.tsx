@@ -7,7 +7,7 @@ import {
 import {
   MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
   MemoryRollbackDemo, CortexInsightsDemo, BYOKDemo, LocalFirstDemo,
-  CloudSyncDemo, WritingToolsDemo, OpenSourceDemo,
+  CloudSyncDemo, WritingToolsDemo, VoiceCaptureDemo, OpenSourceDemo,
 } from "@/components/FeatureDemos";
 
 export const metadata: Metadata = {
@@ -232,6 +232,7 @@ export default function FeaturesPage() {
               <li>AI structuring &mdash; raw transcript becomes meeting notes, thought capture, or learning notes</li>
               <li>Save as a new note or merge into an existing one</li>
             </ul>
+            <VoiceCaptureDemo />
           </Feature>
 
           <Feature
