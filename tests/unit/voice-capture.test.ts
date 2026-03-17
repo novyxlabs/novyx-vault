@@ -276,6 +276,56 @@ describe("API /api/notes/transcribe", () => {
     expect(res.status).toBe(400);
     expect(body.error).toBe("Invalid provider URL");
   });
+
+  it("accepts provider details sent as a JSON payload", async () => {
+    const mockCreate = vi.fn().mockResolvedValue({
+      text: "transcribed from payload",
+    });
+
+    vi.doMock("openai", () => {
+      class MockOpenAI {
+        audio = {
+          transcriptions: {
+            create: mockCreate,
+          },
+        };
+      }
+      return {
+        default: MockOpenAI,
+        toFile: vi.fn().mockResolvedValue({}),
+      };
+    });
+
+    const { NextRequest } = await import("next/server");
+    const { POST } = await import("@/app/api/notes/transcribe/route");
+
+    const smallBlob = new Blob(["audio data"], { type: "audio/webm" });
+    const formData = new FormData();
+    formData.append("audio", smallBlob, "audio.webm");
+    formData.append(
+      "provider",
+      JSON.stringify({
+        baseURL: "https://api.openai.com/v1",
+        apiKey: "sk-test",
+        model: "whisper-1",
+      })
+    );
+
+    const req = new NextRequest("http://localhost:3000/api/notes/transcribe", {
+      method: "POST",
+      body: formData,
+    });
+
+    const res = await POST(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.text).toBe("transcribed from payload");
+    expect(mockCreate).toHaveBeenCalledWith({
+      model: "whisper-1",
+      file: expect.anything(),
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

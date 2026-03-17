@@ -530,7 +530,7 @@ export function VoiceCaptureDemo() {
           <div className="flex items-center justify-center gap-[2px] h-12 mb-2">
             {Array.from({ length: 32 }).map((_, i) => {
               const height = phase === "recording"
-                ? 8 + Math.sin(i * 0.7) * 16 + Math.random() * 12
+                ? 8 + Math.sin(i * 0.7) * 16 + ((i * 17) % 12)
                 : phase === "idle" ? 4 : 6;
               return (
                 <div

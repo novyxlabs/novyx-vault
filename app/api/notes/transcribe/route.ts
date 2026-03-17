@@ -5,6 +5,12 @@ import { validateProviderBaseURL } from "@/lib/providers";
 import { resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
+interface ProviderPayload {
+  baseURL?: string;
+  apiKey?: string;
+  model?: string;
+}
+
 export async function POST(req: NextRequest) {
   let ctx;
   try { ctx = await getStorageContext(); } catch (e) { if (e instanceof Response) return e; throw e; }
@@ -22,8 +28,21 @@ export async function POST(req: NextRequest) {
   }
 
   const audioFile = formData.get("audio");
+  const providerRaw = formData.get("provider");
   const providerBaseURL = formData.get("providerBaseURL") as string | null;
   const providerApiKey = formData.get("providerApiKey") as string | null;
+  let provider: ProviderPayload | null = null;
+
+  if (typeof providerRaw === "string") {
+    try {
+      provider = JSON.parse(providerRaw) as ProviderPayload;
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid provider payload" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  }
 
   if (!audioFile || !(audioFile instanceof Blob)) {
     return new Response(
@@ -41,9 +60,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const baseURL = providerBaseURL || "https://api.openai.com/v1";
+  const baseURL = provider?.baseURL || providerBaseURL || "https://api.openai.com/v1";
+  const apiKey = provider?.apiKey || providerApiKey;
+  const model = provider?.model || "whisper-1";
 
-  if (!providerApiKey) {
+  if (!apiKey) {
     const isLocal =
       baseURL.includes("localhost") || baseURL.includes("127.0.0.1");
     if (!isLocal) {
@@ -71,7 +92,7 @@ export async function POST(req: NextRequest) {
   }
 
   const client = new OpenAI({
-    apiKey: providerApiKey || "not-needed",
+    apiKey: apiKey || "not-needed",
     baseURL,
   });
 
@@ -83,7 +104,7 @@ export async function POST(req: NextRequest) {
     });
 
     const transcription = await client.audio.transcriptions.create({
-      model: "whisper-1",
+      model,
       file,
     });
 
