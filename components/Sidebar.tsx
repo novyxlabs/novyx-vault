@@ -1012,8 +1012,12 @@ export default function Sidebar({
                   const data = await res.json();
                   if (data.checkout_url) {
                     window.open(data.checkout_url, "_blank");
+                  } else {
+                    alert(data.error || "Could not start checkout. Please try again.");
                   }
-                } catch { /* silent */ }
+                } catch {
+                  alert("Could not connect to billing. Please try again.");
+                }
               }}
               className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
               title="Upgrade to Pro"
