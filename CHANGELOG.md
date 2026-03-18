@@ -2,6 +2,26 @@
 
 All notable changes to Novyx Vault are documented here.
 
+## [Unreleased]
+
+### Added
+- **Voice Capture** — Record meetings, lectures, or voice memos. Transcribe locally on-device (WebAssembly Whisper) or via cloud API. AI structures your transcript into clean markdown notes with titles, sections, and action items.
+- **Voice Capture animated demo** — Features page now includes an interactive waveform demo
+- **Self-serve upgrade via Stripe** — Pro upgrade flow with Stripe Checkout integration across all gated features
+- **Billing management** — Stripe Customer Portal for subscription management
+
+### Changed
+- **Landing page hero** — Replaced placeholder with real app screenshot showing the editor, wiki-links, live preview, and ghost connections
+- **Mobile nav** — Collapsed to hamburger menu on small screens for cleaner mobile experience
+- **Comparison table** — Responsive padding on mobile to prevent horizontal overflow
+- **Footer touch targets** — "Novyx Labs" link now meets 44px minimum touch target
+
+### Fixed
+- Deterministic waveform rendering in VoiceCaptureDemo (no longer randomized on each render)
+- Provider JSON payload accepted in transcribe route (was form-data only)
+- ES2018 regex dotAll flag replaced with cross-target equivalent for broader compatibility
+- Vercel deploy size reduced via `.vercelignore` (excludes Tauri target and build artifacts)
+
 ## [0.3.0] — 2026-03-15
 
 ### Added

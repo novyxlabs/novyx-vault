@@ -36,7 +36,7 @@ STORAGE_MODE=supabase npm run dev
 
 ```
 app/           Next.js pages and API routes
-components/    React components (46+)
+components/    React components (52)
 lib/           Shared modules (auth, storage, providers, memory)
 tests/         Playwright E2E tests
 src-tauri/     Tauri v2 desktop wrapper

@@ -1,7 +1,7 @@
 # Novyx Vault — Master Status Summary
-**Date**: March 6, 2026
+**Date**: March 18, 2026
 **Live**: https://vault.novyxlabs.com
-**Repo**: https://github.com/novyxlabs/novyx-vault (private)
+**Repo**: https://github.com/novyxlabs/novyx-vault
 **Deploys**: Vercel auto-deploy from `main` (region: iad1)
 
 ---
@@ -10,16 +10,16 @@
 
 | Metric | Count |
 |---|---|
-| Total commits | 29 |
-| Components | 42 |
-| API routes | 37 |
-| Lib modules | 23 |
-| Pages | 7 (home, login, forgot-password, reset-password, features, blog, terms/privacy) |
+| Total commits | 121 |
+| Components | 52 |
+| API routes | 64 |
+| Lib modules | 25 |
+| Pages | 9 (home, login, forgot-password, reset-password, features, terms, privacy, verify-email, p/[slug]) |
 
 ## Tech Stack
 - Next.js 16 + React 19 + TypeScript + Tailwind CSS 4
 - CodeMirror 6 (Markdown editor)
-- OpenAI SDK (provider-agnostic — 18 providers supported)
+- OpenAI SDK (provider-agnostic — 18+ providers supported)
 - Novyx SDK (persistent AI memory)
 - Supabase (Postgres + Auth + RLS)
 - Tauri v2 (desktop wrapper)
@@ -99,7 +99,7 @@
 | Feature | Component | Status |
 |---|---|---|
 | AI provider management | `SettingsModal` | Working |
-| 18 provider presets | `lib/providers.ts` | Working |
+| 18+ provider presets | `lib/providers.ts` | Working |
 | Model selector (dropdown) | `SettingsModal` | Working |
 | Novyx Memory key config | `SettingsModal` | Working |
 | Theme picker | `ThemePicker` | Working |
@@ -134,7 +134,7 @@
 
 ---
 
-## Recent Sprint (This Week — 28 Commits)
+## Recent Sprint (Through March 18 — 121 Commits)
 
 ### Bugs Fixed
 - [x] GitHub OAuth blocked by CSP `form-action` directive
@@ -174,7 +174,7 @@
 | P1 | Lighthouse/SEO score likely still low (~52) — no SEO sprint done | No |
 | P1 | Tauri desktop build untested against latest code | No |
 | P2 | "On Your Mind" theme chips empty for new users (needs memory volume) | No — works with data |
-| P2 | Pro-gated features (Graph, Insights, Replay, Audit) need billing integration | Future |
+| P2 | Pro-gated features (Graph, Insights, Replay, Audit) — billing integration shipped via Stripe | Done |
 | P3 | Sync (Phase 6) — offline-first with conflict resolution | Deferred |
 
 ---
@@ -198,15 +198,16 @@ This unblocks the password reset flow.
 
 ```
 app/
-  api/              37 API routes (auth, notes, memory, chat, settings)
+  api/              64 API routes (auth, notes, memory, chat, settings, billing, control)
   login/            Email/password + OAuth login
   forgot-password/  Password reset request
   reset-password/   New password form
   auth/confirm/     Email verification + PKCE handler
-  features/         Public landing page
-  blog/             Blog/changelog
-components/         42 React components
-lib/                23 modules (storage adapters, auth, novyx client, providers, search, etc.)
+  features/         Public features page
+  terms/            Terms of service
+  privacy/          Privacy policy
+components/         52 React components
+lib/                25 modules (storage adapters, auth, novyx client, providers, transcription, etc.)
 src-tauri/          Tauri v2 desktop wrapper (Rust)
 public/             Static assets, icons
 ```

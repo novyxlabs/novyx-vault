@@ -183,7 +183,7 @@ Or connect your GitHub repo to [Vercel](https://vercel.com) for automatic deploy
 
 Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · CodeMirror 6 · Novyx SDK · Supabase · Tauri v2
 
-**51 components · 63 API routes · 18+ AI providers**
+**52 components · 64 API routes · 18+ AI providers**
 
 ---
 
@@ -191,7 +191,7 @@ Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · CodeMirror 6 · Novyx 
 
 ```
 app/              Next.js app router (pages + API routes)
-components/       React components (51 components)
+components/       React components (52 components)
 lib/              Storage adapters, Novyx client, providers, transcription
 public/           Static assets
 src-tauri/        Tauri desktop app (Rust)
@@ -257,7 +257,7 @@ The same Novyx API key works across Vault, MCP, and the SDK. Memories created an
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ```bash
 git clone https://github.com/novyxlabs/novyx-vault.git

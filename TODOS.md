@@ -80,8 +80,19 @@
 
 ## Testing
 
-
 ## Completed
+
+### Voice Capture
+**What:** Record, transcribe (local Whisper or cloud API), 18+ providers), and AI-structure voice memos into markdown notes.
+**Completed:** v0.3.0 (2026-03-17)
+
+### Self-serve billing via Stripe
+**What:** Pro upgrade flow with Stripe Checkout, customer portal for subscription management.
+**Completed:** v0.3.0 (2026-03-17)
+
+### QA audit — mobile responsive fixes
+**What:** Hamburger nav on mobile, comparison table overflow fix, footer touch targets.
+**Completed:** v0.3.0 (2026-03-18)
 
 ### Mission Control dashboard
 **What:** Full mission control UI with approvals, activity stream, drafts, policies, health tabs.
