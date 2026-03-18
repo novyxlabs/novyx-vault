@@ -5,7 +5,7 @@ import {
   Sparkles, History, Key, PenTool, Link2, FolderTree,
   Download, Mic,
 } from "lucide-react";
-import HeroDemo from "./HeroDemo";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
@@ -59,9 +59,16 @@ export default function LandingPage() {
               See All Features
             </a>
           </div>
-          {/* Hero Demo — full-width, high-contrast */}
-          <div className="mt-16 -mx-2 sm:mx-0">
-            <HeroDemo />
+          {/* App screenshot */}
+          <div className="mt-16 -mx-2 sm:mx-0 rounded-xl overflow-hidden border border-sidebar-border shadow-2xl">
+            <Image
+              src="/hero-app.jpeg"
+              alt="Novyx Vault — markdown editor with wiki-links, live preview, and ghost connections"
+              width={1440}
+              height={900}
+              priority
+              className="w-full h-auto"
+            />
           </div>
         </section>
 
