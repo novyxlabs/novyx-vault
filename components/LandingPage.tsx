@@ -3,34 +3,67 @@
 import {
   Brain, FileText, Network, Github, ArrowRight,
   Sparkles, History, Key, PenTool, Link2, FolderTree,
-  Download, Mic,
+  Download, Mic, Menu, X,
 } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Nav — touch targets 44px min */}
-      <nav aria-label="Main navigation" className="flex items-center justify-between max-w-6xl mx-auto px-6 py-4">
-        <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
-        <div className="flex items-center gap-2">
-          <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors px-3 py-2.5 min-h-[44px] flex items-center">Features</a>
-          <a
-            href="https://github.com/novyxlabs/novyx-vault"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub"
-            className="text-muted hover:text-foreground transition-colors p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center"
+      <nav aria-label="Main navigation" className="max-w-6xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
+          {/* Desktop nav */}
+          <div className="hidden sm:flex items-center gap-2">
+            <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors px-3 py-2.5 min-h-[44px] flex items-center">Features</a>
+            <a
+              href="https://github.com/novyxlabs/novyx-vault"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              className="text-muted hover:text-foreground transition-colors p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            >
+              <Github size={20} />
+            </a>
+            <a
+              href="/login"
+              className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors min-h-[44px] flex items-center"
+            >
+              Sign In
+            </a>
+          </div>
+          {/* Mobile hamburger */}
+          <button
+            className="sm:hidden p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted hover:text-foreground transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            <Github size={20} />
-          </a>
-          <a
-            href="/login"
-            className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors min-h-[44px] flex items-center"
-          >
-            Sign In
-          </a>
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden flex flex-col gap-1 pt-4 pb-2 border-t border-sidebar-border mt-4">
+            <a href="/features" className="text-sm text-muted hover:text-foreground transition-colors px-3 py-2.5 min-h-[44px] flex items-center">Features</a>
+            <a
+              href="https://github.com/novyxlabs/novyx-vault"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted hover:text-foreground transition-colors px-3 py-2.5 min-h-[44px] flex items-center gap-2"
+            >
+              <Github size={18} /> GitHub
+            </a>
+            <a
+              href="/login"
+              className="px-5 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors min-h-[44px] flex items-center justify-center mt-2"
+            >
+              Sign In
+            </a>
+          </div>
+        )}
       </nav>
 
       <main>
@@ -195,14 +228,14 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold mb-12 [text-wrap:balance]">
             How it compares
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-2">
+            <table className="w-full text-sm min-w-0">
               <thead>
                 <tr className="border-b border-sidebar-border">
-                  <th className="text-left py-3 pr-4 font-medium text-muted" />
-                  <th className="text-center py-3 px-4 font-semibold text-emerald-400">Novyx Vault</th>
-                  <th className="text-center py-3 px-4 font-medium text-muted">Obsidian</th>
-                  <th className="text-center py-3 px-4 font-medium text-muted">Notion</th>
+                  <th className="text-left py-3 pr-2 sm:pr-4 font-medium text-muted" />
+                  <th className="text-center py-3 px-2 sm:px-4 font-semibold text-emerald-400">Novyx Vault</th>
+                  <th className="text-center py-3 px-2 sm:px-4 font-medium text-muted">Obsidian</th>
+                  <th className="text-center py-3 px-2 sm:px-4 font-medium text-muted">Notion</th>
                 </tr>
               </thead>
               <tbody className="text-muted">
@@ -218,10 +251,10 @@ export default function LandingPage() {
                   ["Open source", "Yes", "No", "No"],
                 ].map(([feature, vault, obsidian, notion], i, arr) => (
                   <tr key={feature} className={i < arr.length - 1 ? "border-b border-sidebar-border/50" : ""}>
-                    <td className="py-3 pr-4">{feature}</td>
-                    <td className="text-center py-3 px-4 text-emerald-400">{vault}</td>
-                    <td className="text-center py-3 px-4">{obsidian === "No" ? <span className="text-muted/50">{obsidian}</span> : obsidian}</td>
-                    <td className="text-center py-3 px-4">{notion === "No" || notion === "Limited" ? <span className="text-muted/50">{notion}</span> : notion}</td>
+                    <td className="py-3 pr-2 sm:pr-4">{feature}</td>
+                    <td className="text-center py-3 px-2 sm:px-4 text-emerald-400">{vault}</td>
+                    <td className="text-center py-3 px-2 sm:px-4">{obsidian === "No" ? <span className="text-muted/50">{obsidian}</span> : obsidian}</td>
+                    <td className="text-center py-3 px-2 sm:px-4">{notion === "No" || notion === "Limited" ? <span className="text-muted/50">{notion}</span> : notion}</td>
                   </tr>
                 ))}
               </tbody>
@@ -329,7 +362,7 @@ export default function LandingPage() {
               href="https://novyxlabs.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-foreground hover:text-accent transition-colors"
+              className="text-foreground hover:text-accent transition-colors py-2.5 min-h-[44px] inline-flex items-center"
             >
               Novyx Labs
             </a>
