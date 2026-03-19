@@ -11,7 +11,7 @@ import {
 } from "@/components/FeatureDemos";
 
 export const metadata: Metadata = {
-  title: "Features — Novyx Vault",
+  title: "Features",
   description:
     "Markdown notes, wiki-links, knowledge graph, persistent AI memory, Ghost Connections, memory rollback, 18+ AI providers, and more.",
   alternates: { canonical: "/features" },

@@ -66,7 +66,7 @@ const jsonLd = {
         "Persistent AI memory across sessions",
         "Wiki-style note linking with backlinks",
         "Interactive knowledge graph",
-        "Multi-provider AI (OpenAI, Anthropic, Ollama, 10+)",
+        "Multi-provider AI (OpenAI, Anthropic, Ollama, 18+)",
         "Local-first with optional cloud sync",
         "Memory rollback and timeline",
         "Ghost Connections — AI-discovered note relationships",
