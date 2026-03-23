@@ -4,6 +4,27 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    a: [
+      ...(defaultSchema.attributes?.a || []),
+      "dataWikiLink",
+      ["className", "wiki-link"],
+    ],
+    span: [
+      ...(defaultSchema.attributes?.span || []),
+      ["className", "note-tag"],
+    ],
+  },
+  protocols: {
+    ...defaultSchema.protocols,
+    href: [...(defaultSchema.protocols?.href || []), "wikilink"],
+  },
+};
 import remarkWikiLinks from "@/lib/remarkWikiLinks";
 import remarkTags from "@/lib/remarkTags";
 import { parseFrontmatter } from "@/lib/frontmatter";
@@ -246,7 +267,7 @@ export default function Preview({ content, onNavigateWikiLink, onToggleCheckbox 
             <ReactMarkdown
               key={`text-${i}`}
               remarkPlugins={[remarkGfm, remarkWikiLinks, remarkTags]}
-              rehypePlugins={[rehypeRaw]}
+              rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
               components={markdownComponents}
             >
               {seg.value}

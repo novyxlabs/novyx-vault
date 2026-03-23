@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchUrlMetadata, formatAsMarkdown, summarizeWithAI } from "@/lib/ingest";
 import { getStorageContext } from "@/lib/auth";
 import { validateProviderBaseURL } from "@/lib/providers";
-import { resolveAndValidateHost } from "@/lib/providers.server";
+import { resolveAndValidateHost, resolveAndValidateUntrustedHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface IngestRequest {
@@ -28,6 +28,12 @@ export async function POST(req: NextRequest) {
     new URL(url);
   } catch {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+  }
+
+  // SSRF: strict DNS validation for user-supplied URLs (no localhost exemptions)
+  const ssrfError = await resolveAndValidateUntrustedHost(url);
+  if (ssrfError) {
+    return NextResponse.json({ error: "URL targets a blocked address" }, { status: 400 });
   }
 
   try {

@@ -73,3 +73,53 @@ export async function resolveAndValidateHost(baseURL: string): Promise<string | 
 
   return null;
 }
+
+/**
+ * Strict DNS validation for user-supplied URLs (e.g. ingest).
+ * Unlike resolveAndValidateHost, this does NOT exempt localhost or known
+ * provider hosts — those exemptions are only appropriate for AI provider
+ * base URLs which the user configures for their own LLM endpoints.
+ */
+export async function resolveAndValidateUntrustedHost(urlStr: string): Promise<string | null> {
+  let parsed: URL;
+  try {
+    parsed = new URL(urlStr);
+  } catch {
+    return "Invalid URL";
+  }
+
+  const host = parsed.hostname;
+
+  // Block localhost and loopback directly (no exemptions)
+  if (host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "::1" || host === "0.0.0.0") {
+    return "URL targets a local address";
+  }
+
+  try {
+    const dns = await import("dns");
+    const { resolve4, resolve6 } = dns.promises;
+
+    const [v4Result, v6Result] = await Promise.allSettled([
+      resolve4(host),
+      resolve6(host),
+    ]);
+
+    const addresses: string[] = [];
+    if (v4Result.status === "fulfilled") addresses.push(...v4Result.value);
+    if (v6Result.status === "fulfilled") addresses.push(...v6Result.value);
+
+    if (addresses.length === 0) {
+      return "Could not resolve hostname";
+    }
+
+    for (const addr of addresses) {
+      if (isPrivateIP(addr)) {
+        return "URL resolves to a private network address";
+      }
+    }
+  } catch {
+    return "Could not resolve hostname";
+  }
+
+  return null;
+}

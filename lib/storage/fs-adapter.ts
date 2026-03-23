@@ -21,8 +21,25 @@ function sanitizePath(inputPath: string): string {
   return resolved;
 }
 
-function sanitizeRelativePath(p: string): string {
-  return p.replace(/\.\./g, "").replace(/^\/+/, "");
+function sanitizeRelativePath(p: string, baseDir: string = HISTORY_DIR): string {
+  const cleaned = p.replace(/^\/+/, "");
+  const resolved = path.resolve(baseDir, cleaned);
+  if (resolved !== baseDir && !resolved.startsWith(baseDir + path.sep)) {
+    throw new Error("Invalid path: outside allowed directory");
+  }
+  return resolved;
+}
+
+function validateTrashId(id: string): void {
+  if (
+    !id ||
+    id === "." ||
+    id.includes("/") ||
+    id.includes("\\") ||
+    id.includes("..")
+  ) {
+    throw new Error("Invalid trash id");
+  }
 }
 
 export class FsAdapter implements StorageAdapter {
@@ -159,6 +176,7 @@ export class FsAdapter implements StorageAdapter {
   }
 
   async restoreFromTrash(id: string): Promise<string> {
+    validateTrashId(id);
     const trashPath = path.join(TRASH_DIR, id);
     const metaPath = trashPath + ".meta.json";
     const metaRaw = await fs.readFile(metaPath, "utf-8");
@@ -175,6 +193,7 @@ export class FsAdapter implements StorageAdapter {
   }
 
   async purgeFromTrash(id: string): Promise<void> {
+    validateTrashId(id);
     const trashPath = path.join(TRASH_DIR, id);
     const metaPath = trashPath + ".meta.json";
     const stat = await fs.stat(trashPath);
@@ -267,8 +286,7 @@ export class FsAdapter implements StorageAdapter {
   }
 
   async listVersions(notePath: string): Promise<{ timestamp: number; filename: string }[]> {
-    const safePath = sanitizeRelativePath(notePath);
-    const histDir = path.join(HISTORY_DIR, safePath);
+    const histDir = sanitizeRelativePath(notePath, HISTORY_DIR);
     try {
       const files = await fs.readdir(histDir);
       return files
@@ -285,14 +303,14 @@ export class FsAdapter implements StorageAdapter {
   }
 
   async readVersion(notePath: string, timestamp: string): Promise<string> {
-    const safePath = sanitizeRelativePath(notePath);
-    const filePath = path.join(HISTORY_DIR, safePath, `${timestamp}.md`);
+    const versionDir = sanitizeRelativePath(notePath, HISTORY_DIR);
+    if (!/^\d+$/.test(timestamp)) throw new Error("Invalid version timestamp");
+    const filePath = path.join(versionDir, `${timestamp}.md`);
     return fs.readFile(filePath, "utf-8");
   }
 
   async saveVersion(notePath: string, content: string): Promise<number> {
-    const safePath = sanitizeRelativePath(notePath);
-    const histDir = path.join(HISTORY_DIR, safePath);
+    const histDir = sanitizeRelativePath(notePath, HISTORY_DIR);
     await fs.mkdir(histDir, { recursive: true });
 
     const ts = Date.now();

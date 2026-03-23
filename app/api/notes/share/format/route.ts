@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStorageContext } from "@/lib/auth";
 import { readNote } from "@/lib/notes";
+import { escapeHtml, formatInlineMarkdown } from "@/lib/sanitize";
 
 // POST — format note for sharing (X thread, LinkedIn, newsletter)
 export async function POST(req: NextRequest) {
@@ -142,25 +143,54 @@ function formatNewsletter(
   title: string,
   body: string
 ): { title: string; subtitle: string; html: string } {
-  // Convert markdown to clean HTML
+  // Convert markdown to clean HTML with escaping for safe export to external tools.
   const lines = body.split("\n");
   const htmlLines: string[] = [];
+  let inUl = false;
+  let inOl = false;
+
+  const closeLists = () => {
+    if (inUl) {
+      htmlLines.push("</ul>");
+      inUl = false;
+    }
+    if (inOl) {
+      htmlLines.push("</ol>");
+      inOl = false;
+    }
+  };
 
   for (const line of lines) {
     const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
     if (headingMatch) {
+      closeLists();
       const level = headingMatch[1].length;
-      htmlLines.push(`<h${level}>${headingMatch[2]}</h${level}>`);
+      htmlLines.push(`<h${level}>${formatInlineMarkdown(headingMatch[2])}</h${level}>`);
     } else if (line.match(/^[-*]\s/)) {
-      htmlLines.push(`<li>${line.replace(/^[-*]\s/, "")}</li>`);
+      if (!inUl) {
+        closeLists();
+        htmlLines.push("<ul>");
+        inUl = true;
+      }
+      htmlLines.push(`<li>${formatInlineMarkdown(line.replace(/^[-*]\s/, ""))}</li>`);
     } else if (line.match(/^\d+\.\s/)) {
-      htmlLines.push(`<li>${line.replace(/^\d+\.\s/, "")}</li>`);
+      if (!inOl) {
+        closeLists();
+        htmlLines.push("<ol>");
+        inOl = true;
+      }
+      htmlLines.push(`<li>${formatInlineMarkdown(line.replace(/^\d+\.\s/, ""))}</li>`);
     } else if (line.startsWith("> ")) {
-      htmlLines.push(`<blockquote>${line.slice(2)}</blockquote>`);
+      closeLists();
+      htmlLines.push(`<blockquote>${formatInlineMarkdown(line.slice(2))}</blockquote>`);
     } else if (line.trim()) {
-      htmlLines.push(`<p>${line}</p>`);
+      closeLists();
+      htmlLines.push(`<p>${formatInlineMarkdown(line)}</p>`);
+    } else {
+      closeLists();
     }
   }
+  closeLists();
 
   // Generate subtitle from first paragraph
   const firstPara = body
@@ -171,8 +201,8 @@ function formatNewsletter(
   const subtitle = firstPara || `Thoughts on ${title}`;
 
   return {
-    title,
-    subtitle,
+    title: escapeHtml(title),
+    subtitle: escapeHtml(subtitle),
     html: htmlLines.join("\n"),
   };
 }
