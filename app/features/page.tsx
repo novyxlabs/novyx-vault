@@ -5,7 +5,7 @@ import {
   Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight, Link2, Mic,
 } from "lucide-react";
 import {
-  MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
+  MarkdownEditorDemo, MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
   MemoryRollbackDemo, CortexInsightsDemo, BYOKDemo, LocalFirstDemo,
   CloudSyncDemo, WritingToolsDemo, VoiceCaptureDemo, OpenSourceDemo,
 } from "@/components/FeatureDemos";
@@ -65,6 +65,7 @@ export default function FeaturesPage() {
               <li>Autosave with version history</li>
               <li>Templates for common note types</li>
             </ul>
+            <MarkdownEditorDemo />
           </Feature>
 
           <Feature

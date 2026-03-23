@@ -40,6 +40,173 @@ function useTyping(text: string, active: boolean, speed = 40) {
   return text.slice(0, index);
 }
 
+/* ========== 0. Markdown Editor ========== */
+
+const EDITOR_LINES = [
+  { type: "heading", text: "# Project Roadmap" },
+  { type: "blank", text: "" },
+  { type: "text", text: "The team agreed to prioritize **AI memory** for Q4." },
+  { type: "text", text: "Key milestones:" },
+  { type: "list", text: "- [ ] Ship persistent memory by Oct 15" },
+  { type: "list", text: "- [x] Prototype ghost connections" },
+  { type: "list", text: "- [ ] Launch voice capture beta" },
+  { type: "blank", text: "" },
+  { type: "code", text: "> \"The longer you use it, the smarter it gets.\"" },
+];
+
+export function MarkdownEditorDemo() {
+  const { ref, inView } = useInView();
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [visibleLines, setVisibleLines] = useState(0);
+  const [showSlash, setShowSlash] = useState(false);
+
+  useEffect(() => {
+    if (!inView) return;
+    if (visibleLines >= EDITOR_LINES.length) {
+      const t = setTimeout(() => setShowSlash(true), 600);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setVisibleLines((n) => n + 1), 180);
+    return () => clearTimeout(t);
+  }, [inView, visibleLines]);
+
+  useEffect(() => {
+    if (!showSlash) return;
+    const t = setTimeout(() => {
+      setShowSlash(false);
+      setMode("preview");
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [showSlash]);
+
+  return (
+    <DemoCard>
+      <div ref={ref}>
+        {/* Editor toolbar */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-[#71717a] bg-[#1c1c1f] px-2 py-0.5 rounded">project-roadmap.md</span>
+          </div>
+          <div className="flex items-center bg-[#1c1c1f] rounded-md overflow-hidden border border-[#27272a]">
+            <button
+              className={`text-[9px] px-2 py-0.5 transition-colors ${mode === "edit" ? "text-[#e4e4e7] bg-[#27272a]" : "text-[#71717a]"}`}
+              onClick={() => setMode("edit")}
+            >
+              Edit
+            </button>
+            <button
+              className={`text-[9px] px-2 py-0.5 transition-colors ${mode === "preview" ? "text-[#e4e4e7] bg-[#27272a]" : "text-[#71717a]"}`}
+              onClick={() => setMode("preview")}
+            >
+              Preview
+            </button>
+          </div>
+        </div>
+        {/* Editor / Preview */}
+        <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] font-[var(--font-geist-mono),monospace] min-h-[170px] relative">
+          {mode === "edit" ? (
+            <motion.div
+              initial="hidden"
+              animate={inView ? "visible" : "hidden"}
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+            >
+              {EDITOR_LINES.slice(0, visibleLines).map((line, i) => (
+                <motion.div
+                  key={i}
+                  className="flex items-start gap-2"
+                  variants={fadeUp}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="text-[9px] text-[#3f3f46] select-none w-3 text-right shrink-0 mt-px">{i + 1}</span>
+                  <EditorLine type={line.type} text={line.text} />
+                </motion.div>
+              ))}
+              {inView && visibleLines < EDITOR_LINES.length && <span className="hero-cursor ml-5" />}
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="text-[11px] leading-relaxed"
+            >
+              <h1 className="text-[14px] font-bold text-[#e4e4e7] mb-1.5">Project Roadmap</h1>
+              <p className="text-[#a1a1aa] mb-2">The team agreed to prioritize <strong className="text-[#e4e4e7]">AI memory</strong> for Q4. Key milestones:</p>
+              <div className="space-y-0.5 mb-2">
+                <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Ship persistent memory by Oct 15</p>
+                <p className="text-[#a1a1aa]"><span className="text-[#22c55e]">✓</span> <span className="line-through text-[#71717a]">Prototype ghost connections</span></p>
+                <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Launch voice capture beta</p>
+              </div>
+              <div className="border-l-2 border-[#8b5cf6]/40 pl-2.5 text-[#a1a1aa] italic">
+                &quot;The longer you use it, the smarter it gets.&quot;
+              </div>
+            </motion.div>
+          )}
+          {/* Slash command dropdown */}
+          {showSlash && mode === "edit" && (
+            <motion.div
+              className="absolute left-8 bottom-3 w-44 bg-[#1c1c1f] border border-[#27272a] rounded-lg shadow-xl overflow-hidden z-10"
+              initial={{ opacity: 0, scaleY: 0 }}
+              animate={{ opacity: 1, scaleY: 1 }}
+              transition={{ duration: 0.2 }}
+              style={{ transformOrigin: "top" }}
+            >
+              <div className="px-2.5 py-1 text-[8px] text-[#71717a] uppercase tracking-wider border-b border-[#27272a]">Slash Commands</div>
+              {[
+                { icon: "✨", label: "Ask AI", desc: "Get help writing" },
+                { icon: "📋", label: "Template", desc: "Insert template" },
+                { icon: "🔗", label: "Link note", desc: "Insert wiki-link" },
+              ].map((item, i) => (
+                <div
+                  key={item.label}
+                  className={`px-2.5 py-1.5 flex items-center gap-2 ${i === 0 ? "bg-[#8b5cf6]/15" : ""}`}
+                >
+                  <span className="text-[11px]">{item.icon}</span>
+                  <div>
+                    <span className={`text-[10px] block ${i === 0 ? "text-[#e4e4e7]" : "text-[#a1a1aa]"}`}>{item.label}</span>
+                    <span className="text-[8px] text-[#71717a]">{item.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </DemoCard>
+  );
+}
+
+function EditorLine({ type, text }: { type: string; text: string }) {
+  if (!text) return <div className="h-[16px]" />;
+  switch (type) {
+    case "heading":
+      return <p className="text-[12px] text-[#e4e4e7] font-bold"><span className="text-[#8b5cf6]">#</span> {text.slice(2)}</p>;
+    case "list":
+      return (
+        <p className="text-[11px] text-[#a1a1aa]">
+          <span className="text-[#71717a]">-</span>{" "}
+          {text.includes("[x]") ? (
+            <><span className="text-[#22c55e]">[x]</span> {text.slice(6)}</>
+          ) : (
+            <><span className="text-[#71717a]">[ ]</span> {text.slice(6)}</>
+          )}
+        </p>
+      );
+    case "code":
+      return <p className="text-[11px] text-[#8b5cf6]">{text}</p>;
+    default:
+      return (
+        <p className="text-[11px] text-[#a1a1aa]">
+          {text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+            part.startsWith("**") && part.endsWith("**")
+              ? <strong key={i} className="text-[#e4e4e7]">{part}</strong>
+              : part
+          )}
+        </p>
+      );
+  }
+}
+
 /* ========== 1. Persistent AI Memory ========== */
 
 export function MemoryDemo() {
