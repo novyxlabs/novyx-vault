@@ -1,22 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, useInView as useMotionInView } from "motion/react";
 
 /* ========== Shared ========== */
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.15 } },
+};
+
 function useInView() {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
-      { threshold: 0.3 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const inView = useMotionInView(ref, { once: true, amount: 0.3 });
   return { ref, inView };
 }
 
@@ -62,7 +63,12 @@ export function MemoryDemo() {
         </div>
         {/* AI response */}
         {inView && (
-          <div className="flex justify-start demo-fade-in">
+          <motion.div
+            className="flex justify-start"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             <div className="bg-[#1c1c1f] border border-[#27272a] rounded-lg rounded-bl-sm px-3 py-2 max-w-[85%]">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="w-3.5 h-3.5 rounded-full bg-[#8b5cf6]/20 flex items-center justify-center text-[7px]">🧠</span>
@@ -73,7 +79,7 @@ export function MemoryDemo() {
                 {aiText.length < 120 && <span className="hero-cursor" />}
               </p>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </DemoCard>
@@ -105,7 +111,13 @@ export function WikiLinkDemo() {
         </div>
         {/* Autocomplete dropdown */}
         {showDropdown && (
-          <div className="absolute left-3 bottom-2 translate-y-full w-48 bg-[#1c1c1f] border border-[#27272a] rounded-lg shadow-xl overflow-hidden demo-dropdown-in z-10">
+          <motion.div
+            className="absolute left-3 bottom-2 translate-y-full w-48 bg-[#1c1c1f] border border-[#27272a] rounded-lg shadow-xl overflow-hidden z-10"
+            initial={{ opacity: 0, scaleY: 0 }}
+            animate={{ opacity: 1, scaleY: 1 }}
+            transition={{ duration: 0.2 }}
+            style={{ transformOrigin: "top" }}
+          >
             {["Project Alpha", "Project Beta", "Project Plan"].map((item, i) => (
               <div
                 key={item}
@@ -118,7 +130,7 @@ export function WikiLinkDemo() {
                 {item}
               </div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </DemoCard>
@@ -137,14 +149,19 @@ export function GhostConnectionsDemo() {
 
   return (
     <DemoCard>
-      <div ref={ref} className="flex flex-col gap-2">
-        {connections.map((c, i) => (
-          <div
+      <motion.div
+        ref={ref}
+        className="flex flex-col gap-2"
+        initial="hidden"
+        animate={inView ? "visible" : "hidden"}
+        variants={staggerContainer}
+      >
+        {connections.map((c) => (
+          <motion.div
             key={c.type}
-            className={`flex items-center gap-2 bg-[#1c1c1f] border border-[#27272a] rounded-lg px-3 py-2 ${
-              inView ? "demo-fade-in" : "opacity-0"
-            }`}
-            style={inView ? { animationDelay: `${i * 300}ms` } : undefined}
+            className="flex items-center gap-2 bg-[#1c1c1f] border border-[#27272a] rounded-lg px-3 py-2"
+            variants={fadeUp}
+            transition={{ duration: 0.4 }}
           >
             <span className="text-[11px] text-[#a1a1aa] min-w-[80px] sm:min-w-[100px] truncate">{c.from}</span>
             <div className="flex-1 flex items-center gap-1.5 justify-center">
@@ -158,9 +175,9 @@ export function GhostConnectionsDemo() {
               <div className="h-px flex-1 max-w-[40px]" style={{ background: c.color, opacity: 0.4 }} />
             </div>
             <span className="text-[11px] text-[#a1a1aa] min-w-[80px] sm:min-w-[100px] truncate text-right">{c.to}</span>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </DemoCard>
   );
 }
@@ -189,27 +206,35 @@ export function KnowledgeGraphDemo() {
         {/* Edges */}
         <svg className="absolute inset-0 w-full h-full">
           {GRAPH_EDGES.map(([a, b], i) => (
-            <line
+            <motion.line
               key={i}
               x1={`${GRAPH_NODES[a].x}%`} y1={`${GRAPH_NODES[a].y}%`}
               x2={`${GRAPH_NODES[b].x}%`} y2={`${GRAPH_NODES[b].y}%`}
               stroke="#27272a"
               strokeWidth={1}
-              className={inView ? "demo-fade-in" : "opacity-0"}
-              style={inView ? { animationDelay: `${800 + i * 80}ms` } : undefined}
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: 0.4, delay: 0.6 + i * 0.06 }}
             />
           ))}
         </svg>
         {/* Nodes */}
         {GRAPH_NODES.map((node, i) => (
-          <div
+          <motion.div
             key={node.label}
-            className={`absolute flex flex-col items-center ${inView ? "demo-node-pop" : "opacity-0"}`}
+            className="absolute flex flex-col items-center"
             style={{
               left: `${node.x}%`,
               top: `${node.y}%`,
               transform: "translate(-50%, -50%)",
-              ...(inView ? { animationDelay: `${i * 150}ms` } : {}),
+            }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+              delay: i * 0.1,
             }}
           >
             <div
@@ -223,7 +248,7 @@ export function KnowledgeGraphDemo() {
               }}
             />
             <span className="text-[8px] sm:text-[9px] text-[#71717a] mt-0.5 whitespace-nowrap">{node.label}</span>
-          </div>
+          </motion.div>
         ))}
       </div>
     </DemoCard>
@@ -298,27 +323,47 @@ export function CortexInsightsDemo() {
     <DemoCard>
       <div ref={ref} className="flex flex-col items-center justify-center h-full gap-4">
         {/* Floating tags */}
-        <div className="flex flex-wrap justify-center gap-2">
+        <motion.div
+          className="flex flex-wrap justify-center gap-2"
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+          variants={staggerContainer}
+        >
           {tags.map((tag, i) => (
-            <span
+            <motion.span
               key={tag.label}
-              className={`px-3 py-1 text-[11px] rounded-full font-medium ${
-                inView ? "demo-float-up" : "opacity-0"
-              }`}
+              className="px-3 py-1 text-[11px] rounded-full font-medium"
               style={{
                 color: tag.color,
                 background: `${tag.color}12`,
                 border: `1px solid ${tag.color}30`,
-                ...(inView ? {
-                  animationDelay: `${i * 200}ms`,
-                  animation: `demoFloatUp 0.5s ease-out ${i * 200}ms both, demoFloat 3s ease-in-out ${1000 + i * 200}ms infinite`,
-                } : {}),
               }}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    duration: 0.4,
+                  },
+                },
+              }}
+              animate={inView ? {
+                y: [0, -3, 0],
+                transition: {
+                  y: {
+                    duration: 3,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                    delay: 0.8 + i * 0.2,
+                  },
+                },
+              } : undefined}
             >
               {tag.label}
-            </span>
+            </motion.span>
           ))}
-        </div>
+        </motion.div>
         {/* Document outline */}
         <div className="w-full max-w-[200px]">
           <div className="bg-[#1c1c1f] border border-[#27272a] rounded-lg p-2.5">
@@ -395,21 +440,26 @@ export function LocalFirstDemo() {
       <div ref={ref}>
         <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] font-[var(--font-geist-mono),monospace]">
           <p className="text-[10px] text-[#71717a] mb-2">~/SecondBrain/</p>
-          {files.map((f, i) => (
-            <div
-              key={f.name}
-              className={`flex items-center gap-1.5 py-0.5 ${inView ? "demo-fade-in" : "opacity-0"}`}
-              style={{
-                paddingLeft: `${f.indent * 16}px`,
-                ...(inView ? { animationDelay: `${i * 150}ms` } : {}),
-              }}
-            >
-              <span className="text-[10px]">{f.type === "folder" ? "📁" : "📄"}</span>
-              <span className={`text-[11px] ${f.type === "folder" ? "text-[#e4e4e7]" : "text-[#a1a1aa]"}`}>
-                {f.name}
-              </span>
-            </div>
-          ))}
+          <motion.div
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
+          >
+            {files.map((f) => (
+              <motion.div
+                key={f.name}
+                className="flex items-center gap-1.5 py-0.5"
+                style={{ paddingLeft: `${f.indent * 16}px` }}
+                variants={fadeUp}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="text-[10px]">{f.type === "folder" ? "📁" : "📄"}</span>
+                <span className={`text-[11px] ${f.type === "folder" ? "text-[#e4e4e7]" : "text-[#a1a1aa]"}`}>
+                  {f.name}
+                </span>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
         <p className="text-[9px] text-[#71717a] text-center mt-2">
           Plain markdown files. Open in any editor.
@@ -478,15 +528,25 @@ export function WritingToolsDemo() {
           {inView && !showResult && <div className="absolute inset-0 demo-shimmer" />}
         </div>
         {/* Formatted output */}
-        <div className={`bg-[#161618] rounded-lg p-2.5 border border-[#27272a] ${showResult ? "demo-fade-in" : "opacity-0"}`}>
-          <p className="text-[9px] text-[#22c55e] font-medium mb-1.5">Structured Note</p>
-          <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
-            <p className="text-[#e4e4e7] font-medium mb-0.5"># Q4 Action Items</p>
-            <p>• Ship AI memory — 3 week estimate</p>
-            <p>• Investigate Ollama performance</p>
-            <p>• Evaluate infra hire</p>
-          </div>
-        </div>
+        {showResult && (
+          <motion.div
+            className="bg-[#161618] rounded-lg p-2.5 border border-[#27272a]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <p className="text-[9px] text-[#22c55e] font-medium mb-1.5">Structured Note</p>
+            <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
+              <p className="text-[#e4e4e7] font-medium mb-0.5"># Q4 Action Items</p>
+              <p>• Ship AI memory — 3 week estimate</p>
+              <p>• Investigate Ollama performance</p>
+              <p>• Evaluate infra hire</p>
+            </div>
+          </motion.div>
+        )}
+        {!showResult && (
+          <div className="bg-[#161618] rounded-lg p-2.5 border border-[#27272a] opacity-0" />
+        )}
       </div>
     </DemoCard>
   );
@@ -553,18 +613,27 @@ export function VoiceCaptureDemo() {
           </p>
         </div>
         {/* Right — Structured output */}
-        <div className={`bg-[#161618] rounded-lg p-3 border border-[#27272a] ${phase === "done" ? "demo-fade-in" : "opacity-0"}`}>
-          <p className="text-[9px] text-[#22c55e] font-medium mb-2">Structured Note</p>
-          <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
-            <p className="text-[#e4e4e7] font-medium mb-1"># Team Standup — Mar 17</p>
-            <p className="mb-0.5">## Decisions</p>
-            <p>• Ship voice capture this week</p>
-            <p>• Move to emerald CTA buttons</p>
-            <p className="mt-1 mb-0.5">## Action Items</p>
-            <p>• @blake — update features page</p>
-            <p>• Review PR before EOD</p>
-          </div>
-        </div>
+        {phase === "done" ? (
+          <motion.div
+            className="bg-[#161618] rounded-lg p-3 border border-[#27272a]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <p className="text-[9px] text-[#22c55e] font-medium mb-2">Structured Note</p>
+            <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
+              <p className="text-[#e4e4e7] font-medium mb-1"># Team Standup — Mar 17</p>
+              <p className="mb-0.5">## Decisions</p>
+              <p>• Ship voice capture this week</p>
+              <p>• Move to emerald CTA buttons</p>
+              <p className="mt-1 mb-0.5">## Action Items</p>
+              <p>• @blake — update features page</p>
+              <p>• Review PR before EOD</p>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] opacity-0" />
+        )}
       </div>
     </DemoCard>
   );
@@ -599,14 +668,20 @@ export function OpenSourceDemo() {
           <span className="text-[9px] text-[#71717a] ml-1">Terminal</span>
         </div>
         {lines.slice(0, visibleLines).map((line, i) => (
-          <div key={i} className="demo-fade-in mb-0.5">
+          <motion.div
+            key={i}
+            className="mb-0.5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
             <span className={`text-[11px] ${line.isOutput ? "text-[#22c55e]" : "text-[#22c55e]/70"}`}>
               {line.prompt}
             </span>
             <span className={`text-[11px] ${line.isOutput ? "text-[#22c55e]" : "text-[#e4e4e7]"}`}>
               {line.cmd}
             </span>
-          </div>
+          </motion.div>
         ))}
         {inView && visibleLines < lines.length && (
           <span className="hero-cursor" />

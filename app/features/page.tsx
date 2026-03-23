@@ -9,6 +9,7 @@ import {
   MemoryRollbackDemo, CortexInsightsDemo, BYOKDemo, LocalFirstDemo,
   CloudSyncDemo, WritingToolsDemo, VoiceCaptureDemo, OpenSourceDemo,
 } from "@/components/FeatureDemos";
+import { FadeInSection } from "@/components/FadeInSection";
 
 export const metadata: Metadata = {
   title: "Features",
@@ -342,7 +343,7 @@ export default function FeaturesPage() {
 
 function Feature({ icon, title, id, children }: { icon: React.ReactNode; title: string; id: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-24">
+    <FadeInSection id={id} className="scroll-mt-24">
       <div className="flex items-center gap-3 mb-4">
         <div className="text-accent">{icon}</div>
         <h2 className="text-xl font-bold">{title}</h2>
@@ -350,7 +351,7 @@ function Feature({ icon, title, id, children }: { icon: React.ReactNode; title: 
       <div className="space-y-4 text-muted leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ul]:text-sm [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-card-bg [&_code]:text-accent [&_code]:text-sm">
         {children}
       </div>
-    </section>
+    </FadeInSection>
   );
 }
 
