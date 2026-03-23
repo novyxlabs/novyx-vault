@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     description:
       "The only note app where AI gets smarter the longer you use it.",
   },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export const viewport: Viewport = {

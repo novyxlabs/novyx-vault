@@ -4,6 +4,7 @@ import { Github } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
+  description: "Terms of Service for Novyx Vault. Read our terms governing your use of the AI-powered notes platform.",
   alternates: { canonical: "/terms" },
 };
 
