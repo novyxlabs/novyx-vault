@@ -6,8 +6,8 @@ import {
   Download, Mic, Menu, X,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-import { motion } from "motion/react";
+import { useRef, useState } from "react";
+import { motion, useScroll, useTransform } from "motion/react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -23,6 +23,10 @@ const viewportOnce = { once: true, margin: "-60px" as const };
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start end", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, -60]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.98, 0.95]);
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Nav — touch targets 44px min */}
@@ -122,12 +126,14 @@ export default function LandingPage() {
               See All Features
             </a>
           </motion.div>
-          {/* App screenshot */}
+          {/* App screenshot — scroll parallax */}
           <motion.div
+            ref={heroRef}
             className="mt-16 -mx-2 sm:mx-0 rounded-xl overflow-hidden border border-sidebar-border shadow-2xl"
             initial={{ opacity: 0, y: 40, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ y: heroY, scale: heroScale }}
           >
             <Image
               src="/hero-app.jpeg"

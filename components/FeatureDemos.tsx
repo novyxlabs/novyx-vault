@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView as useMotionInView } from "motion/react";
+import { motion, AnimatePresence, useInView as useMotionInView } from "motion/react";
 
 /* ========== Shared ========== */
 
@@ -103,51 +103,59 @@ export function MarkdownEditorDemo() {
           </div>
         </div>
         {/* Editor / Preview */}
-        <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] font-[var(--font-geist-mono),monospace] min-h-[170px] relative">
-          {mode === "edit" ? (
-            <motion.div
-              initial="hidden"
-              animate={inView ? "visible" : "hidden"}
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
-            >
-              {EDITOR_LINES.slice(0, visibleLines).map((line, i) => (
-                <motion.div
-                  key={i}
-                  className="flex items-start gap-2"
-                  variants={fadeUp}
-                  transition={{ duration: 0.2 }}
-                >
-                  <span className="text-[9px] text-[#3f3f46] select-none w-3 text-right shrink-0 mt-px">{i + 1}</span>
-                  <EditorLine type={line.type} text={line.text} />
-                </motion.div>
-              ))}
-              {inView && visibleLines < EDITOR_LINES.length && <span className="hero-cursor ml-5" />}
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="text-[11px] leading-relaxed"
-            >
-              <h1 className="text-[14px] font-bold text-[#e4e4e7] mb-1.5">Project Roadmap</h1>
-              <p className="text-[#a1a1aa] mb-2">The team agreed to prioritize <strong className="text-[#e4e4e7]">AI memory</strong> for Q4. Key milestones:</p>
-              <div className="space-y-0.5 mb-2">
-                <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Ship persistent memory by Oct 15</p>
-                <p className="text-[#a1a1aa]"><span className="text-[#22c55e]">✓</span> <span className="line-through text-[#71717a]">Prototype ghost connections</span></p>
-                <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Launch voice capture beta</p>
-              </div>
-              <div className="border-l-2 border-[#8b5cf6]/40 pl-2.5 text-[#a1a1aa] italic">
-                &quot;The longer you use it, the smarter it gets.&quot;
-              </div>
-            </motion.div>
-          )}
+        <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] font-[var(--font-geist-mono),monospace] min-h-[170px] relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            {mode === "edit" ? (
+              <motion.div
+                key="edit"
+                initial="hidden"
+                animate={inView ? "visible" : "hidden"}
+                exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+              >
+                {EDITOR_LINES.slice(0, visibleLines).map((line, i) => (
+                  <motion.div
+                    key={i}
+                    className="flex items-start gap-2"
+                    variants={fadeUp}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className="text-[9px] text-[#3f3f46] select-none w-3 text-right shrink-0 mt-px">{i + 1}</span>
+                    <EditorLine type={line.type} text={line.text} />
+                  </motion.div>
+                ))}
+                {inView && visibleLines < EDITOR_LINES.length && <span className="hero-cursor ml-5" />}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="preview"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="text-[11px] leading-relaxed"
+              >
+                <h1 className="text-[14px] font-bold text-[#e4e4e7] mb-1.5">Project Roadmap</h1>
+                <p className="text-[#a1a1aa] mb-2">The team agreed to prioritize <strong className="text-[#e4e4e7]">AI memory</strong> for Q4. Key milestones:</p>
+                <div className="space-y-0.5 mb-2">
+                  <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Ship persistent memory by Oct 15</p>
+                  <p className="text-[#a1a1aa]"><span className="text-[#22c55e]">✓</span> <span className="line-through text-[#71717a]">Prototype ghost connections</span></p>
+                  <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Launch voice capture beta</p>
+                </div>
+                <div className="border-l-2 border-[#8b5cf6]/40 pl-2.5 text-[#a1a1aa] italic">
+                  &quot;The longer you use it, the smarter it gets.&quot;
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {/* Slash command dropdown */}
+          <AnimatePresence>
           {showSlash && mode === "edit" && (
             <motion.div
               className="absolute left-8 bottom-3 w-44 bg-[#1c1c1f] border border-[#27272a] rounded-lg shadow-xl overflow-hidden z-10"
               initial={{ opacity: 0, scaleY: 0 }}
               animate={{ opacity: 1, scaleY: 1 }}
+              exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.15 } }}
               transition={{ duration: 0.2 }}
               style={{ transformOrigin: "top" }}
             >
@@ -170,6 +178,7 @@ export function MarkdownEditorDemo() {
               ))}
             </motion.div>
           )}
+          </AnimatePresence>
         </div>
       </div>
     </DemoCard>
@@ -393,15 +402,24 @@ export function KnowledgeGraphDemo() {
             style={{
               left: `${node.x}%`,
               top: `${node.y}%`,
-              transform: "translate(-50%, -50%)",
+              x: "-50%",
+              y: "-50%",
             }}
             initial={{ opacity: 0, scale: 0 }}
-            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
+            animate={inView ? {
+              opacity: 1,
+              scale: 1,
+              y: ["-50%", `calc(-50% - ${3 + (i % 3)}px)`, "-50%"],
+            } : { opacity: 0, scale: 0 }}
             transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 20,
-              delay: i * 0.1,
+              opacity: { type: "spring", stiffness: 300, damping: 20, delay: i * 0.1 },
+              scale: { type: "spring", stiffness: 300, damping: 20, delay: i * 0.1 },
+              y: {
+                duration: 2.5 + i * 0.3,
+                ease: "easeInOut",
+                repeat: Infinity,
+                delay: 0.8 + i * 0.15,
+              },
             }}
           >
             <div
