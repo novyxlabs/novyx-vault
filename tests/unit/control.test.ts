@@ -30,24 +30,24 @@ describe("getActions", () => {
     vi.clearAllMocks();
   });
 
-  it("delegates to SDK actionList with params", async () => {
+  it("delegates to SDK actionList with all params", async () => {
     mockActionList.mockResolvedValueOnce({
       actions: [{ id: "a1", action_type: "deploy", status: "pending" }],
       total: 1,
     });
 
-    const result = await getActions({ status: "pending", limit: 10 }, "nram_test_key");
+    const result = await getActions({ status: "pending", limit: 10, offset: 5 }, "nram_test_key");
 
-    expect(mockActionList).toHaveBeenCalledWith({ status: "pending" });
+    expect(mockActionList).toHaveBeenCalledWith({ status: "pending", limit: 10, offset: 5 });
     expect(result.actions).toHaveLength(1);
     expect(result.total).toBe(1);
   });
 
-  it("passes undefined status when not provided", async () => {
+  it("passes undefined params when not provided", async () => {
     mockActionList.mockResolvedValueOnce({ actions: [], total: 0 });
 
     await getActions({}, "nram_test_key");
-    expect(mockActionList).toHaveBeenCalledWith({ status: undefined });
+    expect(mockActionList).toHaveBeenCalledWith({ status: undefined, limit: undefined, offset: undefined });
   });
 
   it("throws when SDK throws", async () => {
@@ -84,20 +84,20 @@ describe("submitDecision", () => {
     vi.clearAllMocks();
   });
 
-  it("delegates approval to SDK approveAction", async () => {
+  it("maps 'approved' to SDK 'approve'", async () => {
     mockApproveAction.mockResolvedValueOnce({ success: true });
 
     const result = await submitDecision("approval-123", "approved", "nram_test_key");
 
-    expect(mockApproveAction).toHaveBeenCalledWith("approval-123", { decision: "approved" });
+    expect(mockApproveAction).toHaveBeenCalledWith("approval-123", { decision: "approve" });
     expect(result.success).toBe(true);
   });
 
-  it("delegates denial to SDK approveAction", async () => {
+  it("maps 'denied' to SDK 'deny'", async () => {
     mockApproveAction.mockResolvedValueOnce({ success: true });
 
     await submitDecision("a1", "denied", "nram_test_key");
-    expect(mockApproveAction).toHaveBeenCalledWith("a1", { decision: "denied" });
+    expect(mockApproveAction).toHaveBeenCalledWith("a1", { decision: "deny" });
   });
 
   it("throws when SDK throws", async () => {

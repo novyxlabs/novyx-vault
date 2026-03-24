@@ -12,6 +12,7 @@ function getOrCreateClient(apiKey: string): Novyx {
     const apiUrl = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
     client = new Novyx({
       apiKey,
+      apiUrl,
       controlUrl: apiUrl,
       controlApiKey: apiKey,
     });

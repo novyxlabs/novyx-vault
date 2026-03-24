@@ -45,7 +45,11 @@ export async function getActions(
   apiKey: string
 ): Promise<{ actions: ControlAction[]; total: number }> {
   const nx = requireClient(apiKey);
-  const result = await nx.actionList({ status: params.status });
+  const result = await nx.actionList({
+    status: params.status,
+    limit: params.limit,
+    offset: params.offset,
+  } as Parameters<typeof nx.actionList>[0]);
   return result as { actions: ControlAction[]; total: number };
 }
 
@@ -67,7 +71,9 @@ export async function submitDecision(
   apiKey: string
 ): Promise<{ success: boolean; message?: string }> {
   const nx = requireClient(apiKey);
-  const result = await nx.approveAction(approvalId, { decision });
+  // SDK/backend expects "approve"/"deny", not "approved"/"denied"
+  const sdkDecision = decision === "approved" ? "approve" : "deny";
+  const result = await nx.approveAction(approvalId, { decision: sdkDecision });
   return result as { success: boolean; message?: string };
 }
 
@@ -87,9 +93,3 @@ export async function explainAction(
   return nx.explainAction(actionId);
 }
 
-export async function getMemoryHealth(
-  apiKey: string
-): Promise<Record<string, unknown>> {
-  const nx = requireClient(apiKey);
-  return nx.memoryHealth();
-}
