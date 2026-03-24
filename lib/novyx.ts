@@ -9,7 +9,12 @@ const clientCache = new Map<string, Novyx>();
 function getOrCreateClient(apiKey: string): Novyx {
   let client = clientCache.get(apiKey);
   if (!client) {
-    client = new Novyx({ apiKey });
+    const apiUrl = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
+    client = new Novyx({
+      apiKey,
+      controlUrl: apiUrl,
+      controlApiKey: apiKey,
+    });
     clientCache.set(apiKey, client);
   }
   return client;

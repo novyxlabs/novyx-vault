@@ -1,138 +1,141 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock the Novyx SDK via lib/novyx
+const mockActionList = vi.fn();
+const mockListApprovals = vi.fn();
+const mockApproveAction = vi.fn();
+const mockListPolicies = vi.fn();
+
+vi.mock("@/lib/novyx", () => ({
+  getNovyxForKey: vi.fn((key: string) => {
+    if (!key) return null;
+    return {
+      actionList: mockActionList,
+      listApprovals: mockListApprovals,
+      approveAction: mockApproveAction,
+      listPolicies: mockListPolicies,
+    };
+  }),
+}));
+
 import {
   getActions,
   submitDecision,
   getPolicies,
+  getApprovals,
 } from "@/lib/control";
-
-// Mock fetch globally
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
 
 describe("getActions", () => {
   beforeEach(() => {
-    mockFetch.mockReset();
+    vi.clearAllMocks();
   });
 
-  it("fetches actions with correct URL and auth header", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ actions: [{ id: "a1", action_type: "deploy", status: "pending" }], total: 1 }),
+  it("delegates to SDK actionList with params", async () => {
+    mockActionList.mockResolvedValueOnce({
+      actions: [{ id: "a1", action_type: "deploy", status: "pending" }],
+      total: 1,
     });
 
-    const result = await getActions({ status: "pending", limit: 10 }, "my-api-key");
+    const result = await getActions({ status: "pending", limit: 10 }, "nram_test_key");
 
-    expect(mockFetch).toHaveBeenCalledOnce();
-    const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toContain("https://novyx-ram-api.fly.dev/v1/actions");
-    expect(url).toContain("status=pending");
-    expect(url).toContain("limit=10");
-    expect(opts.headers.Authorization).toBe("Bearer my-api-key");
+    expect(mockActionList).toHaveBeenCalledWith({ status: "pending" });
     expect(result.actions).toHaveLength(1);
     expect(result.total).toBe(1);
   });
 
-  it("builds URL without optional params when not provided", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ actions: [], total: 0 }),
-    });
+  it("passes undefined status when not provided", async () => {
+    mockActionList.mockResolvedValueOnce({ actions: [], total: 0 });
 
-    await getActions({}, "key");
-    const [url] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://novyx-ram-api.fly.dev/v1/actions");
+    await getActions({}, "nram_test_key");
+    expect(mockActionList).toHaveBeenCalledWith({ status: undefined });
   });
 
-  it("throws on non-OK response", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 403 });
+  it("throws when SDK throws", async () => {
+    mockActionList.mockRejectedValueOnce(new Error("Control API error: 403"));
 
-    await expect(getActions({}, "key")).rejects.toThrow("Control API error: 403");
+    await expect(getActions({}, "nram_test_key")).rejects.toThrow("Control API error: 403");
+  });
+});
+
+describe("getApprovals", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("delegates to SDK listApprovals with params", async () => {
+    mockListApprovals.mockResolvedValueOnce({
+      approvals: [{ approval_id: "ap1", status: "pending_approval" }],
+      total: 1,
+    });
+
+    const result = await getApprovals({ status: "pending_approval", limit: 50 }, "nram_test_key");
+
+    expect(mockListApprovals).toHaveBeenCalledWith({
+      limit: 50,
+      status_filter: "pending_approval",
+    });
+    expect(result.approvals).toHaveLength(1);
+    expect(result.total).toBe(1);
   });
 });
 
 describe("submitDecision", () => {
   beforeEach(() => {
-    mockFetch.mockReset();
+    vi.clearAllMocks();
   });
 
-  it("posts approval decision with correct body", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true }),
-    });
+  it("delegates approval to SDK approveAction", async () => {
+    mockApproveAction.mockResolvedValueOnce({ success: true });
 
-    const result = await submitDecision("approval-123", "approved", "my-key");
+    const result = await submitDecision("approval-123", "approved", "nram_test_key");
 
-    expect(mockFetch).toHaveBeenCalledOnce();
-    const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://novyx-ram-api.fly.dev/v1/approvals/approval-123/decision");
-    expect(opts.method).toBe("POST");
-    expect(JSON.parse(opts.body)).toEqual({ decision: "approved" });
-    expect(opts.headers.Authorization).toBe("Bearer my-key");
+    expect(mockApproveAction).toHaveBeenCalledWith("approval-123", { decision: "approved" });
     expect(result.success).toBe(true);
   });
 
-  it("posts denial decision", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true }),
-    });
+  it("delegates denial to SDK approveAction", async () => {
+    mockApproveAction.mockResolvedValueOnce({ success: true });
 
-    await submitDecision("a1", "denied", "key");
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    expect(body.decision).toBe("denied");
+    await submitDecision("a1", "denied", "nram_test_key");
+    expect(mockApproveAction).toHaveBeenCalledWith("a1", { decision: "denied" });
   });
 
-  it("throws with API error message on failure", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 422,
-      json: async () => ({ message: "Action already decided" }),
-    });
+  it("throws when SDK throws", async () => {
+    mockApproveAction.mockRejectedValueOnce(new Error("Action already decided"));
 
-    await expect(submitDecision("a1", "approved", "key")).rejects.toThrow("Action already decided");
-  });
-
-  it("throws with status code when response body is not JSON", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      json: async () => { throw new Error("not json"); },
-    });
-
-    await expect(submitDecision("a1", "approved", "key")).rejects.toThrow("Control API error: 500");
+    await expect(submitDecision("a1", "approved", "nram_test_key")).rejects.toThrow(
+      "Action already decided"
+    );
   });
 });
 
 describe("getPolicies", () => {
   beforeEach(() => {
-    mockFetch.mockReset();
+    vi.clearAllMocks();
   });
 
-  it("fetches policies with auth header", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        policies: [{
-          id: "p1",
-          name: "Default",
-          rules: [{ action: "deploy", effect: "require_approval" }],
-        }],
-      }),
+  it("delegates to SDK listPolicies", async () => {
+    mockListPolicies.mockResolvedValueOnce({
+      policies: [{
+        name: "Default",
+        enabled: true,
+        description: "Default policy",
+      }],
+      mode: "strict",
+      connectors: [],
+      approval_modes: [],
     });
 
-    const result = await getPolicies("my-key");
+    const result = await getPolicies("nram_test_key");
 
-    const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://novyx-ram-api.fly.dev/v1/control/policies");
-    expect(opts.headers.Authorization).toBe("Bearer my-key");
+    expect(mockListPolicies).toHaveBeenCalledOnce();
     expect(result.policies).toHaveLength(1);
     expect(result.policies[0].name).toBe("Default");
   });
 
-  it("throws on non-OK response", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+  it("throws when SDK throws", async () => {
+    mockListPolicies.mockRejectedValueOnce(new Error("Control API error: 401"));
 
-    await expect(getPolicies("bad-key")).rejects.toThrow("Control API error: 401");
+    await expect(getPolicies("nram_test_key")).rejects.toThrow("Control API error: 401");
   });
 });

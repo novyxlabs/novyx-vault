@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 
-const BASE_URL = "https://novyx-ram-api.fly.dev";
+const BASE_URL = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
 
 export async function GET(req: NextRequest) {
   try {
