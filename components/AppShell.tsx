@@ -34,6 +34,7 @@ import NovyxErrorBoundary from "@/components/NovyxErrorBoundary";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PromptDialog from "@/components/PromptDialog";
 import ImportPrompt from "@/components/ImportPrompt";
+import { useMemoryStream } from "@/hooks/useMemoryStream";
 import { resolveWikiLink } from "@/lib/wikilink";
 import { loadCloudSettings, syncSettingsToCloud, clearUserLocalStorage } from "@/lib/providers";
 import { Upload, Menu, Search, MessageSquare, ChevronLeft } from "lucide-react";
@@ -120,6 +121,14 @@ export default function AppShell() {
       console.error("Failed to load notes:", err);
     }
   }, []);
+
+  // Real-time memory stream — invalidates notes list when memories change
+  useMemoryStream({
+    onInvalidate: useCallback(() => {
+      loadNotes();
+    }, [loadNotes]),
+    types: ["memory.created", "memory.updated", "memory.deleted"],
+  });
 
   const loadNote = useCallback(async (path: string) => {
     try {
