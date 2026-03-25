@@ -47,7 +47,7 @@ export default function FeaturesPage() {
         </section>
 
         {/* Feature Sections */}
-        <div className="space-y-20">
+        <div className="space-y-14">
           {/* Notes-first features */}
           <Feature
             icon={<FileText size={28} />}
