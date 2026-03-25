@@ -14,7 +14,7 @@ import { FadeInSection } from "@/components/FadeInSection";
 export const metadata: Metadata = {
   title: "Features",
   description:
-    "Markdown notes, wiki-links, knowledge graph, persistent AI memory, Ghost Connections, memory rollback, 18+ AI providers, and more.",
+    "Markdown notes, wiki-links, knowledge graph, persistent AI memory, Ghost Connections, memory rollback, 18+ AI providers, and recovery controls.",
   alternates: { canonical: "/features" },
 };
 
@@ -42,7 +42,7 @@ export default function FeaturesPage() {
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
             A complete workspace for capturing, connecting, and recalling your knowledge &mdash;
-            with AI that gets smarter the longer you use it.
+            with AI that gets smarter, more recoverable, and easier to trust the longer you use it.
           </p>
         </section>
 
