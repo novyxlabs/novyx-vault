@@ -94,13 +94,13 @@ function UsageBar({
       {isHigh && !isFull && (
         <div className="flex items-center gap-1 text-[10px] text-amber-400">
           <AlertTriangle size={10} />
-          <span>Approaching limit</span>
+          <span>Approaching plan limit</span>
         </div>
       )}
       {isFull && (
         <div className="flex items-center gap-1 text-[10px] text-red-400">
           <AlertTriangle size={10} />
-          <span>Limit reached</span>
+          <span>Plan limit reached</span>
         </div>
       )}
     </div>
@@ -187,7 +187,7 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
           {error && (
             <div className="text-center py-12">
               <p className="text-sm text-muted">Failed to load usage data.</p>
-              <p className="text-xs text-muted/60 mt-1">Make sure your Novyx API key is configured in Settings.</p>
+              <p className="text-xs text-muted/60 mt-1">Make sure your Novyx API key is configured in Settings and the billing endpoint is reachable.</p>
             </div>
           )}
 
