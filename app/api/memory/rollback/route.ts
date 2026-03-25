@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
 
     const preview = await nx.rollbackPreview(target);
-    return Response.json({ mode: "preview", target, ...preview });
+    return Response.json({ mode: "preview", target, rollback_target: target, ...preview });
   } catch (e) {
     if (e instanceof Response) return e;
     return Response.json({ error: "Failed to preview rollback" }, { status: 500 });
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await nx.rollback(target, false, true);
-    return Response.json({ mode: "rollback", target, ...result });
+    return Response.json({ mode: "rollback", target, rollback_target: target, ...result });
   } catch (e) {
     if (e instanceof Response) return e;
     return Response.json({ error: "Failed to perform rollback" }, { status: 500 });
