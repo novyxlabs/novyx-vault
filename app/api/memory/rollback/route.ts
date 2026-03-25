@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
     const target = req.nextUrl.searchParams.get("target");
     if (!target) {
-      return Response.json({ error: "Missing target timestamp" }, { status: 400 });
+      return Response.json({ error: "Missing rollback target timestamp" }, { status: 400 });
     }
 
     const nx = resolveClient(apiKey ?? undefined);
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     }
 
     const preview = await nx.rollbackPreview(target);
-    return Response.json(preview);
+    return Response.json({ mode: "preview", target, ...preview });
   } catch (e) {
     if (e instanceof Response) return e;
     return Response.json({ error: "Failed to preview rollback" }, { status: 500 });
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { target } = body;
     if (!target) {
-      return Response.json({ error: "Missing target timestamp" }, { status: 400 });
+      return Response.json({ error: "Missing rollback target timestamp" }, { status: 400 });
     }
 
     const nx = resolveClient(apiKey ?? undefined);
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await nx.rollback(target, false, true);
-    return Response.json(result);
+    return Response.json({ mode: "rollback", target, ...result });
   } catch (e) {
     if (e instanceof Response) return e;
     return Response.json({ error: "Failed to perform rollback" }, { status: 500 });
