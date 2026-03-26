@@ -20,7 +20,6 @@
   <a href="https://github.com/novyxlabs/novyx-vault/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <a href="https://github.com/novyxlabs/novyx-vault/actions/workflows/ci.yml"><img src="https://github.com/novyxlabs/novyx-vault/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/novyxlabs/novyx-vault/stargazers"><img src="https://img.shields.io/github/stars/novyxlabs/novyx-vault?style=social" alt="GitHub stars"></a>
-  <a href="https://discord.gg/jbef3MJy"><img src="https://img.shields.io/discord/1234567890?label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
 ---
