@@ -1,18 +1,33 @@
-# Novyx Vault
-
-**An open-source notes app where your AI actually remembers you.**
-
-Markdown notes, wiki-links, a knowledge graph, and a fast editor — like Obsidian. But with an AI assistant that learns your projects, your writing style, and your ideas over time.
-
-Built on [Novyx Core](https://novyxlabs.com) for persistent AI memory.
-
-**[Try it free →](https://vault.novyxlabs.com)**
-
 <p align="center">
   <img src="docs/hero.png" alt="Novyx Vault" width="800" />
 </p>
 
+<h1 align="center">Novyx Vault</h1>
+
+<p align="center">
+  <strong>An open-source notes app where your AI actually remembers you.</strong>
+</p>
+
+<p align="center">
+  <a href="https://vault.novyxlabs.com"><strong>Try it free</strong></a> &nbsp;·&nbsp;
+  <a href="https://novyxlabs.com">Website</a> &nbsp;·&nbsp;
+  <a href="https://discord.gg/jbef3MJy">Discord</a> &nbsp;·&nbsp;
+  <a href="CONTRIBUTING.md">Contributing</a> &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">Changelog</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/novyxlabs/novyx-vault/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://github.com/novyxlabs/novyx-vault/actions/workflows/ci.yml"><img src="https://github.com/novyxlabs/novyx-vault/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/novyxlabs/novyx-vault/stargazers"><img src="https://img.shields.io/github/stars/novyxlabs/novyx-vault?style=social" alt="GitHub stars"></a>
+  <a href="https://discord.gg/jbef3MJy"><img src="https://img.shields.io/discord/1234567890?label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
+</p>
+
 ---
+
+Markdown notes, wiki-links, a knowledge graph, and a fast editor — like Obsidian. But with an AI assistant that learns your projects, your writing style, and your ideas over time.
+
+Built on [Novyx Core](https://novyxlabs.com) for persistent AI memory.
 
 ## Why Novyx Vault?
 
@@ -20,7 +35,19 @@ Every AI assistant starts from zero. Every conversation. You explain your projec
 
 Novyx Vault fixes that. Your AI builds persistent memory from your notes and conversations. The longer you use it, the more useful it becomes.
 
----
+## How It Compares
+
+| | Novyx Vault | Obsidian | Notion |
+|---|---|---|---|
+| Markdown files | Yes | Yes | No |
+| Wiki-links & backlinks | Yes | Yes | Limited |
+| Knowledge graph | Yes | Plugin | No |
+| AI with persistent memory | Built in | No | No |
+| AI-discovered connections | Built in | No | No |
+| Memory rollback & audit | Built in | No | No |
+| Voice capture & transcription | Built in | No | No |
+| Bring your own AI provider | 20+ | No | No |
+| Open source | Yes | No | No |
 
 ## Features
 
@@ -47,7 +74,7 @@ Novyx Vault fixes that. Your AI builds persistent memory from your notes and con
 - **Writing Coach** — AI feedback on clarity, structure, and tone.
 
 ### BYOK — Bring Your Own Key
-- **18+ AI Providers** — OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter.
+- **20+ AI Providers** — OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Nvidia NIM, Hyperbolic, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter, Ollama, LM Studio.
 - **Your keys, your browser** — API keys are stored in localStorage only. We never store them on our servers.
 - **Switch anytime** — Change providers without losing your memory or notes.
 
@@ -58,25 +85,13 @@ Novyx Vault fixes that. Your AI builds persistent memory from your notes and con
 
 ---
 
-## How It Compares
-
-| | Novyx Vault | Obsidian | Notion |
-|---|---|---|---|
-| Markdown files | Yes | Yes | No |
-| Wiki-links & backlinks | Yes | Yes | Limited |
-| Knowledge graph | Yes | Plugin | No |
-| AI with persistent memory | Built in | No | No |
-| AI-discovered connections | Built in | No | No |
-| Memory rollback & audit | Built in | No | No |
-| Voice capture & transcription | Built in | No | No |
-| Bring your own AI provider | 18+ | No | No |
-| Open source | Yes | No | No |
-
----
-
 ## Quick Start
 
-### Desktop Mode (no account required)
+### Use it now (no install)
+
+**[vault.novyxlabs.com](https://vault.novyxlabs.com)** — sign in with GitHub or Google. Free.
+
+### Self-host / Desktop Mode
 
 Desktop mode stores notes as plain markdown files in `~/SecondBrain/`. No database, no account.
 
@@ -162,8 +177,6 @@ Or connect your GitHub repo to [Vercel](https://vercel.com) for automatic deploy
 | `UPSTASH_REDIS_REST_URL` | Optional | Redis for rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional | Redis auth token |
 
----
-
 ## Scripts
 
 | Command | Description |
@@ -177,15 +190,11 @@ Or connect your GitHub repo to [Vercel](https://vercel.com) for automatic deploy
 | `npm run tauri:dev` | Tauri desktop development |
 | `npm run tauri:build` | Build Tauri desktop app |
 
----
-
 ## Tech Stack
 
 Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · CodeMirror 6 · Novyx SDK · Supabase · Tauri v2
 
-**52 components · 64 API routes · 18+ AI providers**
-
----
+**52 components · 64 API routes · 20+ AI providers**
 
 ## Project Structure
 
@@ -257,7 +266,7 @@ The same Novyx API key works across Vault, MCP, and the SDK. Memories created an
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and [CHANGELOG.md](CHANGELOG.md) for release history.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 git clone https://github.com/novyxlabs/novyx-vault.git
@@ -266,12 +275,16 @@ npm install
 npm run dev
 ```
 
----
+<a href="https://github.com/novyxlabs/novyx-vault/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=novyxlabs/novyx-vault" alt="Contributors" />
+</a>
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 
-Built by [Novyx Labs](https://novyxlabs.com)
+<p align="center">
+  Built by <a href="https://novyxlabs.com">Novyx Labs</a>
+</p>

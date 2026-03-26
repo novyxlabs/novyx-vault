@@ -3,6 +3,27 @@
   "version": "0.3.0",
   "description": "An open-source AI workspace with persistent memory, powered by Novyx",
   "license": "MIT",
+  "homepage": "https://vault.novyxlabs.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novyxlabs/novyx-vault"
+  },
+  "author": "Novyx Labs <blake@novyxlabs.com> (https://novyxlabs.com)",
+  "keywords": [
+    "ai",
+    "notes",
+    "markdown",
+    "knowledge-base",
+    "knowledge-graph",
+    "ai-memory",
+    "notion-alternative",
+    "obsidian-alternative",
+    "second-brain",
+    "self-hosted",
+    "local-first",
+    "nextjs",
+    "tauri"
+  ],
   "private": true,
   "engines": {
     "node": ">=18"
