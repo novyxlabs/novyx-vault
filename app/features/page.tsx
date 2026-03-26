@@ -361,6 +361,7 @@ function Providers() {
     "OpenAI", "Anthropic", "Google Gemini", "DeepSeek", "Ollama", "LM Studio",
     "Groq", "Together", "Mistral", "xAI Grok", "Perplexity", "Cohere",
     "Cerebras", "SambaNova", "Fireworks", "Moonshot", "MiniMax", "OpenRouter",
+    "Nvidia NIM", "Hyperbolic",
   ];
   return (
     <div className="flex flex-wrap gap-2 mt-4">
