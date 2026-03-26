@@ -356,20 +356,20 @@ export default function LandingPage() {
               <tbody className="text-muted">
                 {[
                   ["Markdown files", "Yes", "Yes", "No"],
-                  ["Wiki-links & backlinks", "Yes", "Yes", "Limited"],
-                  ["Knowledge graph", "Yes", "Plugin", "No"],
-                  ["AI with persistent memory", "Built in", "No", "No"],
+                  ["Wiki-links & backlinks", "Yes", "Yes", "Yes"],
+                  ["Knowledge graph", "Yes", "Yes", "No"],
+                  ["AI with persistent memory", "Built in", "No", "Workspace only"],
                   ["AI-discovered connections", "Built in", "No", "No"],
-                  ["Memory rollback & audit", "Built in", "No", "No"],
-                  ["Voice capture & transcription", "Built in", "No", "No"],
-                  ["Bring your own AI provider", "18+", "No", "No"],
+                  ["Memory rollback & audit", "Built in", "No", "Page history"],
+                  ["Voice capture & transcription", "Built in", "Recording only", "Yes (paid)"],
+                  ["Bring your own AI provider", "20+", "No", "No"],
                   ["Open source", "Yes", "No", "No"],
                 ].map(([feature, vault, obsidian, notion], i, arr) => (
                   <tr key={feature} className={i < arr.length - 1 ? "border-b border-sidebar-border/50" : ""}>
                     <td className="py-3 pr-2 sm:pr-4">{feature}</td>
                     <td className="text-center py-3 px-2 sm:px-4 text-emerald-400">{vault}</td>
                     <td className="text-center py-3 px-2 sm:px-4">{obsidian === "No" ? <span className="text-muted/50">{obsidian}</span> : obsidian}</td>
-                    <td className="text-center py-3 px-2 sm:px-4">{notion === "No" || notion === "Limited" ? <span className="text-muted/50">{notion}</span> : notion}</td>
+                    <td className="text-center py-3 px-2 sm:px-4">{notion === "No" ? <span className="text-muted/50">{notion}</span> : notion}</td>
                   </tr>
                 ))}
               </tbody>
@@ -396,7 +396,7 @@ export default function LandingPage() {
               Switch providers anytime without losing your memory or notes.
             </p>
             <div className="flex flex-wrap gap-2">
-              {["OpenAI", "Anthropic", "DeepSeek", "Ollama", "LM Studio", "Groq", "Together", "Mistral", "Gemini", "Cerebras", "Moonshot"].map((provider) => (
+              {["OpenAI", "Anthropic", "Google Gemini", "DeepSeek", "Groq", "Together", "Mistral", "xAI Grok", "Perplexity", "Cohere", "Nvidia NIM", "Hyperbolic", "Cerebras", "SambaNova", "Fireworks", "Moonshot", "MiniMax", "OpenRouter", "Ollama", "LM Studio"].map((provider) => (
                 <span
                   key={provider}
                   className="px-3 py-1.5 text-xs rounded-full border border-sidebar-border text-muted"

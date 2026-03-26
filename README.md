@@ -39,12 +39,12 @@ Novyx Vault fixes that. Your AI builds persistent memory from your notes and con
 | | Novyx Vault | Obsidian | Notion |
 |---|---|---|---|
 | Markdown files | Yes | Yes | No |
-| Wiki-links & backlinks | Yes | Yes | Limited |
-| Knowledge graph | Yes | Plugin | No |
-| AI with persistent memory | Built in | No | No |
+| Wiki-links & backlinks | Yes | Yes | Yes |
+| Knowledge graph | Yes | Yes | No |
+| AI with persistent memory | Built in | No | Workspace only |
 | AI-discovered connections | Built in | No | No |
-| Memory rollback & audit | Built in | No | No |
-| Voice capture & transcription | Built in | No | No |
+| Memory rollback & audit | Built in | No | Page history |
+| Voice capture & transcription | Built in | Recording only | Yes (paid) |
 | Bring your own AI provider | 20+ | No | No |
 | Open source | Yes | No | No |
 
