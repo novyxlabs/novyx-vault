@@ -57,8 +57,12 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const limiter = getLimiter(config);
 
-  // No Redis configured — allow all (local dev)
+  // No Redis configured — fail closed in production, allow all in dev
   if (!limiter) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[rate-limit] Redis not configured in production — denying request");
+      return { allowed: false, remaining: 0, resetMs: 60_000 };
+    }
     return { allowed: true, remaining: config.limit, resetMs: config.windowMs };
   }
 
@@ -111,4 +115,10 @@ export const RATE_LIMITS = {
   heavy: { limit: 10, windowMs: 60_000 },
   /** Auth — 5 per minute */
   auth: { limit: 5, windowMs: 60_000 },
+  /** Destructive operations (delete, rollback) — 10 per minute */
+  destructive: { limit: 10, windowMs: 60_000 },
+  /** Billing operations (checkout creation) — 3 per minute */
+  billing: { limit: 3, windowMs: 60_000 },
+  /** Note CRUD — 60 per minute */
+  crud: { limit: 60, windowMs: 60_000 },
 } as const;

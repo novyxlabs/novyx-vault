@@ -5,6 +5,17 @@
 
 import { getNovyxForKey } from "./novyx";
 
+const NOVYX_TIMEOUT_MS = 3000;
+
+function withTimeout<T>(promise: Promise<T>, ms = NOVYX_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Novyx API timeout")), ms)
+    ),
+  ]);
+}
+
 // --- Types (kept for component imports) ---
 
 export interface Draft {
@@ -85,12 +96,12 @@ export async function listDrafts(
   params?: { status?: string; branch_id?: string; limit?: number; offset?: number }
 ): Promise<{ drafts: Draft[]; total: number }> {
   const nx = requireClient(apiKey);
-  const result = await nx.memoryDrafts({
+  const result = await withTimeout(nx.memoryDrafts({
     status: params?.status,
     branch_name: params?.branch_id,
     limit: params?.limit,
     offset: params?.offset,
-  });
+  }));
   return result as unknown as { drafts: Draft[]; total: number };
 }
 
@@ -99,7 +110,7 @@ export async function getDraft(
   draftId: string
 ): Promise<Draft> {
   const nx = requireClient(apiKey);
-  const result = await nx.memoryDraft(draftId);
+  const result = await withTimeout(nx.memoryDraft(draftId));
   return result as unknown as Draft;
 }
 
@@ -108,7 +119,7 @@ export async function getDraftDiff(
   draftId: string
 ): Promise<DraftDiff> {
   const nx = requireClient(apiKey);
-  const result = await nx.draftDiff(draftId);
+  const result = await withTimeout(nx.draftDiff(draftId));
   return result as unknown as DraftDiff;
 }
 
@@ -117,7 +128,7 @@ export async function mergeDraft(
   draftId: string
 ): Promise<{ success: boolean }> {
   const nx = requireClient(apiKey);
-  const result = await nx.mergeDraft(draftId);
+  const result = await withTimeout(nx.mergeDraft(draftId));
   return result as { success: boolean };
 }
 
@@ -127,7 +138,7 @@ export async function rejectDraft(
   reason?: string
 ): Promise<{ success: boolean }> {
   const nx = requireClient(apiKey);
-  const result = await nx.rejectDraft(draftId, reason);
+  const result = await withTimeout(nx.rejectDraft(draftId, reason));
   return result as { success: boolean };
 }
 
@@ -160,7 +171,7 @@ export async function mergeBranch(
   branchId: string
 ): Promise<{ success: boolean; merged: number }> {
   const nx = requireClient(apiKey);
-  const result = await nx.mergeBranch(branchId);
+  const result = await withTimeout(nx.mergeBranch(branchId));
   return result as { success: boolean; merged: number };
 }
 
@@ -170,6 +181,6 @@ export async function rejectBranch(
   reason?: string
 ): Promise<{ success: boolean; rejected: number }> {
   const nx = requireClient(apiKey);
-  const result = await nx.rejectBranch(branchId, reason);
+  const result = await withTimeout(nx.rejectBranch(branchId, reason));
   return result as { success: boolean; rejected: number };
 }

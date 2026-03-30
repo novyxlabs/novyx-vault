@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStorageContext, isCloudMode } from "@/lib/auth";
 import { createServerSupabase } from "@/lib/supabase";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 function slugify(text: string): string {
   return text
@@ -52,6 +53,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Publishing requires cloud mode" }, { status: 400 });
     }
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("publish", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.crud);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     const { path, publish, slug: customSlug } = await req.json();
     if (!path) return NextResponse.json({ error: "Path required" }, { status: 400 });
 

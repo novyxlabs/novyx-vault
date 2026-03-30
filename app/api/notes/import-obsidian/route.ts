@@ -5,7 +5,7 @@ import { writeNote } from "@/lib/notes";
 
 export const runtime = "nodejs";
 
-const MAX_ZIP_SIZE = 25 * 1024 * 1024;
+const MAX_ZIP_SIZE = 4 * 1024 * 1024; // 4MB — must stay under Vercel's 4.5MB body limit
 const MAX_ENTRY_COUNT = 5000;
 const MAX_ENTRY_UNCOMPRESSED_SIZE = 2 * 1024 * 1024;
 const MAX_TOTAL_UNCOMPRESSED_SIZE = 100 * 1024 * 1024;

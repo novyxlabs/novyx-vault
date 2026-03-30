@@ -1,3 +1,8 @@
+/** Inline cloud mode check — avoids importing auth.ts which depends on next/headers */
+function isCloudMode(): boolean {
+  return typeof process !== "undefined" && process.env?.STORAGE_MODE === "supabase";
+}
+
 export interface ProviderPreset {
   id: string;
   name: string;
@@ -383,9 +388,12 @@ export function validateProviderBaseURL(baseURL: string): string | null {
 
   const host = parsed.hostname;
 
-  // Allow known local providers on localhost
+  // Allow localhost only in desktop mode (local providers like Ollama/LM Studio)
   if (host === "localhost" || host === "127.0.0.1") {
-    return null; // local providers are user-controlled
+    if (isCloudMode()) {
+      return "Localhost providers are not available in cloud mode";
+    }
+    return null;
   }
 
   // Block private/internal IPs
@@ -464,14 +472,6 @@ export interface CloudSettings {
   accent?: { hue: number; saturation: number };
   sort?: string;
 }
-
-const CLOUD_SETTINGS_KEYS = [
-  "noctivault-ai-settings",
-  "noctivault-pinned",
-  "noctivault-theme",
-  "noctivault-accent",
-  "noctivault-sort",
-] as const;
 
 /**
  * Strip API keys from AI settings before syncing to cloud.

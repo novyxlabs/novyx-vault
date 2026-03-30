@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listNotes, readNote, writeNote, createFolder, deleteNote } from "@/lib/notes";
 import { getStorageContext } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -24,6 +25,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("notes-write", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.crud);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     const { path: notePath, content, isFolder, _method } = await req.json();
     if (!notePath) {
       return NextResponse.json({ error: "Path is required" }, { status: 400 });
@@ -55,6 +60,10 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("notes-write", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.crud);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     const { path: notePath, content } = await req.json();
     if (!notePath || content === undefined) {
       return NextResponse.json({ error: "Path and content are required" }, { status: 400 });
@@ -72,6 +81,10 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("notes-del", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.destructive);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     const { path: notePath } = await req.json();
     if (!notePath) {
       return NextResponse.json({ error: "Path is required" }, { status: 400 });

@@ -5,6 +5,17 @@
 
 import { getNovyxForKey } from "./novyx";
 
+const NOVYX_TIMEOUT_MS = 3000;
+
+function withTimeout<T>(promise: Promise<T>, ms = NOVYX_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Novyx API timeout")), ms)
+    ),
+  ]);
+}
+
 // --- Types (kept for component imports) ---
 
 export interface ControlAction {
@@ -45,11 +56,11 @@ export async function getActions(
   apiKey: string
 ): Promise<{ actions: ControlAction[]; total: number }> {
   const nx = requireClient(apiKey);
-  const result = await nx.actionList({
+  const result = await withTimeout(nx.actionList({
     status: params.status,
     limit: params.limit,
     offset: params.offset,
-  } as Parameters<typeof nx.actionList>[0]);
+  } as Parameters<typeof nx.actionList>[0]));
   return result as { actions: ControlAction[]; total: number };
 }
 
@@ -58,10 +69,10 @@ export async function getApprovals(
   apiKey: string
 ): Promise<{ approvals: ControlAction[]; total: number }> {
   const nx = requireClient(apiKey);
-  const result = await nx.listApprovals({
+  const result = await withTimeout(nx.listApprovals({
     limit: params.limit,
     status_filter: params.status,
-  });
+  }));
   return result as unknown as { approvals: ControlAction[]; total: number };
 }
 
@@ -73,7 +84,7 @@ export async function submitDecision(
   const nx = requireClient(apiKey);
   // SDK/backend expects "approve"/"deny", not "approved"/"denied"
   const sdkDecision = decision === "approved" ? "approve" : "deny";
-  const result = await nx.approveAction(approvalId, { decision: sdkDecision });
+  const result = await withTimeout(nx.approveAction(approvalId, { decision: sdkDecision }));
   return result as { success: boolean; message?: string };
 }
 
@@ -81,7 +92,7 @@ export async function getPolicies(
   apiKey: string
 ): Promise<{ policies: ControlPolicy[] }> {
   const nx = requireClient(apiKey);
-  const result = await nx.listPolicies();
+  const result = await withTimeout(nx.listPolicies());
   return result as unknown as { policies: ControlPolicy[] };
 }
 
@@ -90,6 +101,6 @@ export async function explainAction(
   apiKey: string
 ): Promise<Record<string, unknown>> {
   const nx = requireClient(apiKey);
-  return nx.explainAction(actionId);
+  return withTimeout(nx.explainAction(actionId));
 }
 
