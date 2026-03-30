@@ -333,6 +333,7 @@ export default function FeaturesPage() {
           </p>
           <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted">
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           </nav>

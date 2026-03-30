@@ -1483,6 +1483,32 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
             )}
           </div>
         )}
+
+        {/* Powered by Novyx Core CTA */}
+        <div className="mt-6 p-4 rounded-lg border border-sidebar-border/50 bg-card-bg/50 text-center">
+          <p className="text-sm text-muted">
+            This memory system is powered by{" "}
+            <a
+              href="https://novyxlabs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline font-medium"
+            >
+              Novyx Core
+            </a>
+          </p>
+          <p className="text-xs text-muted/70 mt-1">
+            Add persistent AI memory to your own app in 6 lines of code.{" "}
+            <a
+              href="https://novyxlabs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              Learn more →
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

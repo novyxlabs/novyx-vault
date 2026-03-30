@@ -537,6 +537,9 @@ export default function LandingPage() {
             <a href="/features" className="hover:text-foreground transition-colors px-3 py-2.5 min-h-[44px] flex items-center">
               Features
             </a>
+            <a href="/pricing" className="hover:text-foreground transition-colors px-3 py-2.5 min-h-[44px] flex items-center">
+              Pricing
+            </a>
             <a href="/terms" className="hover:text-foreground transition-colors px-3 py-2.5 min-h-[44px] flex items-center">
               Terms
             </a>

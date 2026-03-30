@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
@@ -25,7 +26,7 @@ const nextConfig: NextConfig = {
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: blob: https://avatars.githubusercontent.com",
           "font-src 'self'",
-          "connect-src 'self' https://*.supabase.co https://api.novyx.ai https://*.vercel-insights.com https://*.vercel-analytics.com https://plausible.io",
+          "connect-src 'self' https://*.supabase.co https://api.novyx.ai https://*.vercel-insights.com https://*.vercel-analytics.com https://plausible.io https://*.ingest.sentry.io",
           "frame-ancestors 'none'",
           "base-uri 'self'",
           "form-action 'self' https://*.supabase.co",
@@ -50,4 +51,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: true,
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+});
