@@ -331,9 +331,12 @@ export default function FeaturesPage() {
               Novyx Labs
             </a>
           </p>
-          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted">
+          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted flex-wrap">
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
             <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+            <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
+            <Link href="/compare/obsidian" className="hover:text-foreground transition-colors">vs Obsidian</Link>
+            <Link href="/compare/notion" className="hover:text-foreground transition-colors">vs Notion</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           </nav>
