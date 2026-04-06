@@ -47,6 +47,8 @@ import {
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
 
+const PAID_TIERS = ["starter", "pro", "enterprise"];
+
 interface NoteEntry {
   name: string;
   path: string;
@@ -516,6 +518,17 @@ export default function Sidebar({
   const [sortBy, setSortBy] = useState<string>("default");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const [userTier, setUserTier] = useState<string>("free");
+
+  useEffect(() => {
+    fetch("/api/memory/usage")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        const t = data.gating?.tier || data.usage?.tier || "free";
+        setUserTier(t);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Hydrate from localStorage after mount to avoid SSR mismatch
@@ -1001,6 +1014,33 @@ export default function Sidebar({
               <Gauge size={13} />
               <span className="text-[10px] leading-none font-medium">Usage & Limits</span>
             </button>
+            {!PAID_TIERS.includes(userTier) && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/billing", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tier: "pro" }),
+                  });
+                  const data = await res.json();
+                  if (data.checkout_url) {
+                    window.open(data.checkout_url, "_blank");
+                  } else {
+                    window.alert(data.error || "Could not start checkout. Please try again.");
+                  }
+                } catch (err) {
+                  console.error("[Sidebar] Checkout failed:", err);
+                  window.alert("Could not start checkout. Please check your connection and try again.");
+                }
+              }}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
+              title="Upgrade to Pro"
+            >
+              <ArrowUpRight size={13} />
+              <span className="text-[10px] leading-none font-medium">Upgrade</span>
+            </button>
+            )}
             <button
               onClick={async () => {
                 try {
