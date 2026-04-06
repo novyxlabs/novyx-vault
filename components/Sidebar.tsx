@@ -43,6 +43,7 @@ import {
   ShieldCheck,
   Mic,
   ArrowUpRight,
+  Github,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
@@ -1167,6 +1168,15 @@ export default function Sidebar({
               >
                 <HelpCircle size={13} />
               </button>
+              <a
+                href="https://github.com/novyxlabs/novyx-vault"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-md text-muted/40 hover:text-yellow-400 hover:bg-yellow-400/10 transition-all"
+                title="Star us on GitHub"
+              >
+                <Github size={13} />
+              </a>
             </div>
             <div className="flex items-center gap-1.5">
               <button
