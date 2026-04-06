@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey, getNovyxForKey, requireFeature } from "@/lib/novyx";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 function resolveClient(apiKey?: string) {
   if (apiKey) return getNovyxForKey(apiKey);
@@ -36,6 +37,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("memory-rollback", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.destructive);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     const gated = await requireFeature(apiKey, "replay");
     if (gated) return gated;

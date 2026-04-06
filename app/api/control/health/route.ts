@@ -1,7 +1,5 @@
 import { getStorageContext } from "@/lib/auth";
-import { getUserNovyxKey } from "@/lib/novyx";
-
-const BASE_URL = "https://novyx-ram-api.fly.dev";
+import { getUserNovyxKey, getNovyxForKey } from "@/lib/novyx";
 
 export async function GET() {
   try {
@@ -9,20 +7,12 @@ export async function GET() {
     const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
     if (!apiKey) return Response.json({ error: "No API key" }, { status: 401 });
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    try {
-      const res = await fetch(`${BASE_URL}/v1/eval/gate`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error(`${res.status}`);
-      const data = await res.json();
-      return Response.json(data);
-    } finally {
-      clearTimeout(timer);
-    }
+    const nx = getNovyxForKey(apiKey);
+    if (!nx) return Response.json({ error: "No Novyx client" }, { status: 500 });
+
+    // evalGate returns { score, status, checks, ... } which the UI expects
+    const data = await nx.evalGate(0);
+    return Response.json(data);
   } catch (e) {
     if (e instanceof Response) return e;
     return Response.json({ error: "Failed to fetch health" }, { status: 500 });

@@ -4,6 +4,7 @@ import { Github } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
+  description: "Privacy Policy for Novyx Vault. Learn how we handle your data, API keys, and notes. Your keys never leave your browser.",
   alternates: { canonical: "/privacy" },
 };
 

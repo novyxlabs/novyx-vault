@@ -3,6 +3,27 @@
   "version": "0.3.0",
   "description": "An open-source AI workspace with persistent memory, powered by Novyx",
   "license": "MIT",
+  "homepage": "https://vault.novyxlabs.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novyxlabs/novyx-vault"
+  },
+  "author": "Novyx Labs <blake@novyxlabs.com> (https://novyxlabs.com)",
+  "keywords": [
+    "ai",
+    "notes",
+    "markdown",
+    "knowledge-base",
+    "knowledge-graph",
+    "ai-memory",
+    "notion-alternative",
+    "obsidian-alternative",
+    "second-brain",
+    "self-hosted",
+    "local-first",
+    "nextjs",
+    "tauri"
+  ],
   "private": true,
   "engines": {
     "node": ">=18"
@@ -27,19 +48,22 @@
     "@codemirror/theme-one-dark": "^6.1.3",
     "@codemirror/view": "^6.39.15",
     "@huggingface/transformers": "^3.8.1",
+    "@sentry/nextjs": "^10.46.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.3",
     "@vercel/analytics": "^1.6.1",
     "lucide-react": "^0.575.0",
-    "next": "16.1.6",
-    "novyx": "^2.10.0",
+    "motion": "^12.38.0",
+    "next": "^16.2.1",
+    "novyx": "^2.11.0",
     "openai": "^6.25.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {

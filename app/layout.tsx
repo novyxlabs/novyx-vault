@@ -37,6 +37,9 @@ export const metadata: Metadata = {
     description:
       "The only note app where AI gets smarter the longer you use it.",
   },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export const viewport: Viewport = {
@@ -66,7 +69,7 @@ const jsonLd = {
         "Persistent AI memory across sessions",
         "Wiki-style note linking with backlinks",
         "Interactive knowledge graph",
-        "Multi-provider AI (OpenAI, Anthropic, Ollama, 10+)",
+        "Multi-provider AI (OpenAI, Anthropic, Ollama, 18+)",
         "Local-first with optional cloud sync",
         "Memory rollback and timeline",
         "Ghost Connections — AI-discovered note relationships",

@@ -1,22 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useInView as useMotionInView } from "motion/react";
 
 /* ========== Shared ========== */
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.15 } },
+};
+
 function useInView() {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
-      { threshold: 0.3 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const inView = useMotionInView(ref, { once: true, amount: 0.3 });
   return { ref, inView };
 }
 
@@ -37,6 +38,182 @@ function useTyping(text: string, active: boolean, speed = 40) {
     return () => clearTimeout(t);
   }, [active, index, text, speed]);
   return text.slice(0, index);
+}
+
+/* ========== 0. Markdown Editor ========== */
+
+const EDITOR_LINES = [
+  { type: "heading", text: "# Project Roadmap" },
+  { type: "blank", text: "" },
+  { type: "text", text: "The team agreed to prioritize **AI memory** for Q4." },
+  { type: "text", text: "Key milestones:" },
+  { type: "list", text: "- [ ] Ship persistent memory by Oct 15" },
+  { type: "list", text: "- [x] Prototype ghost connections" },
+  { type: "list", text: "- [ ] Launch voice capture beta" },
+  { type: "blank", text: "" },
+  { type: "code", text: "> \"The longer you use it, the smarter it gets.\"" },
+];
+
+export function MarkdownEditorDemo() {
+  const { ref, inView } = useInView();
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [visibleLines, setVisibleLines] = useState(0);
+  const [showSlash, setShowSlash] = useState(false);
+
+  useEffect(() => {
+    if (!inView) return;
+    if (visibleLines >= EDITOR_LINES.length) {
+      const t = setTimeout(() => setShowSlash(true), 600);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setVisibleLines((n) => n + 1), 180);
+    return () => clearTimeout(t);
+  }, [inView, visibleLines]);
+
+  useEffect(() => {
+    if (!showSlash) return;
+    const t = setTimeout(() => {
+      setShowSlash(false);
+      setMode("preview");
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [showSlash]);
+
+  return (
+    <DemoCard>
+      <div ref={ref}>
+        {/* Editor toolbar */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-[#71717a] bg-[#1c1c1f] px-2 py-0.5 rounded">project-roadmap.md</span>
+          </div>
+          <div className="flex items-center bg-[#1c1c1f] rounded-md overflow-hidden border border-[#27272a]">
+            <button
+              className={`text-[9px] px-2 py-0.5 transition-colors ${mode === "edit" ? "text-[#e4e4e7] bg-[#27272a]" : "text-[#71717a]"}`}
+              onClick={() => setMode("edit")}
+            >
+              Edit
+            </button>
+            <button
+              className={`text-[9px] px-2 py-0.5 transition-colors ${mode === "preview" ? "text-[#e4e4e7] bg-[#27272a]" : "text-[#71717a]"}`}
+              onClick={() => setMode("preview")}
+            >
+              Preview
+            </button>
+          </div>
+        </div>
+        {/* Editor / Preview */}
+        <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] font-[var(--font-geist-mono),monospace] min-h-[170px] relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            {mode === "edit" ? (
+              <motion.div
+                key="edit"
+                initial="hidden"
+                animate={inView ? "visible" : "hidden"}
+                exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+              >
+                {EDITOR_LINES.slice(0, visibleLines).map((line, i) => (
+                  <motion.div
+                    key={i}
+                    className="flex items-start gap-2"
+                    variants={fadeUp}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className="text-[9px] text-[#3f3f46] select-none w-3 text-right shrink-0 mt-px">{i + 1}</span>
+                    <EditorLine type={line.type} text={line.text} />
+                  </motion.div>
+                ))}
+                {inView && visibleLines < EDITOR_LINES.length && <span className="hero-cursor ml-5" />}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="preview"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="text-[11px] leading-relaxed"
+              >
+                <h1 className="text-[14px] font-bold text-[#e4e4e7] mb-1.5">Project Roadmap</h1>
+                <p className="text-[#a1a1aa] mb-2">The team agreed to prioritize <strong className="text-[#e4e4e7]">AI memory</strong> for Q4. Key milestones:</p>
+                <div className="space-y-0.5 mb-2">
+                  <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Ship persistent memory by Oct 15</p>
+                  <p className="text-[#a1a1aa]"><span className="text-[#22c55e]">✓</span> <span className="line-through text-[#71717a]">Prototype ghost connections</span></p>
+                  <p className="text-[#a1a1aa]"><span className="text-[#71717a]">☐</span> Launch voice capture beta</p>
+                </div>
+                <div className="border-l-2 border-[#8b5cf6]/40 pl-2.5 text-[#a1a1aa] italic">
+                  &quot;The longer you use it, the smarter it gets.&quot;
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {/* Slash command dropdown */}
+          <AnimatePresence>
+          {showSlash && mode === "edit" && (
+            <motion.div
+              className="absolute left-8 bottom-3 w-44 bg-[#1c1c1f] border border-[#27272a] rounded-lg shadow-xl overflow-hidden z-10"
+              initial={{ opacity: 0, scaleY: 0 }}
+              animate={{ opacity: 1, scaleY: 1 }}
+              exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.15 } }}
+              transition={{ duration: 0.2 }}
+              style={{ transformOrigin: "top" }}
+            >
+              <div className="px-2.5 py-1 text-[8px] text-[#71717a] uppercase tracking-wider border-b border-[#27272a]">Slash Commands</div>
+              {[
+                { icon: "✨", label: "Ask AI", desc: "Get help writing" },
+                { icon: "📋", label: "Template", desc: "Insert template" },
+                { icon: "🔗", label: "Link note", desc: "Insert wiki-link" },
+              ].map((item, i) => (
+                <div
+                  key={item.label}
+                  className={`px-2.5 py-1.5 flex items-center gap-2 ${i === 0 ? "bg-[#8b5cf6]/15" : ""}`}
+                >
+                  <span className="text-[11px]">{item.icon}</span>
+                  <div>
+                    <span className={`text-[10px] block ${i === 0 ? "text-[#e4e4e7]" : "text-[#a1a1aa]"}`}>{item.label}</span>
+                    <span className="text-[8px] text-[#71717a]">{item.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </DemoCard>
+  );
+}
+
+function EditorLine({ type, text }: { type: string; text: string }) {
+  if (!text) return <div className="h-[16px]" />;
+  switch (type) {
+    case "heading":
+      return <p className="text-[12px] text-[#e4e4e7] font-bold"><span className="text-[#8b5cf6]">#</span> {text.slice(2)}</p>;
+    case "list":
+      return (
+        <p className="text-[11px] text-[#a1a1aa]">
+          <span className="text-[#71717a]">-</span>{" "}
+          {text.includes("[x]") ? (
+            <><span className="text-[#22c55e]">[x]</span> {text.slice(6)}</>
+          ) : (
+            <><span className="text-[#71717a]">[ ]</span> {text.slice(6)}</>
+          )}
+        </p>
+      );
+    case "code":
+      return <p className="text-[11px] text-[#8b5cf6]">{text}</p>;
+    default:
+      return (
+        <p className="text-[11px] text-[#a1a1aa]">
+          {text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+            part.startsWith("**") && part.endsWith("**")
+              ? <strong key={i} className="text-[#e4e4e7]">{part}</strong>
+              : part
+          )}
+        </p>
+      );
+  }
 }
 
 /* ========== 1. Persistent AI Memory ========== */
@@ -62,7 +239,12 @@ export function MemoryDemo() {
         </div>
         {/* AI response */}
         {inView && (
-          <div className="flex justify-start demo-fade-in">
+          <motion.div
+            className="flex justify-start"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             <div className="bg-[#1c1c1f] border border-[#27272a] rounded-lg rounded-bl-sm px-3 py-2 max-w-[85%]">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="w-3.5 h-3.5 rounded-full bg-[#8b5cf6]/20 flex items-center justify-center text-[7px]">🧠</span>
@@ -73,7 +255,7 @@ export function MemoryDemo() {
                 {aiText.length < 120 && <span className="hero-cursor" />}
               </p>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </DemoCard>
@@ -105,7 +287,13 @@ export function WikiLinkDemo() {
         </div>
         {/* Autocomplete dropdown */}
         {showDropdown && (
-          <div className="absolute left-3 bottom-2 translate-y-full w-48 bg-[#1c1c1f] border border-[#27272a] rounded-lg shadow-xl overflow-hidden demo-dropdown-in z-10">
+          <motion.div
+            className="absolute left-3 bottom-2 translate-y-full w-48 bg-[#1c1c1f] border border-[#27272a] rounded-lg shadow-xl overflow-hidden z-10"
+            initial={{ opacity: 0, scaleY: 0 }}
+            animate={{ opacity: 1, scaleY: 1 }}
+            transition={{ duration: 0.2 }}
+            style={{ transformOrigin: "top" }}
+          >
             {["Project Alpha", "Project Beta", "Project Plan"].map((item, i) => (
               <div
                 key={item}
@@ -118,7 +306,7 @@ export function WikiLinkDemo() {
                 {item}
               </div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </DemoCard>
@@ -137,14 +325,19 @@ export function GhostConnectionsDemo() {
 
   return (
     <DemoCard>
-      <div ref={ref} className="flex flex-col gap-2">
-        {connections.map((c, i) => (
-          <div
+      <motion.div
+        ref={ref}
+        className="flex flex-col gap-2"
+        initial="hidden"
+        animate={inView ? "visible" : "hidden"}
+        variants={staggerContainer}
+      >
+        {connections.map((c) => (
+          <motion.div
             key={c.type}
-            className={`flex items-center gap-2 bg-[#1c1c1f] border border-[#27272a] rounded-lg px-3 py-2 ${
-              inView ? "demo-fade-in" : "opacity-0"
-            }`}
-            style={inView ? { animationDelay: `${i * 300}ms` } : undefined}
+            className="flex items-center gap-2 bg-[#1c1c1f] border border-[#27272a] rounded-lg px-3 py-2"
+            variants={fadeUp}
+            transition={{ duration: 0.4 }}
           >
             <span className="text-[11px] text-[#a1a1aa] min-w-[80px] sm:min-w-[100px] truncate">{c.from}</span>
             <div className="flex-1 flex items-center gap-1.5 justify-center">
@@ -158,9 +351,9 @@ export function GhostConnectionsDemo() {
               <div className="h-px flex-1 max-w-[40px]" style={{ background: c.color, opacity: 0.4 }} />
             </div>
             <span className="text-[11px] text-[#a1a1aa] min-w-[80px] sm:min-w-[100px] truncate text-right">{c.to}</span>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </DemoCard>
   );
 }
@@ -189,27 +382,44 @@ export function KnowledgeGraphDemo() {
         {/* Edges */}
         <svg className="absolute inset-0 w-full h-full">
           {GRAPH_EDGES.map(([a, b], i) => (
-            <line
+            <motion.line
               key={i}
               x1={`${GRAPH_NODES[a].x}%`} y1={`${GRAPH_NODES[a].y}%`}
               x2={`${GRAPH_NODES[b].x}%`} y2={`${GRAPH_NODES[b].y}%`}
               stroke="#27272a"
               strokeWidth={1}
-              className={inView ? "demo-fade-in" : "opacity-0"}
-              style={inView ? { animationDelay: `${800 + i * 80}ms` } : undefined}
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: 0.4, delay: 0.6 + i * 0.06 }}
             />
           ))}
         </svg>
         {/* Nodes */}
         {GRAPH_NODES.map((node, i) => (
-          <div
+          <motion.div
             key={node.label}
-            className={`absolute flex flex-col items-center ${inView ? "demo-node-pop" : "opacity-0"}`}
+            className="absolute flex flex-col items-center"
             style={{
               left: `${node.x}%`,
               top: `${node.y}%`,
-              transform: "translate(-50%, -50%)",
-              ...(inView ? { animationDelay: `${i * 150}ms` } : {}),
+              x: "-50%",
+              y: "-50%",
+            }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={inView ? {
+              opacity: 1,
+              scale: 1,
+              y: ["-50%", `calc(-50% - ${3 + (i % 3)}px)`, "-50%"],
+            } : { opacity: 0, scale: 0 }}
+            transition={{
+              opacity: { type: "spring", stiffness: 300, damping: 20, delay: i * 0.1 },
+              scale: { type: "spring", stiffness: 300, damping: 20, delay: i * 0.1 },
+              y: {
+                duration: 2.5 + i * 0.3,
+                ease: "easeInOut",
+                repeat: Infinity,
+                delay: 0.8 + i * 0.15,
+              },
             }}
           >
             <div
@@ -223,7 +433,7 @@ export function KnowledgeGraphDemo() {
               }}
             />
             <span className="text-[8px] sm:text-[9px] text-[#71717a] mt-0.5 whitespace-nowrap">{node.label}</span>
-          </div>
+          </motion.div>
         ))}
       </div>
     </DemoCard>
@@ -298,27 +508,47 @@ export function CortexInsightsDemo() {
     <DemoCard>
       <div ref={ref} className="flex flex-col items-center justify-center h-full gap-4">
         {/* Floating tags */}
-        <div className="flex flex-wrap justify-center gap-2">
+        <motion.div
+          className="flex flex-wrap justify-center gap-2"
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+          variants={staggerContainer}
+        >
           {tags.map((tag, i) => (
-            <span
+            <motion.span
               key={tag.label}
-              className={`px-3 py-1 text-[11px] rounded-full font-medium ${
-                inView ? "demo-float-up" : "opacity-0"
-              }`}
+              className="px-3 py-1 text-[11px] rounded-full font-medium"
               style={{
                 color: tag.color,
                 background: `${tag.color}12`,
                 border: `1px solid ${tag.color}30`,
-                ...(inView ? {
-                  animationDelay: `${i * 200}ms`,
-                  animation: `demoFloatUp 0.5s ease-out ${i * 200}ms both, demoFloat 3s ease-in-out ${1000 + i * 200}ms infinite`,
-                } : {}),
               }}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    duration: 0.4,
+                  },
+                },
+              }}
+              animate={inView ? {
+                y: [0, -3, 0],
+                transition: {
+                  y: {
+                    duration: 3,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                    delay: 0.8 + i * 0.2,
+                  },
+                },
+              } : undefined}
             >
               {tag.label}
-            </span>
+            </motion.span>
           ))}
-        </div>
+        </motion.div>
         {/* Document outline */}
         <div className="w-full max-w-[200px]">
           <div className="bg-[#1c1c1f] border border-[#27272a] rounded-lg p-2.5">
@@ -395,21 +625,26 @@ export function LocalFirstDemo() {
       <div ref={ref}>
         <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] font-[var(--font-geist-mono),monospace]">
           <p className="text-[10px] text-[#71717a] mb-2">~/SecondBrain/</p>
-          {files.map((f, i) => (
-            <div
-              key={f.name}
-              className={`flex items-center gap-1.5 py-0.5 ${inView ? "demo-fade-in" : "opacity-0"}`}
-              style={{
-                paddingLeft: `${f.indent * 16}px`,
-                ...(inView ? { animationDelay: `${i * 150}ms` } : {}),
-              }}
-            >
-              <span className="text-[10px]">{f.type === "folder" ? "📁" : "📄"}</span>
-              <span className={`text-[11px] ${f.type === "folder" ? "text-[#e4e4e7]" : "text-[#a1a1aa]"}`}>
-                {f.name}
-              </span>
-            </div>
-          ))}
+          <motion.div
+            initial="hidden"
+            animate={inView ? "visible" : "hidden"}
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
+          >
+            {files.map((f) => (
+              <motion.div
+                key={f.name}
+                className="flex items-center gap-1.5 py-0.5"
+                style={{ paddingLeft: `${f.indent * 16}px` }}
+                variants={fadeUp}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="text-[10px]">{f.type === "folder" ? "📁" : "📄"}</span>
+                <span className={`text-[11px] ${f.type === "folder" ? "text-[#e4e4e7]" : "text-[#a1a1aa]"}`}>
+                  {f.name}
+                </span>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
         <p className="text-[9px] text-[#71717a] text-center mt-2">
           Plain markdown files. Open in any editor.
@@ -478,15 +713,25 @@ export function WritingToolsDemo() {
           {inView && !showResult && <div className="absolute inset-0 demo-shimmer" />}
         </div>
         {/* Formatted output */}
-        <div className={`bg-[#161618] rounded-lg p-2.5 border border-[#27272a] ${showResult ? "demo-fade-in" : "opacity-0"}`}>
-          <p className="text-[9px] text-[#22c55e] font-medium mb-1.5">Structured Note</p>
-          <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
-            <p className="text-[#e4e4e7] font-medium mb-0.5"># Q4 Action Items</p>
-            <p>• Ship AI memory — 3 week estimate</p>
-            <p>• Investigate Ollama performance</p>
-            <p>• Evaluate infra hire</p>
-          </div>
-        </div>
+        {showResult && (
+          <motion.div
+            className="bg-[#161618] rounded-lg p-2.5 border border-[#27272a]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <p className="text-[9px] text-[#22c55e] font-medium mb-1.5">Structured Note</p>
+            <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
+              <p className="text-[#e4e4e7] font-medium mb-0.5"># Q4 Action Items</p>
+              <p>• Ship AI memory — 3 week estimate</p>
+              <p>• Investigate Ollama performance</p>
+              <p>• Evaluate infra hire</p>
+            </div>
+          </motion.div>
+        )}
+        {!showResult && (
+          <div className="bg-[#161618] rounded-lg p-2.5 border border-[#27272a] opacity-0" />
+        )}
       </div>
     </DemoCard>
   );
@@ -553,18 +798,27 @@ export function VoiceCaptureDemo() {
           </p>
         </div>
         {/* Right — Structured output */}
-        <div className={`bg-[#161618] rounded-lg p-3 border border-[#27272a] ${phase === "done" ? "demo-fade-in" : "opacity-0"}`}>
-          <p className="text-[9px] text-[#22c55e] font-medium mb-2">Structured Note</p>
-          <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
-            <p className="text-[#e4e4e7] font-medium mb-1"># Team Standup — Mar 17</p>
-            <p className="mb-0.5">## Decisions</p>
-            <p>• Ship voice capture this week</p>
-            <p>• Move to emerald CTA buttons</p>
-            <p className="mt-1 mb-0.5">## Action Items</p>
-            <p>• @blake — update features page</p>
-            <p>• Review PR before EOD</p>
-          </div>
-        </div>
+        {phase === "done" ? (
+          <motion.div
+            className="bg-[#161618] rounded-lg p-3 border border-[#27272a]"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <p className="text-[9px] text-[#22c55e] font-medium mb-2">Structured Note</p>
+            <div className="text-[10px] text-[#a1a1aa] leading-relaxed font-[var(--font-geist-mono),monospace]">
+              <p className="text-[#e4e4e7] font-medium mb-1"># Team Standup — Mar 17</p>
+              <p className="mb-0.5">## Decisions</p>
+              <p>• Ship voice capture this week</p>
+              <p>• Move to emerald CTA buttons</p>
+              <p className="mt-1 mb-0.5">## Action Items</p>
+              <p>• @blake — update features page</p>
+              <p>• Review PR before EOD</p>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="bg-[#161618] rounded-lg p-3 border border-[#27272a] opacity-0" />
+        )}
       </div>
     </DemoCard>
   );
@@ -599,14 +853,20 @@ export function OpenSourceDemo() {
           <span className="text-[9px] text-[#71717a] ml-1">Terminal</span>
         </div>
         {lines.slice(0, visibleLines).map((line, i) => (
-          <div key={i} className="demo-fade-in mb-0.5">
+          <motion.div
+            key={i}
+            className="mb-0.5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
             <span className={`text-[11px] ${line.isOutput ? "text-[#22c55e]" : "text-[#22c55e]/70"}`}>
               {line.prompt}
             </span>
             <span className={`text-[11px] ${line.isOutput ? "text-[#22c55e]" : "text-[#e4e4e7]"}`}>
               {line.cmd}
             </span>
-          </div>
+          </motion.div>
         ))}
         {inView && visibleLines < lines.length && (
           <span className="hero-cursor" />

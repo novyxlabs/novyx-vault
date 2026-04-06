@@ -203,16 +203,38 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
                     {tierLabel(tier)}
                   </span>
                 </div>
-                {usage.billing_reset_date && (
-                  <div className="text-right">
-                    <div className="text-[11px] uppercase tracking-widest text-muted/50 font-medium mb-1">
-                      Resets
+                <div className="text-right">
+                  {usage.billing_reset_date && (
+                    <div className="mb-1">
+                      <div className="text-[11px] uppercase tracking-widest text-muted/50 font-medium mb-1">
+                        Resets
+                      </div>
+                      <span className="text-sm text-foreground">
+                        {parseBillingDate(usage.billing_reset_date)}
+                      </span>
                     </div>
-                    <span className="text-sm text-foreground">
-                      {parseBillingDate(usage.billing_reset_date)}
-                    </span>
-                  </div>
-                )}
+                  )}
+                  {!isLocked && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/billing");
+                          const data = await res.json();
+                          if (data.portal_url) {
+                            window.open(data.portal_url, "_blank");
+                          } else {
+                            alert(data.error || "Could not open billing portal.");
+                          }
+                        } catch {
+                          alert("Could not connect to billing. Please try again.");
+                        }
+                      }}
+                      className="text-[10px] text-muted hover:text-foreground transition-colors"
+                    >
+                      Manage subscription →
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Usage Stats */}
@@ -378,14 +400,28 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
                     <Lock size={24} className="text-accent/30 mb-2" />
                     <p className="text-sm font-medium text-foreground">Detailed Breakdown</p>
                     <p className="text-xs text-muted mt-0.5">Available on Pro plan</p>
-                    <a
-                      href="https://novyx.ai/pricing"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 px-4 py-2 bg-accent/15 text-accent rounded-md text-xs hover:bg-accent/25 transition-colors"
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/billing", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ tier: "pro" }),
+                          });
+                          const data = await res.json();
+                          if (data.checkout_url) {
+                            window.open(data.checkout_url, "_blank");
+                          } else {
+                            alert(data.error || "Could not start checkout. Please try again.");
+                          }
+                        } catch {
+                          alert("Could not connect to billing. Please try again.");
+                        }
+                      }}
+                      className="mt-3 px-4 py-2 bg-emerald-500/15 text-emerald-400 rounded-md text-xs hover:bg-emerald-500/25 transition-colors"
                     >
                       Upgrade to Pro →
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}

@@ -17,6 +17,7 @@ import {
   Send,
   Newspaper,
 } from "lucide-react";
+import { formatInlineMarkdown } from "@/lib/sanitize";
 
 interface ShareMenuProps {
   notePath: string;
@@ -85,6 +86,58 @@ export default function ShareMenu({ notePath, content, isOpen, onClose, anchorRe
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }, []);
+
+  const renderSafeHtml = useCallback((markdown: string) => {
+    const lines = markdown.replace(/^---\n[\s\S]*?\n---\n?/, "").split("\n");
+    const htmlLines: string[] = [];
+    let inUl = false;
+    let inOl = false;
+
+    const closeLists = () => {
+      if (inUl) {
+        htmlLines.push("</ul>");
+        inUl = false;
+      }
+      if (inOl) {
+        htmlLines.push("</ol>");
+        inOl = false;
+      }
+    };
+
+    for (const line of lines) {
+      const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
+      if (headingMatch) {
+        closeLists();
+        const level = headingMatch[1].length;
+        htmlLines.push(`<h${level}>${formatInlineMarkdown(headingMatch[2])}</h${level}>`);
+      } else if (line.match(/^[-*]\s/)) {
+        if (!inUl) {
+          closeLists();
+          htmlLines.push("<ul>");
+          inUl = true;
+        }
+        htmlLines.push(`<li>${formatInlineMarkdown(line.replace(/^[-*]\s/, ""))}</li>`);
+      } else if (line.match(/^\d+\.\s/)) {
+        if (!inOl) {
+          closeLists();
+          htmlLines.push("<ol>");
+          inOl = true;
+        }
+        htmlLines.push(`<li>${formatInlineMarkdown(line.replace(/^\d+\.\s/, ""))}</li>`);
+      } else if (line.startsWith("> ")) {
+        closeLists();
+        htmlLines.push(`<blockquote>${formatInlineMarkdown(line.slice(2))}</blockquote>`);
+      } else if (line.trim()) {
+        closeLists();
+        htmlLines.push(`<p>${formatInlineMarkdown(line)}</p>`);
+      } else {
+        closeLists();
+      }
+    }
+
+    closeLists();
+    return htmlLines.join("\n");
   }, []);
 
   const handlePublish = async (publish: boolean) => {
@@ -171,20 +224,7 @@ export default function ShareMenu({ notePath, content, isOpen, onClose, anchorRe
     { id: "newsletter", label: "Export to Newsletter", icon: <Newspaper size={14} />, action: openNewsletter },
     { id: "divider-2" },
     { id: "copy-md", label: "Copy as Markdown", icon: <FileText size={14} />, action: () => copyToClipboard(content) },
-    { id: "copy-html", label: "Copy as HTML", icon: <Code2 size={14} />, action: () => {
-      const html = content
-        .replace(/^---\n[\s\S]*?\n---\n?/, "")
-        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\*(.+?)\*/g, "<em>$1</em>")
-        .replace(/`(.+?)`/g, "<code>$1</code>")
-        .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-        .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-        .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-        .replace(/^[-*] (.+)$/gm, "<li>$1</li>")
-        .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
-        .split("\n").filter(Boolean).map(l => l.startsWith("<") ? l : `<p>${l}</p>`).join("\n");
-      copyToClipboard(html);
-    }},
+    { id: "copy-html", label: "Copy as HTML", icon: <Code2 size={14} />, action: () => copyToClipboard(renderSafeHtml(content)) },
   ];
 
   // Main menu or panel

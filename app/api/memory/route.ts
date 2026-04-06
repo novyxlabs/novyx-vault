@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { listMemories, forgetMemory, rememberExchange } from "@/lib/memory";
 import { getStorageContext, getUser } from "@/lib/auth";
 import { getUserNovyxKey, ensureNovyxKey } from "@/lib/novyx";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,6 +37,10 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("memory-write", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.crud);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     let apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
 
     if (!apiKey && ctx.userId) {
@@ -60,6 +65,10 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("memory-del", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.destructive);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     let apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
 
     if (!apiKey && ctx.userId) {

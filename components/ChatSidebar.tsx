@@ -41,6 +41,7 @@ export default function ChatSidebar({
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [currentSettings, setCurrentSettings] = useState(() => loadSettings());
   const [memoriesRecalled, setMemoriesRecalled] = useState(0);
+  const [showMemoryAha, setShowMemoryAha] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const modelPickerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -222,6 +223,19 @@ export default function ChatSidebar({
     } finally {
       setIsStreaming(false);
       abortRef.current = null;
+
+      // Show memory onboarding moment for early-session users
+      try {
+        const alreadyShown = sessionStorage.getItem("memory-aha-shown");
+        // newMessages includes the user message we just sent; +1 for the assistant reply
+        const totalMessages = newMessages.length + 1;
+        if (!alreadyShown && totalMessages <= 5) {
+          setShowMemoryAha(true);
+          sessionStorage.setItem("memory-aha-shown", "1");
+        }
+      } catch {
+        // sessionStorage unavailable (e.g. SSR or privacy mode) — skip silently
+      }
     }
   };
 
@@ -473,6 +487,33 @@ export default function ChatSidebar({
             <span className="text-xs text-accent/70">
               Recalled {memoriesRecalled} {memoriesRecalled === 1 ? "memory" : "memories"}
             </span>
+          </div>
+        )}
+
+        {showMemoryAha && (
+          <div className="mx-1 px-3 py-2.5 bg-accent/10 border border-accent/20 rounded-lg flex items-start gap-2">
+            <span className="text-sm leading-5 flex-1">
+              <span className="mr-1">&#10024;</span>
+              Your AI just stored a memory from this conversation. Ask it{" "}
+              <button
+                onClick={() => {
+                  setInput("What do you remember about me?");
+                  textareaRef.current?.focus();
+                  setShowMemoryAha(false);
+                }}
+                className="text-accent underline underline-offset-2 hover:text-accent-hover transition-colors"
+              >
+                &ldquo;What do you remember about me?&rdquo;
+              </button>{" "}
+              to see it in action.
+            </span>
+            <button
+              onClick={() => setShowMemoryAha(false)}
+              className="shrink-0 p-0.5 text-muted hover:text-foreground transition-colors"
+              title="Dismiss"
+            >
+              <X size={14} />
+            </button>
           </div>
         )}
 

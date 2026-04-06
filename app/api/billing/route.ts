@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUser, isCloudMode } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 const NOVYX_API_URL = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
 
@@ -18,6 +19,10 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+
+  const rlKey = getRateLimitKey("billing", user.id, req);
+  const rl = await checkRateLimit(rlKey, RATE_LIMITS.billing);
+  if (!rl.allowed) return rateLimitResponse(rl.resetMs);
 
   const cookie = req.headers.get("cookie") ?? "";
   const apiKey = await getUserNovyxKey(user.id, cookie);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Forgot Password",
+  description: "Reset your Novyx Vault password. Enter your email to receive a password reset link.",
   alternates: { canonical: "/forgot-password" },
 };
 

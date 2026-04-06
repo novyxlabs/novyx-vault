@@ -5,13 +5,14 @@ import {
   Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight, Link2, Mic,
 } from "lucide-react";
 import {
-  MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
+  MarkdownEditorDemo, MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
   MemoryRollbackDemo, CortexInsightsDemo, BYOKDemo, LocalFirstDemo,
   CloudSyncDemo, WritingToolsDemo, VoiceCaptureDemo, OpenSourceDemo,
 } from "@/components/FeatureDemos";
+import { FadeInSection } from "@/components/FadeInSection";
 
 export const metadata: Metadata = {
-  title: "Features — Novyx Vault",
+  title: "Features",
   description:
     "Markdown notes, wiki-links, knowledge graph, persistent AI memory, Ghost Connections, memory rollback, 18+ AI providers, and more.",
   alternates: { canonical: "/features" },
@@ -46,7 +47,7 @@ export default function FeaturesPage() {
         </section>
 
         {/* Feature Sections */}
-        <div className="space-y-20">
+        <div className="space-y-14">
           {/* Notes-first features */}
           <Feature
             icon={<FileText size={28} />}
@@ -64,6 +65,7 @@ export default function FeaturesPage() {
               <li>Autosave with version history</li>
               <li>Templates for common note types</li>
             </ul>
+            <MarkdownEditorDemo />
           </Feature>
 
           <Feature
@@ -329,8 +331,12 @@ export default function FeaturesPage() {
               Novyx Labs
             </a>
           </p>
-          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted">
+          <nav aria-label="Footer" className="flex items-center gap-6 text-sm text-muted flex-wrap">
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+            <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
+            <Link href="/compare/obsidian" className="hover:text-foreground transition-colors">vs Obsidian</Link>
+            <Link href="/compare/notion" className="hover:text-foreground transition-colors">vs Notion</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           </nav>
@@ -342,7 +348,7 @@ export default function FeaturesPage() {
 
 function Feature({ icon, title, id, children }: { icon: React.ReactNode; title: string; id: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-24">
+    <FadeInSection id={id} className="scroll-mt-24">
       <div className="flex items-center gap-3 mb-4">
         <div className="text-accent">{icon}</div>
         <h2 className="text-xl font-bold">{title}</h2>
@@ -350,7 +356,7 @@ function Feature({ icon, title, id, children }: { icon: React.ReactNode; title: 
       <div className="space-y-4 text-muted leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ul]:text-sm [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-card-bg [&_code]:text-accent [&_code]:text-sm">
         {children}
       </div>
-    </section>
+    </FadeInSection>
   );
 }
 
@@ -359,6 +365,7 @@ function Providers() {
     "OpenAI", "Anthropic", "Google Gemini", "DeepSeek", "Ollama", "LM Studio",
     "Groq", "Together", "Mistral", "xAI Grok", "Perplexity", "Cohere",
     "Cerebras", "SambaNova", "Fireworks", "Moonshot", "MiniMax", "OpenRouter",
+    "Nvidia NIM", "Hyperbolic",
   ];
   return (
     <div className="flex flex-wrap gap-2 mt-4">

@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getStorage } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 // Minimal zip creation (no dependencies)
 function createZip(entries: { name: string; data: Buffer }[]): Buffer {
@@ -82,14 +83,27 @@ function crc32(data: Buffer): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rlKey = getRateLimitKey("export", ctx.userId, req);
+    const rl = await checkRateLimit(rlKey, RATE_LIMITS.heavy);
+    if (!rl.allowed) return rateLimitResponse(rl.resetMs);
+
     const storage = getStorage(ctx.userId, ctx.cookieHeader);
     const entries = await storage.exportAll();
 
     if (entries.length === 0) {
       return NextResponse.json({ error: "No notes to export" }, { status: 404 });
+    }
+
+    // Guard against OOM — cap total export size at 50MB
+    const totalBytes = entries.reduce((sum, e) => sum + e.data.length, 0);
+    if (totalBytes > 50 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "Vault too large to export (>50MB). Export individual folders instead." },
+        { status: 413 }
+      );
     }
 
     const zip = createZip(entries);
@@ -101,6 +115,7 @@ export async function GET() {
       },
     });
   } catch (err) {
+    if (err instanceof Response) return err;
     console.error("Export error:", err);
     return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }

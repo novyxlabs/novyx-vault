@@ -2,16 +2,34 @@ import { Novyx } from "novyx";
 import { createHmac } from "crypto";
 import { isCloudMode } from "./auth";
 import { createServiceSupabase, createServerSupabase } from "./supabase";
+import { encrypt, decrypt } from "./crypto";
 
 // --- Client cache (keyed by API key) ---
-const clientCache = new Map<string, Novyx>();
+const CLIENT_CACHE_MAX = 100;
+const CLIENT_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const clientCache = new Map<string, { client: Novyx; createdAt: number }>();
 
 function getOrCreateClient(apiKey: string): Novyx {
-  let client = clientCache.get(apiKey);
-  if (!client) {
-    client = new Novyx({ apiKey });
-    clientCache.set(apiKey, client);
+  const entry = clientCache.get(apiKey);
+  if (entry && Date.now() - entry.createdAt < CLIENT_CACHE_TTL) {
+    return entry.client;
   }
+
+  const apiUrl = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
+  const client = new Novyx({
+    apiKey,
+    apiUrl,
+    controlUrl: apiUrl,
+    controlApiKey: apiKey,
+  });
+
+  // Evict oldest entries if cache is full
+  if (clientCache.size >= CLIENT_CACHE_MAX) {
+    const oldestKey = clientCache.keys().next().value;
+    if (oldestKey) clientCache.delete(oldestKey);
+  }
+
+  clientCache.set(apiKey, { client, createdAt: Date.now() });
   return client;
 }
 
@@ -41,7 +59,14 @@ export async function getUserNovyxKey(
       .select("novyx_api_key")
       .eq("id", userId)
       .single();
-    if (data?.novyx_api_key) return data.novyx_api_key;
+    if (data?.novyx_api_key) {
+      try {
+        return decrypt(data.novyx_api_key);
+      } catch {
+        // Key might be stored in plaintext (pre-encryption migration)
+        return data.novyx_api_key;
+      }
+    }
   } catch {
     // fall through
   }
@@ -109,7 +134,7 @@ export async function provisionNovyxKeyWithRetry(
 ): Promise<{ api_key: string; tenant_id: string; tier: string }> {
   try {
     return await provisionNovyxKey(email);
-  } catch (firstError) {
+  } catch {
     // Wait 1 second, then retry once
     await new Promise((resolve) => setTimeout(resolve, 1000));
     try {
@@ -155,7 +180,7 @@ export async function storeNovyxKey(
   const supabase = createServiceSupabase();
   const { error } = await supabase
     .from("profiles")
-    .update({ novyx_api_key: apiKey })
+    .update({ novyx_api_key: encrypt(apiKey) })
     .eq("id", userId);
   if (error) {
     throw new Error(`Failed to store Novyx key: ${error.message}`);

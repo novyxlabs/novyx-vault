@@ -15,11 +15,36 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip auth for API routes (they handle their own auth via getStorageContext),
-  // public pages, static assets, and OG image generation
   const { pathname } = request.nextUrl;
+
+  // API routes: enforce auth globally (defense-in-depth alongside per-route checks)
+  if (pathname.startsWith("/api/")) {
+    // Public API routes that don't require auth
+    const isPublicApi =
+      pathname.startsWith("/api/auth/") ||
+      pathname.startsWith("/api/health") ||
+      pathname === "/api/digest"; // Cron job, uses its own secret
+    if (!isPublicApi) {
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll: () => request.cookies.getAll(),
+            setAll: () => {},
+          },
+        }
+      );
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+    return NextResponse.next();
+  }
+
+  // Skip auth for public pages, static assets, and OG image generation
   if (
-    pathname.startsWith("/api/") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/reset-password") ||

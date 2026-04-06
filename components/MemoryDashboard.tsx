@@ -1134,7 +1134,21 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                 <p className="text-xs mt-1">As you chat, entities and relationships will appear here.</p>
               </div>
             ) : (
-              <MemoryGraph nodes={graphNodes} edges={graphEdges} />
+              <div className="w-full h-full flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <MemoryGraph nodes={graphNodes} edges={graphEdges} />
+                </div>
+                <div className="flex items-center justify-between px-4 py-2 border-t border-sidebar-border/50">
+                  <span className="text-xs text-muted">{graphNodes.length} entities · {graphEdges.length} connections</span>
+                  <button
+                    onClick={() => window.open("/api/share/graph", "_blank")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+                  >
+                    <Share2 size={12} />
+                    Share my graph
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -1483,6 +1497,32 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
             )}
           </div>
         )}
+
+        {/* Powered by Novyx Core CTA */}
+        <div className="mt-6 p-4 rounded-lg border border-sidebar-border/50 bg-card-bg/50 text-center">
+          <p className="text-sm text-muted">
+            This memory system is powered by{" "}
+            <a
+              href="https://novyxlabs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline font-medium"
+            >
+              Novyx Core
+            </a>
+          </p>
+          <p className="text-xs text-muted/70 mt-1">
+            Add persistent AI memory to your own app in 6 lines of code.{" "}
+            <a
+              href="https://novyxlabs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              Learn more →
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

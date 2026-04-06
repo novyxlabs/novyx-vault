@@ -21,6 +21,18 @@ export class SupabaseAdapter implements StorageAdapter {
     return idx === -1 ? "" : p.substring(0, idx);
   }
 
+  private assertNoError(error: { message: string } | null | undefined, fallback: string): void {
+    if (error) throw new Error(error.message || fallback);
+  }
+
+  private async updateById(id: string, updates: Record<string, unknown>): Promise<void> {
+    const { error } = await this.supabase
+      .from("notes")
+      .update(updates)
+      .eq("id", id);
+    this.assertNoError(error, `Failed to update note ${id}`);
+  }
+
   async listNotes(dirPath = ""): Promise<NoteEntry[]> {
     // Single query: fetch all non-trashed notes, then build tree in-memory
     const { data, error } = await this.supabase
@@ -104,35 +116,24 @@ export class SupabaseAdapter implements StorageAdapter {
     const normalized = notePath.replace(/\.md$/, "");
     const name = normalized.split("/").pop() ?? normalized;
 
-    // Upsert: update if exists, insert if not
-    const { data: existing } = await this.supabase
+    // Ensure parent folders exist
+    await this.ensureFolders(normalized);
+
+    const { error } = await this.supabase
       .from("notes")
-      .select("id")
-      .eq("user_id", this.userId)
-      .eq("path", normalized)
-      .eq("is_trashed", false)
-      .single();
-
-    if (existing) {
-      const { error } = await this.supabase
-        .from("notes")
-        .update({ content, modified_at: new Date().toISOString() })
-        .eq("id", existing.id);
-      if (error) throw new Error(error.message);
-    } else {
-      // Ensure parent folders exist
-      await this.ensureFolders(normalized);
-
-      const { error } = await this.supabase.from("notes").insert({
-        user_id: this.userId,
-        path: normalized,
-        name,
-        content,
-        is_folder: false,
-        modified_at: new Date().toISOString(),
-      });
-      if (error) throw new Error(error.message);
-    }
+      .upsert(
+        {
+          user_id: this.userId,
+          path: normalized,
+          name,
+          content,
+          is_folder: false,
+          is_trashed: false,
+          modified_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,path" }
+      );
+    if (error) throw new Error(error.message);
   }
 
   private async ensureFolders(notePath: string): Promise<void> {
@@ -153,12 +154,13 @@ export class SupabaseAdapter implements StorageAdapter {
         .single();
 
       if (!data) {
-        await this.supabase.from("notes").insert({
+        const { error } = await this.supabase.from("notes").insert({
           user_id: this.userId,
           path: folderPath,
           name: folderName,
           is_folder: true,
         });
+        this.assertNoError(error, `Failed to create folder ${folderPath}`);
       }
     }
   }
@@ -206,7 +208,6 @@ export class SupabaseAdapter implements StorageAdapter {
     const now = new Date().toISOString();
 
     if (target.is_folder) {
-      // Trash the folder and all children — each child keeps its own path as original_path
       const { data: children } = await this.supabase
         .from("notes")
         .select("id, path")
@@ -214,31 +215,33 @@ export class SupabaseAdapter implements StorageAdapter {
         .eq("is_trashed", false)
         .like("path", `${target.path}/%`);
 
-      if (children) {
-        for (const child of children) {
-          await this.supabase
-            .from("notes")
-            .update({
-              is_trashed: true,
-              trashed_at: now,
-              original_path: child.path,
-            })
-            .eq("id", child.id);
+      const updatedChildren: string[] = [];
+      try {
+        for (const child of children || []) {
+          await this.updateById(child.id, {
+            is_trashed: true,
+            trashed_at: now,
+            original_path: child.path,
+          });
+          updatedChildren.push(child.id);
         }
+      } catch (error) {
+        for (const childId of updatedChildren.reverse()) {
+          await this.updateById(childId, {
+            is_trashed: false,
+            trashed_at: null,
+            original_path: null,
+          }).catch(() => {});
+        }
+        throw error;
       }
     }
 
-    // Trash the note/folder itself
-    const { error } = await this.supabase
-      .from("notes")
-      .update({
-        is_trashed: true,
-        trashed_at: now,
-        original_path: target.path,
-      })
-      .eq("id", target.id);
-
-    if (error) throw new Error(error.message);
+    await this.updateById(target.id, {
+      is_trashed: true,
+      trashed_at: now,
+      original_path: target.path,
+    });
   }
 
   async renameNote(oldPath: string, newPath: string): Promise<void> {
@@ -259,15 +262,8 @@ export class SupabaseAdapter implements StorageAdapter {
 
     if (!target) throw new Error(`Note not found: ${oldPath}`);
 
-    // Update the note itself
-    const { error } = await this.supabase
-      .from("notes")
-      .update({ path: normalizedNew, name: newName })
-      .eq("id", target.id);
+    await this.updateById(target.id, { path: normalizedNew, name: newName });
 
-    if (error) throw new Error(error.message);
-
-    // If it's a folder, update all children's paths
     if (target.is_folder) {
       const { data: children } = await this.supabase
         .from("notes")
@@ -275,15 +271,19 @@ export class SupabaseAdapter implements StorageAdapter {
         .eq("user_id", this.userId)
         .eq("is_trashed", false)
         .like("path", `${normalizedOld}/%`);
-
-      if (children) {
-        for (const child of children) {
+      const updatedChildren: Array<{ id: string; path: string }> = [];
+      try {
+        for (const child of children || []) {
           const updatedPath = normalizedNew + child.path.slice(normalizedOld.length);
-          await this.supabase
-            .from("notes")
-            .update({ path: updatedPath })
-            .eq("id", child.id);
+          await this.updateById(child.id, { path: updatedPath });
+          updatedChildren.push({ id: child.id, path: child.path });
         }
+      } catch (error) {
+        await this.updateById(target.id, { path: normalizedOld, name: normalizedOld.split("/").pop() ?? normalizedOld }).catch(() => {});
+        for (const child of updatedChildren.reverse()) {
+          await this.updateById(child.id, { path: child.path }).catch(() => {});
+        }
+        throw error;
       }
     }
   }
@@ -321,19 +321,12 @@ export class SupabaseAdapter implements StorageAdapter {
 
     const restorePath = data.original_path ?? data.path;
 
-    // Restore the item itself
-    const { error: updateError } = await this.supabase
-      .from("notes")
-      .update({
-        is_trashed: false,
-        trashed_at: null,
-        path: restorePath,
-      })
-      .eq("id", id);
+    await this.updateById(id, {
+      is_trashed: false,
+      trashed_at: null,
+      path: restorePath,
+    });
 
-    if (updateError) throw new Error(updateError.message);
-
-    // If it's a folder, restore all trashed children that belonged to this folder
     if (data.is_folder) {
       const { data: children } = await this.supabase
         .from("notes")
@@ -341,19 +334,31 @@ export class SupabaseAdapter implements StorageAdapter {
         .eq("user_id", this.userId)
         .eq("is_trashed", true)
         .or(`original_path.like.${restorePath}/%,path.like.${restorePath}/%`);
-
-      if (children) {
-        for (const child of children) {
+      const restoredChildren: Array<{ id: string; path: string }> = [];
+      try {
+        for (const child of children || []) {
           const childRestore = child.original_path ?? child.path;
-          await this.supabase
-            .from("notes")
-            .update({
-              is_trashed: false,
-              trashed_at: null,
-              path: childRestore,
-            })
-            .eq("id", child.id);
+          await this.updateById(child.id, {
+            is_trashed: false,
+            trashed_at: null,
+            path: childRestore,
+          });
+          restoredChildren.push({ id: child.id, path: child.path });
         }
+      } catch (error) {
+        await this.updateById(id, {
+          is_trashed: true,
+          trashed_at: new Date().toISOString(),
+          path: data.path,
+        }).catch(() => {});
+        for (const child of restoredChildren.reverse()) {
+          await this.updateById(child.id, {
+            is_trashed: true,
+            trashed_at: new Date().toISOString(),
+            path: child.path,
+          }).catch(() => {});
+        }
+        throw error;
       }
     }
 

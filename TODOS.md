@@ -66,22 +66,21 @@
 
 ## Backend
 
-### Novyx SDK upgrade to v2.11.0
-
-**What:** Upgrade `novyx` npm package when v2.11.0 publishes — adds `listApprovals`, `approveAction`, `listPolicies` + 24 other methods.
-
-**Why:** Mission Control currently uses raw fetch to proxy routes. With SDK methods, can simplify the API layer.
-
-**Context:** JS SDK at full parity with Python (~78 methods). Core team confirmed ready. Current proxy routes in `app/api/control/` work fine as-is — this is a cleanup, not a blocker.
-
-**Effort:** M
-**Priority:** P3
-**Depends on:** npm publish of novyx v2.11.0
-
 ## Testing
 
-
 ## Completed
+
+### Voice Capture
+**What:** Record, transcribe (local Whisper or cloud API), 18+ providers), and AI-structure voice memos into markdown notes.
+**Completed:** v0.3.0 (2026-03-17)
+
+### Self-serve billing via Stripe
+**What:** Pro upgrade flow with Stripe Checkout, customer portal for subscription management.
+**Completed:** v0.3.0 (2026-03-17)
+
+### QA audit — mobile responsive fixes
+**What:** Hamburger nav on mobile, comparison table overflow fix, footer touch targets.
+**Completed:** v0.3.0 (2026-03-18)
 
 ### Mission Control dashboard
 **What:** Full mission control UI with approvals, activity stream, drafts, policies, health tabs.
@@ -110,6 +109,10 @@
 ### E2E tests for Draft Review
 **What:** 3 Playwright tests covering tab access, draft list/empty state, close/reopen.
 **Completed:** v0.3.0 (2026-03-15)
+
+### Novyx SDK upgrade to v2.11.0
+**What:** Upgraded `novyx` 2.10.0 → 2.11.0. Rewrote lib/control.ts and lib/drafts.ts from raw fetch to SDK methods. Eliminated all hardcoded Novyx API URLs from lib layer.
+**Completed:** v0.3.0 (2026-03-24)
 
 ### E2E tests for core views
 **What:** 85 Playwright tests covering UsageView, AuditTrailView, RollbackHistoryView, onboarding, error boundaries.

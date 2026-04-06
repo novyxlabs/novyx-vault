@@ -33,11 +33,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: note.name,
     description,
+    alternates: { canonical: `/p/${slug}` },
     openGraph: {
       title: note.name,
       description,
+      url: `https://vault.novyxlabs.com/p/${slug}`,
       type: "article",
       publishedTime: note.published_at,
+    },
+    twitter: {
+      card: "summary",
+      title: note.name,
+      description,
     },
   };
 }
@@ -162,6 +169,21 @@ export default async function PublishedNotePage({ params }: Props) {
         `}} />
       </head>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: note.name,
+            datePublished: note.published_at,
+            url: `https://vault.novyxlabs.com/p/${slug}`,
+            publisher: {
+              "@type": "Organization",
+              name: "Novyx Vault",
+              url: "https://vault.novyxlabs.com",
+            },
+          }) }}
+        />
         <article>
           <h1>{note.name}</h1>
           {note.published_at && (

@@ -1042,6 +1042,30 @@ export default function Sidebar({
             </button>
             )}
             <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/billing", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tier: "pro" }),
+                  });
+                  const data = await res.json();
+                  if (data.checkout_url) {
+                    window.open(data.checkout_url, "_blank");
+                  } else {
+                    alert(data.error || "Could not start checkout. Please try again.");
+                  }
+                } catch {
+                  alert("Could not connect to billing. Please try again.");
+                }
+              }}
+              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
+              title="Upgrade to Pro"
+            >
+              <ArrowUpRight size={13} />
+              <span className="text-[10px] leading-none font-medium">Upgrade</span>
+            </button>
+            <button
               onClick={onOpenAuditTrail}
               className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
               title="Audit trail"
