@@ -63,7 +63,7 @@ const sections = [
     rows: [
       { feature: "Free tier", vault: "Yes (full editor + BYOK)", notion: "Yes (limited blocks)" },
       { feature: "Team plan", vault: "N/A (individual-first)", notion: "$10/seat/month" },
-      { feature: "AI add-on cost", vault: "BYOK (pay your provider)", notion: "Included in paid plans" },
+      { feature: "AI add-on cost", vault: "BYOK (pay your provider)", notion: "Bundled in Business ($20/user/mo)" },
       { feature: "Pro features", vault: "$9/month", notion: "$10/month (Plus)" },
     ],
   },
@@ -95,7 +95,7 @@ export default function CompareNotionPage() {
     author: { "@type": "Organization", name: "Novyx Labs", url: "https://novyxlabs.com" },
     publisher: { "@type": "Organization", name: "Novyx Labs", url: "https://novyxlabs.com" },
     datePublished: "2026-03-30",
-    dateModified: "2026-03-30",
+    dateModified: "2026-04-06",
   };
 
   return (
@@ -125,8 +125,9 @@ export default function CompareNotionPage() {
             Novyx Vault vs Notion
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Notion is a powerful all-in-one workspace for teams. Novyx Vault is a focused,
-            individual-first knowledge base with persistent AI memory. Here&apos;s how they compare.
+            Every AI notes app does RAG over your files. Vault has true persistent AI memory
+            that survives sessions, consolidates over time, and can be rolled back. Here&apos;s
+            how Vault and Notion compare for knowledge management.
           </p>
         </section>
 
@@ -166,9 +167,10 @@ export default function CompareNotionPage() {
             <h2 className="text-xl font-bold mb-3">Notes & Editor</h2>
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
-                Notion and Novyx Vault take very different approaches to note-taking. Notion uses
-                a proprietary block-based editor that excels at databases, tables, Kanban boards,
-                and project management. It is a team-first tool designed for collaboration.
+                Notion and Novyx Vault take very different approaches to note-taking. With over
+                100 million users, Notion uses a proprietary block-based editor that excels at
+                databases, tables, Kanban boards, and project management. It is a team-first tool
+                designed for collaboration.
               </p>
               <p>
                 Vault uses plain markdown files. Your notes are real files on disk (in desktop mode)
@@ -188,15 +190,16 @@ export default function CompareNotionPage() {
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
                 Notion has invested heavily in AI, offering built-in AI writing, summarization, and
-                recently AI agents powered by GPT-5.2, Claude, and Gemini. Their AI is tightly
-                integrated with Notion&apos;s database and page system.
+                recently AI agents. But Notion&apos;s AI does RAG over your pages &mdash; it does
+                not build persistent memory across conversations. AI is bundled into the Business
+                tier at $20/user/month.
               </p>
               <p>
-                Vault&apos;s AI is different in two fundamental ways. First, it has persistent
-                memory &mdash; your AI builds context over time and remembers your projects,
-                preferences, and writing style across sessions. Second, it uses BYOK (Bring Your
-                Own Key) with 20+ providers, so you choose and pay your AI provider directly
-                instead of being locked into Notion&apos;s pricing.
+                Vault&apos;s AI is different in two fundamental ways. First, it has true persistent
+                memory that survives sessions, consolidates over time, and can be rolled back to
+                any previous state. Second, it uses BYOK (Bring Your Own Key) with 20+ providers,
+                so you choose and pay your AI provider directly instead of being locked into a
+                single vendor.
               </p>
               <p>
                 Notion&apos;s AI agents are more capable for task automation within the Notion
@@ -249,8 +252,9 @@ export default function CompareNotionPage() {
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
                 Notion&apos;s free tier has limitations on block storage and file uploads. The Plus
-                plan is $10/month, and team plans start at $10/seat/month. AI features are included
-                in paid plans but the cost scales with team size.
+                plan is $10/month, and team plans start at $10/seat/month. Full AI features are
+                bundled into the Business tier at $20/user/month, and the cost scales with team
+                size.
               </p>
               <p>
                 Vault&apos;s free tier includes the full editor, wiki-links, knowledge graph, 20+

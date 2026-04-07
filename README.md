@@ -50,27 +50,29 @@ AI in note-taking apps doesn't remember you. Notion AI, Obsidian plugins, Reflec
 
 **[vault.novyxlabs.com](https://vault.novyxlabs.com)** — sign in with GitHub or Google. Free.
 
-### Self-host / Desktop
+### Self-host (3 commands)
 
 ```bash
 git clone https://github.com/novyxlabs/novyx-vault.git
 cd novyx-vault
-npm install
+npm install && npm run dev
 ```
 
-Create `.env.local`:
+Open [http://localhost:3000](http://localhost:3000). That's it — notes, wiki-links, knowledge graph, and AI chat all work immediately.
 
-```env
-NOVYX_MEMORY_API_KEY=your_novyx_api_key
-```
-
-Get a free API key at [novyxlabs.com](https://novyxlabs.com).
+**Add persistent AI memory (optional):**
 
 ```bash
-npm run dev
+echo "NOVYX_MEMORY_API_KEY=your_key" > .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Get a free API key at [novyxlabs.com](https://novyxlabs.com) — unlocks cross-session memory, rollback, ghost connections, and cortex insights.
+
+### Docker (one command)
+
+```bash
+docker run -p 3000:3000 ghcr.io/novyxlabs/novyx-vault
+```
 
 ### Desktop app (Tauri)
 

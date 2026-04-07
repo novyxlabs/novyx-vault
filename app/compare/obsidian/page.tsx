@@ -49,7 +49,7 @@ const sections = [
   {
     name: "Privacy & Ownership",
     rows: [
-      { feature: "Open source", vault: "MIT License", obsidian: false },
+      { feature: "Open source", vault: "MIT License", obsidian: "Source-available" },
       { feature: "Local-first / offline mode", vault: true, obsidian: true },
       { feature: "Self-hostable", vault: true, obsidian: false },
       { feature: "Plain markdown files on disk", vault: true, obsidian: true },
@@ -94,7 +94,7 @@ export default function CompareObsidianPage() {
     author: { "@type": "Organization", name: "Novyx Labs", url: "https://novyxlabs.com" },
     publisher: { "@type": "Organization", name: "Novyx Labs", url: "https://novyxlabs.com" },
     datePublished: "2026-03-30",
-    dateModified: "2026-03-30",
+    dateModified: "2026-04-06",
   };
 
   return (
@@ -124,8 +124,9 @@ export default function CompareObsidianPage() {
             Novyx Vault vs Obsidian
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Both are great tools for personal knowledge management. Here&apos;s an honest look
-            at how they compare so you can pick the right one for your workflow.
+            Every AI notes app does RAG over your files. Vault has true persistent AI memory
+            that survives sessions, consolidates over time, and can be rolled back. Here&apos;s
+            an honest look at how Vault and Obsidian compare.
           </p>
         </section>
 
@@ -170,10 +171,10 @@ export default function CompareObsidianPage() {
                 backlinks, and an interactive knowledge graph for visualizing connections.
               </p>
               <p>
-                Where Obsidian pulls ahead is its massive plugin ecosystem. With over 2,000
-                community plugins, you can customize Obsidian to do almost anything &mdash; from
-                Kanban boards to spaced repetition. Obsidian also has polished mobile apps for iOS
-                and Android, which Vault does not have yet.
+                Where Obsidian pulls ahead is its massive plugin ecosystem. With over 1.5 million
+                users and 2,000+ community plugins, you can customize Obsidian to do almost
+                anything &mdash; from Kanban boards to spaced repetition. Obsidian also has polished
+                mobile apps for iOS and Android, which Vault does not have yet.
               </p>
               <p>
                 Vault&apos;s editor is built on CodeMirror 6 with slash commands, live preview, and
@@ -188,15 +189,16 @@ export default function CompareObsidianPage() {
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
                 Obsidian recently introduced AI features, but they are stateless &mdash; the AI
-                does not remember previous conversations or build context over time. Each
-                interaction starts from scratch.
+                does RAG over your files without remembering previous conversations or building
+                context over time. Each interaction starts from scratch.
               </p>
               <p>
-                Novyx Vault&apos;s AI is fundamentally different. It stores persistent memories
-                that accumulate across sessions. Ask about a project from last month and the AI
-                responds with full context. It also discovers hidden connections between your notes
-                (Ghost Connections), extracts entities and relationships, and offers a full memory
-                timeline with rollback.
+                Novyx Vault&apos;s AI is fundamentally different. It has true persistent memory
+                that survives sessions, consolidates over time, and can be rolled back to any
+                previous state. Ask about a project from last month and the AI responds with full
+                context. It also discovers hidden connections between your notes (Ghost
+                Connections), extracts entities and relationships, and offers a full memory
+                timeline with audit trail.
               </p>
               <p>
                 Vault supports 20+ AI providers through BYOK (Bring Your Own Key), including
@@ -233,7 +235,8 @@ export default function CompareObsidianPage() {
               <p>
                 The key difference is openness. Vault is open source under the MIT license &mdash;
                 you can read every line of code, contribute features, or fork the entire project.
-                Obsidian is closed source. You trust their code; with Vault, you can verify it.
+                Obsidian is source-available but not open source &mdash; you can inspect the code,
+                but you cannot modify or redistribute it. With Vault, you can verify and fork it.
               </p>
               <p>
                 Vault&apos;s BYOK model means your AI API keys never touch Novyx servers. They
