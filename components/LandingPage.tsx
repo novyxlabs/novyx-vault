@@ -96,16 +96,16 @@ export default function LandingPage() {
             variants={fadeUp}
             transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            A notes app where your AI{" "}
-            <span className="text-accent">actually remembers you</span>
+            Your AI forgets everything.{" "}
+            <span className="text-accent">This one doesn&apos;t.</span>
           </motion.h1>
           <motion.p
             className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-10 [text-wrap:balance]"
             variants={fadeUp}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Markdown notes, wiki-links, and a knowledge graph &mdash; like Obsidian.
-            But with an AI assistant that learns your projects, your writing style, and your ideas over time.
+            The only open-source second brain with AI memory that persists across every session.
+            Roll back what your AI knows at any point. Connect 20+ providers &mdash; your keys never leave your browser.
           </motion.p>
           <motion.div
             className="flex flex-wrap items-center justify-center gap-4"
