@@ -17,11 +17,13 @@ export async function GET(
 
     const { searchParams } = req.nextUrl;
     const limit = searchParams.get("limit");
-    const offset = searchParams.get("offset");
+    const since = searchParams.get("since");
+    const until = searchParams.get("until");
 
     const result = await getAgentViolations(id, apiKey, {
       limit: limit ? parseInt(limit, 10) : undefined,
-      offset: offset ? parseInt(offset, 10) : undefined,
+      since: since || undefined,
+      until: until || undefined,
     });
     return Response.json(result);
   } catch (e) {

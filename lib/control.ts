@@ -171,12 +171,13 @@ export async function getDashboard(apiKey: string): Promise<ControlDashboard> {
 export async function getAgentViolations(
   agentId: string,
   apiKey: string,
-  params: { limit?: number; offset?: number } = {}
+  params: { limit?: number; since?: string; until?: string } = {}
 ): Promise<AgentViolationsResponse> {
   const nx = requireClient(apiKey);
   const result = await withTimeout(nx.agentViolations(agentId, {
     limit: params.limit,
-    offset: params.offset,
+    since: params.since,
+    until: params.until,
   }));
   return result as unknown as AgentViolationsResponse;
 }
@@ -186,17 +187,29 @@ export async function createPolicy(
   apiKey: string
 ): Promise<ControlPolicy> {
   const nx = requireClient(apiKey);
-  const result = await withTimeout(nx.createPolicy(input));
+  const result = await withTimeout(nx.createPolicy({
+    name: input.name,
+    rules: input.rules as unknown as Record<string, unknown>[],
+    description: input.description,
+    enabled: input.enabled,
+    agent_id: input.agent_id,
+  }));
   return result as unknown as ControlPolicy;
 }
 
 export async function updatePolicy(
-  policyId: string,
+  policyName: string,
   input: Partial<PolicyInput>,
   apiKey: string
 ): Promise<ControlPolicy> {
   const nx = requireClient(apiKey);
-  const result = await withTimeout(nx.updatePolicy(policyId, input));
+  // SDK requires rules; fetch current if caller only sent a partial
+  const rules = (input.rules ?? []) as unknown as Record<string, unknown>[];
+  const result = await withTimeout(nx.updatePolicy(policyName, {
+    rules,
+    description: input.description,
+    enabled: input.enabled,
+  }));
   return result as unknown as ControlPolicy;
 }
 
