@@ -1246,7 +1246,7 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
           saving={policySaving}
           agentOptions={dashboard?.violations_by_agent.map(a => ({
             id: a.agent_id,
-            name: a.agent_name || a.agent_id,
+            name: a.agent_id,
           })) || []}
           onSave={handleSavePolicy}
           onClose={() => { setEditingPolicy(null); setCreatingPolicy(false); }}
