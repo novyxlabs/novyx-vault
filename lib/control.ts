@@ -50,38 +50,51 @@ export interface PolicyRule {
 }
 
 export interface ControlDashboard {
-  total_actions: number;
-  pending_approvals: number;
-  approved_today: number;
-  denied_today: number;
-  violations_today: number;
-  active_policies: number;
-  agents_total: number;
+  window: "24h" | "7d" | "30d";
+  bucket: "hour" | "day";
+  backend: "postgres" | "file";
+  totals: {
+    evaluations: number;
+    executed: number;
+    pending_review: number;
+    approved: number;
+    denied: number;
+  };
+  violations_by_policy: Array<{
+    policy: string;
+    count: number;
+    severity_breakdown: Record<string, number>;
+  }>;
   violations_by_agent: Array<{
     agent_id: string;
-    agent_name?: string;
-    violations: number;
+    count: number;
   }>;
-  recent_activity: Array<{
-    id: string;
-    type: string;
-    agent_id?: string;
-    agent_name?: string;
-    description?: string;
-    timestamp: string;
+  time_series: Array<{
+    bucket: string; // ISO 8601 timestamp — parse on client
+    executed: number;
+    pending_review: number;
+    approved: number;
+    denied: number;
   }>;
 }
 
 export interface AgentViolation {
-  id: string;
+  action_id: string;
+  action: string;
+  timestamp: string; // ISO 8601
+  event: "action_pending_review" | "action_denied" | "action_executed";
+  triggered_policy: string | null;
+  severity: "critical" | "high" | "medium" | "low" | null;
+  reason: string | null;
+  risk_score: number | null; // 0.0 - 1.0
+  violation_count: number;
+}
+
+export interface AgentViolationsResponse {
   agent_id: string;
-  policy_id?: string;
-  policy_name?: string;
-  action_type: string;
-  severity: "low" | "medium" | "high" | "critical";
-  description?: string;
-  timestamp: string;
-  details?: Record<string, unknown>;
+  total: number;
+  backend: "postgres" | "file";
+  violations: AgentViolation[];
 }
 
 export interface PolicyInput {
@@ -190,12 +203,12 @@ export async function getAgentViolations(
   agentId: string,
   apiKey: string,
   params: { limit?: number; offset?: number } = {}
-): Promise<{ violations: AgentViolation[]; total: number }> {
+): Promise<AgentViolationsResponse> {
   const q = new URLSearchParams();
   if (params.limit) q.set("limit", String(params.limit));
   if (params.offset) q.set("offset", String(params.offset));
   const query = q.toString();
-  return rawFetch(
+  return rawFetch<AgentViolationsResponse>(
     `/v1/control/agents/${encodeURIComponent(agentId)}/violations${query ? `?${query}` : ""}`,
     apiKey
   );

@@ -5,7 +5,7 @@ import {
   X, Shield, Clock, Check, AlertCircle, Activity, FileText,
   GitMerge, GitPullRequest, Eye, Loader2, RefreshCw, Radio,
   ChevronRight, Zap, Brain, CheckCircle2, XCircle,
-  LayoutDashboard, Plus, Trash2, Edit2, AlertTriangle,
+  LayoutDashboard, Plus, Trash2, Edit2,
 } from "lucide-react";
 
 // --- Types ---
@@ -35,37 +35,44 @@ interface Policy {
 }
 
 interface Dashboard {
-  total_actions: number;
-  pending_approvals: number;
-  approved_today: number;
-  denied_today: number;
-  violations_today: number;
-  active_policies: number;
-  agents_total: number;
+  window: "24h" | "7d" | "30d";
+  bucket: "hour" | "day";
+  backend: "postgres" | "file";
+  totals: {
+    evaluations: number;
+    executed: number;
+    pending_review: number;
+    approved: number;
+    denied: number;
+  };
+  violations_by_policy: Array<{
+    policy: string;
+    count: number;
+    severity_breakdown: Record<string, number>;
+  }>;
   violations_by_agent: Array<{
     agent_id: string;
-    agent_name?: string;
-    violations: number;
+    count: number;
   }>;
-  recent_activity: Array<{
-    id: string;
-    type: string;
-    agent_id?: string;
-    agent_name?: string;
-    description?: string;
-    timestamp: string;
+  time_series: Array<{
+    bucket: string;
+    executed: number;
+    pending_review: number;
+    approved: number;
+    denied: number;
   }>;
 }
 
 interface Violation {
-  id: string;
-  agent_id: string;
-  policy_id?: string;
-  policy_name?: string;
-  action_type: string;
-  severity: "low" | "medium" | "high" | "critical";
-  description?: string;
+  action_id: string;
+  action: string;
   timestamp: string;
+  event: "action_pending_review" | "action_denied" | "action_executed";
+  triggered_policy: string | null;
+  severity: "critical" | "high" | "medium" | "low" | null;
+  reason: string | null;
+  risk_score: number | null;
+  violation_count: number;
 }
 
 interface StreamEvent {
@@ -137,6 +144,62 @@ function StatCard({
         <span className="text-[10px] text-muted uppercase tracking-wide">{label}</span>
       </div>
       <div className={`text-lg font-semibold ${toneClass}`}>{value.toLocaleString()}</div>
+    </div>
+  );
+}
+
+function TimeSeriesChart({
+  data,
+  bucket,
+}: {
+  data: Array<{
+    bucket: string;
+    executed: number;
+    pending_review: number;
+    approved: number;
+    denied: number;
+  }>;
+  bucket: "hour" | "day";
+}) {
+  const max = Math.max(
+    ...data.map(d => d.executed + d.pending_review + d.approved + d.denied),
+    1
+  );
+  const formatBucket = (iso: string) => {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return bucket === "hour"
+      ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : d.toLocaleDateString([], { month: "short", day: "numeric" });
+  };
+  return (
+    <div className="flex items-end gap-0.5 h-24">
+      {data.map((point, i) => {
+        const total = point.executed + point.pending_review + point.approved + point.denied;
+        const h = (total / max) * 100;
+        return (
+          <div
+            key={i}
+            className="flex-1 flex flex-col justify-end min-w-0 group relative"
+            title={`${formatBucket(point.bucket)}: ${total} events`}
+          >
+            <div className="w-full flex flex-col" style={{ height: `${h}%` }}>
+              {point.denied > 0 && (
+                <div className="w-full bg-red-400/60" style={{ flex: point.denied }} />
+              )}
+              {point.pending_review > 0 && (
+                <div className="w-full bg-amber-400/60" style={{ flex: point.pending_review }} />
+              )}
+              {point.approved > 0 && (
+                <div className="w-full bg-emerald-400/60" style={{ flex: point.approved }} />
+              )}
+              {point.executed > 0 && (
+                <div className="w-full bg-accent/60" style={{ flex: point.executed }} />
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -574,15 +637,66 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
               </div>
             ) : (
               <>
+                {/* Window / backend indicator */}
+                <div className="flex items-center gap-2 mb-3 text-[10px] text-muted">
+                  <span>Window: {dashboard.window}</span>
+                  <span>&middot;</span>
+                  <span>Bucket: {dashboard.bucket}</span>
+                  {dashboard.backend === "file" && (
+                    <>
+                      <span>&middot;</span>
+                      <span className="text-amber-400">File mode (limited data)</span>
+                    </>
+                  )}
+                </div>
+
                 {/* Stat cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                  <StatCard label="Total actions" value={dashboard.total_actions} icon={Zap} />
-                  <StatCard label="Pending" value={dashboard.pending_approvals} icon={Clock} tone="amber" />
-                  <StatCard label="Approved today" value={dashboard.approved_today} icon={CheckCircle2} tone="emerald" />
-                  <StatCard label="Denied today" value={dashboard.denied_today} icon={XCircle} tone="red" />
-                  <StatCard label="Violations today" value={dashboard.violations_today} icon={AlertTriangle} tone="red" />
-                  <StatCard label="Active policies" value={dashboard.active_policies} icon={FileText} />
-                  <StatCard label="Agents" value={dashboard.agents_total} icon={Brain} />
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                  <StatCard label="Evaluations" value={dashboard.totals.evaluations} icon={Zap} />
+                  <StatCard label="Executed" value={dashboard.totals.executed} icon={CheckCircle2} tone="emerald" />
+                  <StatCard label="Pending review" value={dashboard.totals.pending_review} icon={Clock} tone="amber" />
+                  <StatCard label="Approved" value={dashboard.totals.approved} icon={Check} tone="emerald" />
+                  <StatCard label="Denied" value={dashboard.totals.denied} icon={XCircle} tone="red" />
+                </div>
+
+                {/* Violations by policy */}
+                <div className="bg-card-bg border border-sidebar-border rounded-lg p-4 mb-4">
+                  <h4 className="text-xs font-medium text-foreground/80 mb-3">Violations by policy</h4>
+                  {dashboard.violations_by_policy.length === 0 ? (
+                    <p className="text-xs text-muted py-4 text-center">No policy violations recorded</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {dashboard.violations_by_policy.slice(0, 10).map((row) => {
+                        const max = Math.max(...dashboard.violations_by_policy.map(r => r.count), 1);
+                        const pct = (row.count / max) * 100;
+                        return (
+                          <div key={row.policy} className="flex items-center gap-3 px-2 py-1.5">
+                            <span className="text-xs text-foreground/80 w-40 truncate">{row.policy}</span>
+                            <div className="flex-1 h-1.5 bg-muted-bg rounded overflow-hidden">
+                              <div className="h-full bg-amber-400/60" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs text-muted w-10 text-right">{row.count}</span>
+                            <div className="flex gap-1">
+                              {Object.entries(row.severity_breakdown).map(([sev, n]) => (
+                                <span
+                                  key={sev}
+                                  className={`text-[9px] px-1 py-0.5 rounded font-medium ${
+                                    sev === "critical" ? "bg-red-500/20 text-red-400" :
+                                    sev === "high" ? "bg-red-400/15 text-red-400" :
+                                    sev === "medium" ? "bg-amber-400/15 text-amber-400" :
+                                    "bg-muted-bg text-muted"
+                                  }`}
+                                  title={`${n} ${sev}`}
+                                >
+                                  {sev[0].toUpperCase()}{n}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Violations by agent */}
@@ -592,25 +706,25 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
                     <span className="text-[10px] text-muted">Click to drill down</span>
                   </div>
                   {dashboard.violations_by_agent.length === 0 ? (
-                    <p className="text-xs text-muted py-4 text-center">No violations recorded</p>
+                    <p className="text-xs text-muted py-4 text-center">No agent violations recorded</p>
                   ) : (
                     <div className="space-y-1">
                       {dashboard.violations_by_agent.slice(0, 10).map((row) => {
-                        const max = Math.max(...dashboard.violations_by_agent.map(r => r.violations), 1);
-                        const pct = (row.violations / max) * 100;
+                        const max = Math.max(...dashboard.violations_by_agent.map(r => r.count), 1);
+                        const pct = (row.count / max) * 100;
                         return (
                           <button
                             key={row.agent_id}
                             onClick={() => setSelectedAgentId(row.agent_id)}
                             className="w-full flex items-center gap-3 px-2 py-1.5 rounded hover:bg-muted-bg/50 transition-colors text-left"
                           >
-                            <span className="text-xs text-foreground/80 w-32 truncate">
-                              {row.agent_name || row.agent_id}
+                            <span className="text-xs text-foreground/80 w-40 truncate font-mono">
+                              {row.agent_id}
                             </span>
                             <div className="flex-1 h-1.5 bg-muted-bg rounded overflow-hidden">
                               <div className="h-full bg-red-400/60" style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="text-xs text-muted w-10 text-right">{row.violations}</span>
+                            <span className="text-xs text-muted w-10 text-right">{row.count}</span>
                             <ChevronRight size={12} className="text-muted" />
                           </button>
                         );
@@ -624,7 +738,7 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
                   <div className="bg-card-bg border border-accent/30 rounded-lg p-4 mb-4">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-medium text-accent">
-                        Violations: {selectedAgentId}
+                        Violations: <span className="font-mono">{selectedAgentId}</span>
                       </h4>
                       <button
                         onClick={() => { setSelectedAgentId(null); setViolations([]); }}
@@ -642,22 +756,37 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
                     ) : (
                       <div className="space-y-2">
                         {violations.map((v) => (
-                          <div key={v.id} className="flex items-start gap-3 px-2 py-2 rounded bg-background/40">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          <div key={v.action_id} className="flex items-start gap-3 px-2 py-2 rounded bg-background/40">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${
                               v.severity === "critical" ? "bg-red-500/20 text-red-400" :
                               v.severity === "high" ? "bg-red-400/15 text-red-400" :
                               v.severity === "medium" ? "bg-amber-400/15 text-amber-400" :
+                              v.severity === "low" ? "bg-muted-bg text-muted" :
                               "bg-muted-bg text-muted"
                             }`}>
-                              {v.severity}
+                              {v.severity || "—"}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs text-foreground truncate">{v.action_type}</div>
-                              {v.description && (
-                                <div className="text-[11px] text-muted mt-0.5 truncate">{v.description}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-foreground truncate">{v.action}</span>
+                                <span className={`text-[10px] px-1 py-0.5 rounded ${
+                                  v.event === "action_denied" ? "bg-red-400/15 text-red-400" :
+                                  v.event === "action_pending_review" ? "bg-amber-400/15 text-amber-400" :
+                                  "bg-muted-bg text-muted"
+                                }`}>
+                                  {v.event.replace("action_", "")}
+                                </span>
+                                {v.risk_score !== null && (
+                                  <span className="text-[10px] text-muted">
+                                    risk {(v.risk_score * 100).toFixed(0)}%
+                                  </span>
+                                )}
+                              </div>
+                              {v.reason && (
+                                <div className="text-[11px] text-muted mt-0.5 truncate">{v.reason}</div>
                               )}
                               <div className="text-[10px] text-muted mt-1">
-                                {v.policy_name && <span>{v.policy_name} &middot; </span>}
+                                {v.triggered_policy && <span>{v.triggered_policy} &middot; </span>}
                                 {timeAgo(v.timestamp)}
                               </div>
                             </div>
@@ -668,24 +797,15 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
                   </div>
                 )}
 
-                {/* Recent activity */}
+                {/* Time series */}
                 <div className="bg-card-bg border border-sidebar-border rounded-lg p-4">
-                  <h4 className="text-xs font-medium text-foreground/80 mb-3">Recent activity</h4>
-                  {dashboard.recent_activity.length === 0 ? (
-                    <p className="text-xs text-muted py-4 text-center">No recent activity</p>
+                  <h4 className="text-xs font-medium text-foreground/80 mb-3">
+                    Activity over time ({dashboard.window})
+                  </h4>
+                  {dashboard.time_series.length === 0 ? (
+                    <p className="text-xs text-muted py-4 text-center">No activity in this window</p>
                   ) : (
-                    <div className="space-y-1">
-                      {dashboard.recent_activity.slice(0, 8).map((a) => (
-                        <div key={a.id} className="flex items-center gap-2 px-2 py-1.5 text-xs">
-                          <Activity size={12} className="text-accent flex-shrink-0" />
-                          <span className="text-foreground/80 flex-shrink-0">{a.type}</span>
-                          <span className="text-muted truncate flex-1">
-                            {a.agent_name || a.agent_id || ""} {a.description && `— ${a.description}`}
-                          </span>
-                          <span className="text-[10px] text-muted flex-shrink-0">{timeAgo(a.timestamp)}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <TimeSeriesChart data={dashboard.time_series} bucket={dashboard.bucket} />
                   )}
                 </div>
               </>
