@@ -1331,14 +1331,15 @@ test.describe("Mission Control", () => {
     await expect(page.locator("text=Mission Control").first()).toBeVisible();
   });
 
-  test("shows all five tabs", async ({ page }) => {
+  test("shows all six tabs", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
     await page.locator('button[title="Control — governed actions"]').click();
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
 
-    // All 5 tabs should be present
+    // All 6 tabs should be present (Governance added as default in PR #11)
+    await expect(page.locator("button:has-text('Governance')")).toBeVisible();
     await expect(page.locator("button:has-text('Approvals')")).toBeVisible();
     await expect(page.locator("button:has-text('Activity')")).toBeVisible();
     await expect(page.locator("button:has-text('Drafts')")).toBeVisible();
@@ -1353,7 +1354,11 @@ test.describe("Mission Control", () => {
     await page.locator('button[title="Control — governed actions"]').click();
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
 
-    // Default tab is Approvals — should show approval queue content
+    // Default tab is Governance (changed in PR #11). Click Approvals to switch.
+    await page.locator("button:has-text('Approvals')").click();
+    await page.waitForTimeout(500);
+
+    // Should show approval queue content (queue or all-clear empty state)
     const approvalQueue = page.locator("text=Approval Queue").first();
     const allClear = page.locator("text=All clear").first();
     const approvalsVisible = await approvalQueue.isVisible().catch(() => false)
@@ -1404,6 +1409,9 @@ test.describe("Mission Control", () => {
 
     await page.locator('button[title="Control — governed actions"]').click();
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
+
+    // Default tab is Governance (changed in PR #11). Click Approvals to switch.
+    await page.locator("button:has-text('Approvals')").click();
 
     // Should show either the empty state or a list of approvals
     await page.waitForTimeout(2000);
