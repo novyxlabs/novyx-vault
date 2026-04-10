@@ -1,11 +1,15 @@
 /**
  * Novyx Control API client — delegates to Novyx SDK 2.11.0.
  * Control is a capability inside Novyx Core — same host, same auth, same key.
+ *
+ * Newer endpoints (dashboard, policy CRUD, agent violations) are called
+ * via raw fetch against NOVYX_API_URL until the SDK ships wrappers.
  */
 
 import { getNovyxForKey } from "./novyx";
 
 const NOVYX_TIMEOUT_MS = 3000;
+const BASE_URL = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
 
 function withTimeout<T>(promise: Promise<T>, ms = NOVYX_TIMEOUT_MS): Promise<T> {
   return Promise.race([
@@ -43,6 +47,62 @@ export interface PolicyRule {
   effect: "allow" | "deny" | "require_approval";
   scope?: string;
   conditions?: Record<string, unknown>;
+}
+
+export interface ControlDashboard {
+  window: "24h" | "7d" | "30d";
+  bucket: "hour" | "day";
+  backend: "postgres" | "file";
+  totals: {
+    evaluations: number;
+    executed: number;
+    pending_review: number;
+    approved: number;
+    denied: number;
+  };
+  violations_by_policy: Array<{
+    policy: string;
+    count: number;
+    severity_breakdown: Record<string, number>;
+  }>;
+  violations_by_agent: Array<{
+    agent_id: string;
+    count: number;
+  }>;
+  time_series: Array<{
+    bucket: string; // ISO 8601 timestamp — parse on client
+    executed: number;
+    pending_review: number;
+    approved: number;
+    denied: number;
+  }>;
+}
+
+export interface AgentViolation {
+  action_id: string;
+  action: string;
+  timestamp: string; // ISO 8601
+  event: "action_pending_review" | "action_denied" | "action_executed";
+  triggered_policy: string | null;
+  severity: "critical" | "high" | "medium" | "low" | null;
+  reason: string | null;
+  risk_score: number | null; // 0.0 - 1.0
+  violation_count: number;
+}
+
+export interface AgentViolationsResponse {
+  agent_id: string;
+  total: number;
+  backend: "postgres" | "file";
+  violations: AgentViolation[];
+}
+
+export interface PolicyInput {
+  name: string;
+  description?: string;
+  agent_id?: string;
+  rules: PolicyRule[];
+  enabled?: boolean;
 }
 
 function requireClient(apiKey: string) {
@@ -102,5 +162,91 @@ export async function explainAction(
 ): Promise<Record<string, unknown>> {
   const nx = requireClient(apiKey);
   return withTimeout(nx.explainAction(actionId));
+}
+
+// --- Raw fetch helpers for endpoints not yet in SDK wrappers ---
+
+async function rawFetch<T>(
+  path: string,
+  apiKey: string,
+  init: RequestInit = {}
+): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), NOVYX_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...(init.headers || {}),
+      },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Response(
+        JSON.stringify({ error: `Upstream ${res.status}` }),
+        { status: res.status }
+      );
+    }
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function getDashboard(apiKey: string): Promise<ControlDashboard> {
+  return rawFetch<ControlDashboard>("/v1/control/dashboard", apiKey);
+}
+
+export async function getAgentViolations(
+  agentId: string,
+  apiKey: string,
+  params: { limit?: number; offset?: number } = {}
+): Promise<AgentViolationsResponse> {
+  const q = new URLSearchParams();
+  if (params.limit) q.set("limit", String(params.limit));
+  if (params.offset) q.set("offset", String(params.offset));
+  const query = q.toString();
+  return rawFetch<AgentViolationsResponse>(
+    `/v1/control/agents/${encodeURIComponent(agentId)}/violations${query ? `?${query}` : ""}`,
+    apiKey
+  );
+}
+
+export async function createPolicy(
+  input: PolicyInput,
+  apiKey: string
+): Promise<ControlPolicy> {
+  return rawFetch<ControlPolicy>("/v1/control/policies", apiKey, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updatePolicy(
+  policyId: string,
+  input: Partial<PolicyInput>,
+  apiKey: string
+): Promise<ControlPolicy> {
+  return rawFetch<ControlPolicy>(
+    `/v1/control/policies/${encodeURIComponent(policyId)}`,
+    apiKey,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    }
+  );
+}
+
+export async function deletePolicy(
+  policyId: string,
+  apiKey: string
+): Promise<{ success: boolean }> {
+  return rawFetch(
+    `/v1/control/policies/${encodeURIComponent(policyId)}`,
+    apiKey,
+    { method: "DELETE" }
+  );
 }
 
