@@ -1241,6 +1241,7 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
       {/* === POLICY EDITOR MODAL === */}
       {editingPolicy && (
         <PolicyEditor
+          key={editingPolicy.id || "new"}
           policy={editingPolicy}
           isNew={creatingPolicy}
           saving={policySaving}
@@ -1268,17 +1269,13 @@ interface PolicyEditorProps {
 }
 
 function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: PolicyEditorProps) {
+  // Parent passes key={policy.id || "new"} so this component remounts per-policy,
+  // which means plain useState initialization with the current policy works correctly.
   const [draft, setDraft] = useState<Policy>(policy);
   const [rulesJson, setRulesJson] = useState<string>(
     JSON.stringify(policy.rules || [], null, 2)
   );
   const [jsonError, setJsonError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setDraft(policy);
-    setRulesJson(JSON.stringify(policy.rules || [], null, 2));
-    setJsonError(null);
-  }, [policy]);
 
   const handleRulesChange = (value: string) => {
     setRulesJson(value);
@@ -1399,6 +1396,15 @@ function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: 
             />
             Policy enabled
           </label>
+
+          <div className="flex items-start gap-2 px-3 py-2 rounded bg-amber-400/5 border border-amber-400/20">
+            <AlertCircle size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-amber-400/90 leading-relaxed">
+              Policy changes can take up to 60 seconds to propagate across all
+              Novyx Core instances. If a newly created policy doesn&apos;t
+              fire immediately, wait ~60s before investigating.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-sidebar-border">

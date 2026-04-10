@@ -5,10 +5,18 @@ All notable changes to Novyx Vault are documented here.
 ## [Unreleased]
 
 ### Added
+- **Governance Dashboard** — New Mission Control tab surfacing the Novyx Core Phase 4 governance APIs: stat totals, violations by policy (with severity breakdown), violations by agent (click to drill down), and an activity-over-time stacked bar chart.
+- **Per-agent violations drilldown** — Inspect individual violations with severity, risk score, triggered policy, reason, and event type.
+- **Policy CRUD** — Create, edit, and delete policies from the Policies tab. JSON rules editor with live validation. Agent picker for scoping policies to a specific agent (Pro tier).
+- **Policy propagation notice** — Editor warns that policy changes can take up to 60s to propagate across Novyx Core instances due to multi-machine caching.
 - **Voice Capture** — Record meetings, lectures, or voice memos. Transcribe locally on-device (WebAssembly Whisper) or via cloud API. AI structures your transcript into clean markdown notes with titles, sections, and action items.
 - **Voice Capture animated demo** — Features page now includes an interactive waveform demo
 - **Self-serve upgrade via Stripe** — Pro upgrade flow with Stripe Checkout integration across all gated features
 - **Billing management** — Stripe Customer Portal for subscription management
+
+### Changed
+- **Novyx SDK** — Bumped from 2.11.0 to 3.1.0 for typed governance wrappers (`governanceDashboard`, `agentViolations`, `createPolicy`, `updatePolicy`, `deletePolicy`)
+- **MCP tool count** — Updated references from 107 to 119 to match the latest Novyx Core release
 
 ### Changed
 - **Landing page hero** — Replaced placeholder with real app screenshot showing the editor, wiki-links, live preview, and ghost connections

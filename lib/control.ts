@@ -1,15 +1,11 @@
 /**
- * Novyx Control API client — delegates to Novyx SDK 2.11.0.
+ * Novyx Control API client — delegates to Novyx SDK 3.1.0+.
  * Control is a capability inside Novyx Core — same host, same auth, same key.
- *
- * Newer endpoints (dashboard, policy CRUD, agent violations) are called
- * via raw fetch against NOVYX_API_URL until the SDK ships wrappers.
  */
 
 import { getNovyxForKey } from "./novyx";
 
 const NOVYX_TIMEOUT_MS = 3000;
-const BASE_URL = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
 
 function withTimeout<T>(promise: Promise<T>, ms = NOVYX_TIMEOUT_MS): Promise<T> {
   return Promise.race([
@@ -164,89 +160,65 @@ export async function explainAction(
   return withTimeout(nx.explainAction(actionId));
 }
 
-// --- Raw fetch helpers for endpoints not yet in SDK wrappers ---
-
-async function rawFetch<T>(
-  path: string,
-  apiKey: string,
-  init: RequestInit = {}
-): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), NOVYX_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        ...(init.headers || {}),
-      },
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      throw new Response(
-        JSON.stringify({ error: `Upstream ${res.status}` }),
-        { status: res.status }
-      );
-    }
-    return (await res.json()) as T;
-  } finally {
-    clearTimeout(timer);
-  }
-}
+// --- Governance endpoints (typed SDK wrappers, novyx 3.1.0+) ---
 
 export async function getDashboard(apiKey: string): Promise<ControlDashboard> {
-  return rawFetch<ControlDashboard>("/v1/control/dashboard", apiKey);
+  const nx = requireClient(apiKey);
+  const result = await withTimeout(nx.governanceDashboard());
+  return result as unknown as ControlDashboard;
 }
 
 export async function getAgentViolations(
   agentId: string,
   apiKey: string,
-  params: { limit?: number; offset?: number } = {}
+  params: { limit?: number; since?: string; until?: string } = {}
 ): Promise<AgentViolationsResponse> {
-  const q = new URLSearchParams();
-  if (params.limit) q.set("limit", String(params.limit));
-  if (params.offset) q.set("offset", String(params.offset));
-  const query = q.toString();
-  return rawFetch<AgentViolationsResponse>(
-    `/v1/control/agents/${encodeURIComponent(agentId)}/violations${query ? `?${query}` : ""}`,
-    apiKey
-  );
+  const nx = requireClient(apiKey);
+  const result = await withTimeout(nx.agentViolations(agentId, {
+    limit: params.limit,
+    since: params.since,
+    until: params.until,
+  }));
+  return result as unknown as AgentViolationsResponse;
 }
 
 export async function createPolicy(
   input: PolicyInput,
   apiKey: string
 ): Promise<ControlPolicy> {
-  return rawFetch<ControlPolicy>("/v1/control/policies", apiKey, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  const nx = requireClient(apiKey);
+  const result = await withTimeout(nx.createPolicy({
+    name: input.name,
+    rules: input.rules as unknown as Record<string, unknown>[],
+    description: input.description,
+    enabled: input.enabled,
+    agent_id: input.agent_id,
+  }));
+  return result as unknown as ControlPolicy;
 }
 
 export async function updatePolicy(
-  policyId: string,
+  policyName: string,
   input: Partial<PolicyInput>,
   apiKey: string
 ): Promise<ControlPolicy> {
-  return rawFetch<ControlPolicy>(
-    `/v1/control/policies/${encodeURIComponent(policyId)}`,
-    apiKey,
-    {
-      method: "PUT",
-      body: JSON.stringify(input),
-    }
-  );
+  const nx = requireClient(apiKey);
+  // SDK requires rules; fetch current if caller only sent a partial
+  const rules = (input.rules ?? []) as unknown as Record<string, unknown>[];
+  const result = await withTimeout(nx.updatePolicy(policyName, {
+    rules,
+    description: input.description,
+    enabled: input.enabled,
+  }));
+  return result as unknown as ControlPolicy;
 }
 
 export async function deletePolicy(
   policyId: string,
   apiKey: string
 ): Promise<{ success: boolean }> {
-  return rawFetch(
-    `/v1/control/policies/${encodeURIComponent(policyId)}`,
-    apiKey,
-    { method: "DELETE" }
-  );
+  const nx = requireClient(apiKey);
+  const result = await withTimeout(nx.deletePolicy(policyId));
+  return result as unknown as { success: boolean };
 }
 
