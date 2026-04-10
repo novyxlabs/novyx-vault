@@ -5,6 +5,7 @@ import {
   X, Shield, Clock, Check, AlertCircle, Activity, FileText,
   GitMerge, GitPullRequest, Eye, Loader2, RefreshCw, Radio,
   ChevronRight, Zap, Brain, CheckCircle2, XCircle,
+  LayoutDashboard, Plus, Trash2, Edit2, AlertTriangle,
 } from "lucide-react";
 
 // --- Types ---
@@ -30,6 +31,41 @@ interface Policy {
   rules?: { action: string; effect: string; scope?: string }[];
   connectors?: string[];
   approval_mode?: string;
+  agent_id?: string;
+}
+
+interface Dashboard {
+  total_actions: number;
+  pending_approvals: number;
+  approved_today: number;
+  denied_today: number;
+  violations_today: number;
+  active_policies: number;
+  agents_total: number;
+  violations_by_agent: Array<{
+    agent_id: string;
+    agent_name?: string;
+    violations: number;
+  }>;
+  recent_activity: Array<{
+    id: string;
+    type: string;
+    agent_id?: string;
+    agent_name?: string;
+    description?: string;
+    timestamp: string;
+  }>;
+}
+
+interface Violation {
+  id: string;
+  agent_id: string;
+  policy_id?: string;
+  policy_name?: string;
+  action_type: string;
+  severity: "low" | "medium" | "high" | "critical";
+  description?: string;
+  timestamp: string;
 }
 
 interface StreamEvent {
@@ -78,6 +114,33 @@ const STATUS_COLORS: Record<string, string> = {
   failed: "text-red-400",
 };
 
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: number;
+  icon: typeof Shield;
+  tone?: "emerald" | "amber" | "red";
+}) {
+  const toneClass =
+    tone === "emerald" ? "text-emerald-400" :
+    tone === "amber" ? "text-amber-400" :
+    tone === "red" ? "text-red-400" :
+    "text-accent";
+  return (
+    <div className="bg-card-bg border border-sidebar-border rounded-lg px-3 py-2.5">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon size={12} className={toneClass} />
+        <span className="text-[10px] text-muted uppercase tracking-wide">{label}</span>
+      </div>
+      <div className={`text-lg font-semibold ${toneClass}`}>{value.toLocaleString()}</div>
+    </div>
+  );
+}
+
 const EVENT_ICONS: Record<string, typeof Brain> = {
   "memory.created": Brain,
   "memory.updated": Brain,
@@ -92,7 +155,7 @@ const EVENT_ICONS: Record<string, typeof Brain> = {
 
 // --- Sections ---
 
-type Section = "approvals" | "activity" | "policies" | "health" | "drafts";
+type Section = "governance" | "approvals" | "activity" | "policies" | "health" | "drafts";
 
 interface MissionControlProps {
   isOpen: boolean;
@@ -100,7 +163,19 @@ interface MissionControlProps {
 }
 
 export default function MissionControl({ isOpen, onClose }: MissionControlProps) {
-  const [section, setSection] = useState<Section>("approvals");
+  const [section, setSection] = useState<Section>("governance");
+
+  // Governance dashboard
+  const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [violations, setViolations] = useState<Violation[]>([]);
+  const [violationsLoading, setViolationsLoading] = useState(false);
+
+  // Policy editor
+  const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
+  const [creatingPolicy, setCreatingPolicy] = useState(false);
+  const [policySaving, setPolicySaving] = useState(false);
 
   // Approvals
   const [approvals, setApprovals] = useState<Approval[]>([]);
@@ -179,6 +254,33 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
       setDrafts([]);
     } finally {
       setDraftsLoading(false);
+    }
+  }, []);
+
+  const fetchDashboard = useCallback(async () => {
+    setDashboardLoading(true);
+    try {
+      const res = await fetch("/api/control/dashboard");
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      setDashboard(data.dashboard || null);
+    } catch {
+      setDashboard(null);
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, []);
+
+  const fetchViolations = useCallback(async (agentId: string) => {
+    setViolationsLoading(true);
+    try {
+      const res = await fetch(`/api/control/agents/${encodeURIComponent(agentId)}/violations?limit=50`);
+      const data = await res.json();
+      setViolations(data.violations || []);
+    } catch {
+      setViolations([]);
+    } finally {
+      setViolationsLoading(false);
     }
   }, []);
 
@@ -269,9 +371,15 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
   // Lazy-load sections
   useEffect(() => {
     if (!isOpen) return;
+    if (section === "governance" && dashboard === null && !dashboardLoading) fetchDashboard();
     if (section === "policies" && policies.length === 0 && !policiesLoading) fetchPolicies();
     if (section === "drafts" && drafts.length === 0 && !draftsLoading) fetchDrafts();
-  }, [section, isOpen, policies.length, policiesLoading, drafts.length, draftsLoading, fetchPolicies, fetchDrafts]);
+  }, [section, isOpen, dashboard, dashboardLoading, policies.length, policiesLoading, drafts.length, draftsLoading, fetchDashboard, fetchPolicies, fetchDrafts]);
+
+  // Load violations when an agent is selected from the dashboard
+  useEffect(() => {
+    if (selectedAgentId) fetchViolations(selectedAgentId);
+  }, [selectedAgentId, fetchViolations]);
 
   // --- Actions ---
 
@@ -310,6 +418,54 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
     finally { setDraftActionId(null); }
   };
 
+  const handleSavePolicy = async (policy: Policy) => {
+    setPolicySaving(true);
+    try {
+      const isUpdate = Boolean(policy.id);
+      const url = isUpdate ? `/api/control/policies/${policy.id}` : "/api/control/policies";
+      const method = isUpdate ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: policy.name,
+          description: policy.description,
+          agent_id: policy.agent_id,
+          rules: policy.rules || [],
+          enabled: policy.enabled ?? true,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        window.alert(err.error || "Failed to save policy. Check your input and try again.");
+        return;
+      }
+      await fetchPolicies();
+      setEditingPolicy(null);
+      setCreatingPolicy(false);
+    } catch (err) {
+      console.error("[MissionControl] Policy save failed:", err);
+      window.alert("Could not save policy. Please check your connection and try again.");
+    } finally {
+      setPolicySaving(false);
+    }
+  };
+
+  const handleDeletePolicy = async (policyId: string) => {
+    if (!window.confirm("Delete this policy? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/control/policies/${policyId}`, { method: "DELETE" });
+      if (!res.ok) {
+        window.alert("Failed to delete policy.");
+        return;
+      }
+      await fetchPolicies();
+    } catch (err) {
+      console.error("[MissionControl] Policy delete failed:", err);
+      window.alert("Could not delete policy. Please try again.");
+    }
+  };
+
   // --- Derived ---
 
   const pendingCount = approvals.filter(a => a.status === "pending_approval" || a.status === "pending_review").length;
@@ -321,6 +477,7 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
   if (!isOpen) return null;
 
   const sections: { id: Section; label: string; icon: typeof Shield; badge?: number }[] = [
+    { id: "governance", label: "Governance", icon: LayoutDashboard },
     { id: "approvals", label: "Approvals", icon: Shield, badge: pendingCount },
     { id: "activity", label: "Activity", icon: Activity },
     { id: "drafts", label: "Drafts", icon: GitPullRequest, badge: openDrafts },
@@ -382,6 +539,159 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
+
+        {/* === GOVERNANCE === */}
+        {section === "governance" && (
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium">Governance Dashboard</h3>
+                <p className="text-xs text-muted mt-0.5">Overview of actions, policies, and agent behavior</p>
+              </div>
+              <button
+                onClick={fetchDashboard}
+                disabled={dashboardLoading}
+                className="p-1.5 rounded text-muted hover:text-foreground transition-colors"
+                aria-label="Refresh dashboard"
+              >
+                <RefreshCw size={14} className={dashboardLoading ? "animate-spin" : ""} />
+              </button>
+            </div>
+
+            {dashboardLoading && !dashboard ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 size={24} className="text-accent animate-spin" />
+              </div>
+            ) : !dashboard ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted">
+                <div className="w-16 h-16 rounded-2xl bg-accent/5 flex items-center justify-center mb-4">
+                  <LayoutDashboard size={28} className="text-accent/30" />
+                </div>
+                <p className="text-sm font-medium text-foreground/60">Dashboard unavailable</p>
+                <p className="text-xs text-center max-w-xs leading-relaxed mt-1">
+                  Requires a Novyx API key with Control enabled.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Stat cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  <StatCard label="Total actions" value={dashboard.total_actions} icon={Zap} />
+                  <StatCard label="Pending" value={dashboard.pending_approvals} icon={Clock} tone="amber" />
+                  <StatCard label="Approved today" value={dashboard.approved_today} icon={CheckCircle2} tone="emerald" />
+                  <StatCard label="Denied today" value={dashboard.denied_today} icon={XCircle} tone="red" />
+                  <StatCard label="Violations today" value={dashboard.violations_today} icon={AlertTriangle} tone="red" />
+                  <StatCard label="Active policies" value={dashboard.active_policies} icon={FileText} />
+                  <StatCard label="Agents" value={dashboard.agents_total} icon={Brain} />
+                </div>
+
+                {/* Violations by agent */}
+                <div className="bg-card-bg border border-sidebar-border rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-medium text-foreground/80">Violations by agent</h4>
+                    <span className="text-[10px] text-muted">Click to drill down</span>
+                  </div>
+                  {dashboard.violations_by_agent.length === 0 ? (
+                    <p className="text-xs text-muted py-4 text-center">No violations recorded</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {dashboard.violations_by_agent.slice(0, 10).map((row) => {
+                        const max = Math.max(...dashboard.violations_by_agent.map(r => r.violations), 1);
+                        const pct = (row.violations / max) * 100;
+                        return (
+                          <button
+                            key={row.agent_id}
+                            onClick={() => setSelectedAgentId(row.agent_id)}
+                            className="w-full flex items-center gap-3 px-2 py-1.5 rounded hover:bg-muted-bg/50 transition-colors text-left"
+                          >
+                            <span className="text-xs text-foreground/80 w-32 truncate">
+                              {row.agent_name || row.agent_id}
+                            </span>
+                            <div className="flex-1 h-1.5 bg-muted-bg rounded overflow-hidden">
+                              <div className="h-full bg-red-400/60" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs text-muted w-10 text-right">{row.violations}</span>
+                            <ChevronRight size={12} className="text-muted" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Per-agent violations drilldown */}
+                {selectedAgentId && (
+                  <div className="bg-card-bg border border-accent/30 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-xs font-medium text-accent">
+                        Violations: {selectedAgentId}
+                      </h4>
+                      <button
+                        onClick={() => { setSelectedAgentId(null); setViolations([]); }}
+                        className="text-[10px] text-muted hover:text-foreground"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    {violationsLoading ? (
+                      <div className="flex items-center justify-center py-6">
+                        <Loader2 size={16} className="text-accent animate-spin" />
+                      </div>
+                    ) : violations.length === 0 ? (
+                      <p className="text-xs text-muted py-4 text-center">No violations for this agent</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {violations.map((v) => (
+                          <div key={v.id} className="flex items-start gap-3 px-2 py-2 rounded bg-background/40">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                              v.severity === "critical" ? "bg-red-500/20 text-red-400" :
+                              v.severity === "high" ? "bg-red-400/15 text-red-400" :
+                              v.severity === "medium" ? "bg-amber-400/15 text-amber-400" :
+                              "bg-muted-bg text-muted"
+                            }`}>
+                              {v.severity}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-foreground truncate">{v.action_type}</div>
+                              {v.description && (
+                                <div className="text-[11px] text-muted mt-0.5 truncate">{v.description}</div>
+                              )}
+                              <div className="text-[10px] text-muted mt-1">
+                                {v.policy_name && <span>{v.policy_name} &middot; </span>}
+                                {timeAgo(v.timestamp)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Recent activity */}
+                <div className="bg-card-bg border border-sidebar-border rounded-lg p-4">
+                  <h4 className="text-xs font-medium text-foreground/80 mb-3">Recent activity</h4>
+                  {dashboard.recent_activity.length === 0 ? (
+                    <p className="text-xs text-muted py-4 text-center">No recent activity</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {dashboard.recent_activity.slice(0, 8).map((a) => (
+                        <div key={a.id} className="flex items-center gap-2 px-2 py-1.5 text-xs">
+                          <Activity size={12} className="text-accent flex-shrink-0" />
+                          <span className="text-foreground/80 flex-shrink-0">{a.type}</span>
+                          <span className="text-muted truncate flex-1">
+                            {a.agent_name || a.agent_id || ""} {a.description && `— ${a.description}`}
+                          </span>
+                          <span className="text-[10px] text-muted flex-shrink-0">{timeAgo(a.timestamp)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* === APPROVALS === */}
         {section === "approvals" && (
@@ -620,9 +930,18 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium">Policies</h3>
-              <button onClick={fetchPolicies} disabled={policiesLoading} className="p-1.5 rounded text-muted hover:text-foreground transition-colors">
-                <RefreshCw size={14} className={policiesLoading ? "animate-spin" : ""} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setCreatingPolicy(true); setEditingPolicy({ id: "", name: "", rules: [], enabled: true }); }}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs bg-accent/15 text-accent hover:bg-accent/25 transition-colors"
+                >
+                  <Plus size={12} />
+                  New policy
+                </button>
+                <button onClick={fetchPolicies} disabled={policiesLoading} className="p-1.5 rounded text-muted hover:text-foreground transition-colors">
+                  <RefreshCw size={14} className={policiesLoading ? "animate-spin" : ""} />
+                </button>
+              </div>
             </div>
 
             {policiesLoading ? (
@@ -652,10 +971,35 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
                             {p.enabled ? "Active" : "Disabled"}
                           </span>
                         )}
+                        {p.agent_id && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-mono">
+                            agent:{p.agent_id.slice(0, 8)}
+                          </span>
+                        )}
                       </div>
-                      {p.approval_mode && (
-                        <span className="text-[10px] text-muted">{p.approval_mode}</span>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {p.approval_mode && (
+                          <span className="text-[10px] text-muted mr-2">{p.approval_mode}</span>
+                        )}
+                        {p.id && (
+                          <>
+                            <button
+                              onClick={() => { setEditingPolicy(p); setCreatingPolicy(false); }}
+                              className="p-1 rounded text-muted hover:text-foreground hover:bg-muted-bg/50 transition-colors"
+                              aria-label="Edit policy"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePolicy(p.id)}
+                              className="p-1 rounded text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                              aria-label="Delete policy"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     {p.description && <p className="text-xs text-muted mb-2">{p.description}</p>}
                     {p.rules && p.rules.length > 0 && (
@@ -773,6 +1117,188 @@ export default function MissionControl({ isOpen, onClose }: MissionControlProps)
           </div>
         )}
       </div>
+
+      {/* === POLICY EDITOR MODAL === */}
+      {editingPolicy && (
+        <PolicyEditor
+          policy={editingPolicy}
+          isNew={creatingPolicy}
+          saving={policySaving}
+          agentOptions={dashboard?.violations_by_agent.map(a => ({
+            id: a.agent_id,
+            name: a.agent_name || a.agent_id,
+          })) || []}
+          onSave={handleSavePolicy}
+          onClose={() => { setEditingPolicy(null); setCreatingPolicy(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Policy Editor ---
+
+interface PolicyEditorProps {
+  policy: Policy;
+  isNew: boolean;
+  saving: boolean;
+  agentOptions: Array<{ id: string; name: string }>;
+  onSave: (p: Policy) => void;
+  onClose: () => void;
+}
+
+function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: PolicyEditorProps) {
+  const [draft, setDraft] = useState<Policy>(policy);
+  const [rulesJson, setRulesJson] = useState<string>(
+    JSON.stringify(policy.rules || [], null, 2)
+  );
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDraft(policy);
+    setRulesJson(JSON.stringify(policy.rules || [], null, 2));
+    setJsonError(null);
+  }, [policy]);
+
+  const handleRulesChange = (value: string) => {
+    setRulesJson(value);
+    try {
+      const parsed = JSON.parse(value);
+      if (!Array.isArray(parsed)) {
+        setJsonError("Rules must be an array");
+        return;
+      }
+      setJsonError(null);
+      setDraft(d => ({ ...d, rules: parsed }));
+    } catch (e) {
+      setJsonError(e instanceof Error ? e.message : "Invalid JSON");
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (jsonError) return;
+    if (!draft.name.trim()) {
+      window.alert("Policy name is required");
+      return;
+    }
+    onSave(draft);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="bg-background border border-sidebar-border rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-sidebar-border">
+          <div className="flex items-center gap-2">
+            <Shield size={14} className="text-accent" />
+            <h3 className="text-sm font-medium">
+              {isNew ? "Create policy" : `Edit policy: ${policy.name}`}
+            </h3>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded text-muted hover:text-foreground">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div>
+            <label className="block text-xs text-muted mb-1">Name</label>
+            <input
+              type="text"
+              value={draft.name}
+              onChange={(e) => setDraft(d => ({ ...d, name: e.target.value }))}
+              placeholder="e.g. no-external-api"
+              className="w-full px-3 py-2 bg-card-bg border border-sidebar-border rounded text-sm focus:outline-none focus:border-accent"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs text-muted mb-1">Description (optional)</label>
+            <input
+              type="text"
+              value={draft.description || ""}
+              onChange={(e) => setDraft(d => ({ ...d, description: e.target.value }))}
+              placeholder="What does this policy enforce?"
+              className="w-full px-3 py-2 bg-card-bg border border-sidebar-border rounded text-sm focus:outline-none focus:border-accent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs text-muted mb-1">
+              Scope to agent (optional, Pro tier)
+            </label>
+            <select
+              value={draft.agent_id || ""}
+              onChange={(e) => setDraft(d => ({ ...d, agent_id: e.target.value || undefined }))}
+              className="w-full px-3 py-2 bg-card-bg border border-sidebar-border rounded text-sm focus:outline-none focus:border-accent"
+            >
+              <option value="">All agents (global policy)</option>
+              {agentOptions.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs text-muted mb-1">
+              Rules (JSON array)
+            </label>
+            <textarea
+              value={rulesJson}
+              onChange={(e) => handleRulesChange(e.target.value)}
+              rows={10}
+              className={`w-full px-3 py-2 bg-card-bg border rounded text-xs font-mono focus:outline-none ${
+                jsonError ? "border-red-400 focus:border-red-400" : "border-sidebar-border focus:border-accent"
+              }`}
+              placeholder={`[\n  { "action": "http.fetch", "effect": "require_approval", "scope": "external" }\n]`}
+            />
+            {jsonError && (
+              <p className="text-[11px] text-red-400 mt-1">Invalid: {jsonError}</p>
+            )}
+            <p className="text-[10px] text-muted mt-1">
+              Each rule: <code>{"{ action, effect: \"allow\" | \"deny\" | \"require_approval\", scope?, conditions? }"}</code>
+            </p>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draft.enabled ?? true}
+              onChange={(e) => setDraft(d => ({ ...d, enabled: e.target.checked }))}
+              className="rounded"
+            />
+            Policy enabled
+          </label>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-sidebar-border">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 rounded text-xs text-muted hover:text-foreground transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving || Boolean(jsonError)}
+            className="px-3 py-1.5 rounded text-xs bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          >
+            {saving && <Loader2 size={12} className="animate-spin" />}
+            {isNew ? "Create policy" : "Save changes"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
