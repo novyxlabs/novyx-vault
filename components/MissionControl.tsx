@@ -1399,6 +1399,15 @@ function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: 
             />
             Policy enabled
           </label>
+
+          <div className="flex items-start gap-2 px-3 py-2 rounded bg-amber-400/5 border border-amber-400/20">
+            <AlertCircle size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-amber-400/90 leading-relaxed">
+              Policy changes can take up to 60 seconds to propagate across all
+              Novyx Core instances. If a newly created policy doesn&apos;t
+              fire immediately, wait ~60s before investigating.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-sidebar-border">

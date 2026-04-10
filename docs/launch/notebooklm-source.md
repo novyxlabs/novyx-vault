@@ -73,7 +73,7 @@ The same Novyx memory layer works across Vault, Claude Code, and Cursor via the 
 
 ## Who Built It
 
-Blake Heron, solo founder of Novyx Labs. Bootstrapped, building in public. The memory infrastructure (Novyx Core) powers both Vault and the MCP server. 107 MCP tools, 185+ API endpoints, 6,500+ PyPI downloads.
+Blake Heron, solo founder of Novyx Labs. Bootstrapped, building in public. The memory infrastructure (Novyx Core) powers both Vault and the MCP server. 119 MCP tools, 185+ API endpoints, 6,500+ PyPI downloads.
 
 ## Try It
 
