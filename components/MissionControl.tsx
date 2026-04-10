@@ -148,6 +148,66 @@ function StatCard({
   );
 }
 
+function TestResultDisplay({ result }: { result: TestResult }) {
+  const status = result.status;
+  const policy = result.policy_result;
+  const actionId = result.action_id || policy?.action_id;
+
+  const toneClass =
+    status === "allowed" ? "bg-emerald-400/10 border-emerald-400/30 text-emerald-400" :
+    status === "blocked" ? "bg-red-400/10 border-red-400/30 text-red-400" :
+    status === "pending_review" ? "bg-amber-400/10 border-amber-400/30 text-amber-400" :
+    "bg-muted-bg/30 border-sidebar-border text-muted";
+
+  const Icon =
+    status === "allowed" ? CheckCircle2 :
+    status === "blocked" ? XCircle :
+    status === "pending_review" ? Clock :
+    AlertCircle;
+
+  return (
+    <div className={`rounded px-3 py-2.5 border ${toneClass}`}>
+      <div className="flex items-center gap-2 mb-1.5">
+        <Icon size={14} />
+        <span className="text-xs font-semibold">
+          {status === "pending_review" ? "Pending review" :
+           status === "allowed" ? "Allowed" :
+           status === "blocked" ? "Blocked" :
+           status}
+        </span>
+      </div>
+      {policy?.triggered_policy && (
+        <div className="text-[11px] mb-0.5">
+          <span className="opacity-60">Policy:</span>{" "}
+          <span className="font-mono">{policy.triggered_policy}</span>
+        </div>
+      )}
+      {policy?.severity && (
+        <div className="text-[11px] mb-0.5">
+          <span className="opacity-60">Severity:</span>{" "}
+          <span className="font-medium uppercase">{policy.severity}</span>
+        </div>
+      )}
+      {typeof policy?.risk_score === "number" && (
+        <div className="text-[11px] mb-0.5">
+          <span className="opacity-60">Risk score:</span>{" "}
+          <span>{(policy.risk_score * 100).toFixed(0)}%</span>
+        </div>
+      )}
+      {policy?.reason && (
+        <div className="text-[11px] mb-0.5">
+          <span className="opacity-60">Reason:</span> {policy.reason}
+        </div>
+      )}
+      {actionId && (
+        <div className="text-[10px] opacity-70 font-mono mt-1 break-all">
+          action_id: {actionId}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TimeSeriesChart({
   data,
   bucket,
@@ -1268,6 +1328,19 @@ interface PolicyEditorProps {
   onClose: () => void;
 }
 
+interface TestResult {
+  status: "allowed" | "blocked" | "pending_review" | string;
+  action_id?: string;
+  policy_result?: {
+    action_id?: string;
+    triggered_policy?: string;
+    severity?: string;
+    reason?: string;
+    risk_score?: number;
+  };
+  [key: string]: unknown;
+}
+
 function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: PolicyEditorProps) {
   // Parent passes key={policy.id || "new"} so this component remounts per-policy,
   // which means plain useState initialization with the current policy works correctly.
@@ -1276,6 +1349,77 @@ function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: 
     JSON.stringify(policy.rules || [], null, 2)
   );
   const [jsonError, setJsonError] = useState<string | null>(null);
+
+  // Test Action panel state
+  const [testOpen, setTestOpen] = useState(false);
+  const [testAction, setTestAction] = useState("");
+  const [testParamsJson, setTestParamsJson] = useState("{}");
+  const [testAgentId, setTestAgentId] = useState("");
+  const [testParamsError, setTestParamsError] = useState<string | null>(null);
+  const [testSubmitting, setTestSubmitting] = useState(false);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  const handleTestParamsChange = (value: string) => {
+    setTestParamsJson(value);
+    if (!value.trim()) {
+      setTestParamsError(null);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(value);
+      if (typeof parsed !== "object" || Array.isArray(parsed) || parsed === null) {
+        setTestParamsError("Params must be a JSON object");
+        return;
+      }
+      setTestParamsError(null);
+    } catch (e) {
+      setTestParamsError(e instanceof Error ? e.message : "Invalid JSON");
+    }
+  };
+
+  const handleTestSubmit = async () => {
+    if (!testAction.trim()) {
+      setTestError("Action name is required");
+      return;
+    }
+    if (testParamsError) return;
+
+    let params: Record<string, unknown> = {};
+    try {
+      params = testParamsJson.trim() ? JSON.parse(testParamsJson) : {};
+    } catch {
+      setTestParamsError("Invalid JSON");
+      return;
+    }
+
+    setTestSubmitting(true);
+    setTestError(null);
+    setTestResult(null);
+
+    try {
+      const res = await fetch("/api/control/actions/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: testAction.trim(),
+          params,
+          agent_id: testAgentId.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTestError(data.error || `Request failed (${res.status})`);
+        return;
+      }
+      setTestResult(data as TestResult);
+    } catch (err) {
+      console.error("[PolicyEditor] Test action submit failed:", err);
+      setTestError("Network error. Check your connection and try again.");
+    } finally {
+      setTestSubmitting(false);
+    }
+  };
 
   const handleRulesChange = (value: string) => {
     setRulesJson(value);
@@ -1404,6 +1548,99 @@ function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: 
               Novyx Core instances. If a newly created policy doesn&apos;t
               fire immediately, wait ~60s before investigating.
             </p>
+          </div>
+
+          {/* Test this policy */}
+          <div className="border border-sidebar-border rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setTestOpen(o => !o)}
+              className="w-full flex items-center justify-between px-3 py-2 text-xs text-foreground hover:bg-muted-bg/30 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Zap size={12} className="text-accent" />
+                <span className="font-medium">Test this policy</span>
+                <span className="text-muted">— submit a sample action to see what fires</span>
+              </span>
+              <ChevronRight size={12} className={`text-muted transition-transform ${testOpen ? "rotate-90" : ""}`} />
+            </button>
+
+            {testOpen && (
+              <div className="px-3 py-3 border-t border-sidebar-border space-y-3 bg-card-bg/40">
+                <div>
+                  <label className="block text-[11px] text-muted mb-1">Action name</label>
+                  <input
+                    type="text"
+                    value={testAction}
+                    onChange={(e) => { setTestAction(e.target.value); setTestError(null); }}
+                    placeholder="e.g. send_invoice, http.fetch, write_file"
+                    className="w-full px-2.5 py-1.5 bg-background border border-sidebar-border rounded text-xs focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-muted mb-1">Params (JSON object)</label>
+                  <textarea
+                    value={testParamsJson}
+                    onChange={(e) => handleTestParamsChange(e.target.value)}
+                    rows={4}
+                    placeholder='{ "amount": 50000, "recipient": "vendor@example.com" }'
+                    className={`w-full px-2.5 py-1.5 bg-background border rounded text-[11px] font-mono focus:outline-none ${
+                      testParamsError ? "border-red-400 focus:border-red-400" : "border-sidebar-border focus:border-accent"
+                    }`}
+                  />
+                  {testParamsError && (
+                    <p className="text-[10px] text-red-400 mt-1">Invalid: {testParamsError}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] text-muted mb-1">Agent ID (optional)</label>
+                  <input
+                    type="text"
+                    value={testAgentId}
+                    onChange={(e) => setTestAgentId(e.target.value)}
+                    list="test-agent-options"
+                    placeholder="Leave blank for tenant-wide evaluation"
+                    className="w-full px-2.5 py-1.5 bg-background border border-sidebar-border rounded text-xs focus:outline-none focus:border-accent"
+                  />
+                  {agentOptions.length > 0 && (
+                    <datalist id="test-agent-options">
+                      {agentOptions.map(a => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </datalist>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTestSubmit}
+                  disabled={testSubmitting || !testAction.trim() || Boolean(testParamsError)}
+                  className="w-full px-3 py-1.5 rounded text-xs bg-accent text-accent-foreground hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                >
+                  {testSubmitting && <Loader2 size={12} className="animate-spin" />}
+                  Submit test action
+                </button>
+
+                {testError && (
+                  <div className="flex items-start gap-2 px-2.5 py-2 rounded bg-red-400/5 border border-red-400/20">
+                    <AlertCircle size={12} className="text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-red-400/90">{testError}</p>
+                  </div>
+                )}
+
+                {testResult && <TestResultDisplay result={testResult} />}
+
+                <div className="flex items-start gap-2 px-2.5 py-1.5 rounded bg-muted-bg/30">
+                  <AlertCircle size={11} className="text-muted flex-shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-muted leading-relaxed">
+                    Test actions hit the same audit chain as production submissions
+                    and will appear in the dashboard. There is currently no dry-run mode.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

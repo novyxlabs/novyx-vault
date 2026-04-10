@@ -101,6 +101,19 @@ export interface PolicyInput {
   enabled?: boolean;
 }
 
+export interface SubmitActionResult {
+  status: "allowed" | "blocked" | "pending_review";
+  action_id?: string;
+  policy_result?: {
+    action_id?: string;
+    triggered_policy?: string;
+    severity?: "low" | "medium" | "high" | "critical";
+    reason?: string;
+    risk_score?: number;
+  };
+  [key: string]: unknown;
+}
+
 function requireClient(apiKey: string) {
   const nx = getNovyxForKey(apiKey);
   if (!nx) throw new Error("No Novyx client available");
@@ -220,5 +233,20 @@ export async function deletePolicy(
   const nx = requireClient(apiKey);
   const result = await withTimeout(nx.deletePolicy(policyId));
   return result as unknown as { success: boolean };
+}
+
+export async function submitAction(
+  action: string,
+  params: Record<string, unknown>,
+  apiKey: string,
+  opts: { agent_id?: string } = {}
+): Promise<SubmitActionResult> {
+  const nx = requireClient(apiKey);
+  // submitAction has a longer timeout ceiling since policies may do expensive eval
+  const result = await withTimeout(
+    nx.submitAction(action, params, { agent_id: opts.agent_id }),
+    10000
+  );
+  return result as unknown as SubmitActionResult;
 }
 
