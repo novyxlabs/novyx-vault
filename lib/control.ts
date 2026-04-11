@@ -84,6 +84,11 @@ export interface AgentViolation {
   reason: string | null;
   risk_score: number | null; // 0.0 - 1.0
   violation_count: number;
+  // Optional audit chain fields — present on postgres backend, absent in file mode.
+  // Surfaced in the Test Action panel to close the visible loop between
+  // "policy fired" and "this is on the chain".
+  audit_hash?: string;
+  audit_chain_index?: number;
 }
 
 export interface AgentViolationsResponse {
