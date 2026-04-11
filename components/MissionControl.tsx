@@ -204,6 +204,20 @@ function TestResultDisplay({ result }: { result: TestResult }) {
           action_id: {actionId}
         </div>
       )}
+      {result.auditEntry && (
+        <div className="mt-2 pt-2 border-t border-current/15">
+          <div className="text-[10px] opacity-80 mb-0.5">Logged to audit chain</div>
+          {result.auditEntry.audit_hash ? (
+            <div className="text-[10px] opacity-70 font-mono break-all">
+              {result.auditEntry.audit_hash}
+            </div>
+          ) : (
+            <div className="text-[10px] opacity-60 italic">
+              Entry recorded at {timeAgo(result.auditEntry.timestamp)} (hash unavailable in file mode)
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1338,6 +1352,14 @@ interface TestResult {
     reason?: string;
     risk_score?: number;
   };
+  // Populated by the loop-close fetch after a pending_review response.
+  // Lets the result card render "Logged to audit chain → {hash}" so the
+  // user sees that their test action was actually written to the chain.
+  auditEntry?: {
+    action_id: string;
+    timestamp: string;
+    audit_hash?: string;
+  };
   [key: string]: unknown;
 }
 
@@ -1397,6 +1419,8 @@ function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: 
     setTestError(null);
     setTestResult(null);
 
+    const agentId = testAgentId.trim() || undefined;
+
     try {
       const res = await fetch("/api/control/actions/submit", {
         method: "POST",
@@ -1404,7 +1428,7 @@ function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: 
         body: JSON.stringify({
           action: testAction.trim(),
           params,
-          agent_id: testAgentId.trim() || undefined,
+          agent_id: agentId,
         }),
       });
       const data = await res.json();
@@ -1412,7 +1436,50 @@ function PolicyEditor({ policy, isNew, saving, agentOptions, onSave, onClose }: 
         setTestError(data.error || `Request failed (${res.status})`);
         return;
       }
-      setTestResult(data as TestResult);
+      const result = data as TestResult;
+      setTestResult(result);
+
+      // Loop-close: if the action landed in pending_review and we have an
+      // agent_id to query, fetch the latest violation for that agent and
+      // merge the matching entry into the result so the card can render
+      // "Logged to audit chain → {hash}". Without an agent_id we can't
+      // query violations — show the result without the chain entry.
+      if (result.status === "pending_review" && agentId) {
+        const submittedActionId = result.action_id || result.policy_result?.action_id;
+        try {
+          const vRes = await fetch(
+            `/api/control/agents/${encodeURIComponent(agentId)}/violations?limit=5`
+          );
+          if (vRes.ok) {
+            const vData = await vRes.json();
+            const violations: Array<{
+              action_id: string;
+              timestamp: string;
+              audit_hash?: string;
+            }> = vData.violations || [];
+            // Prefer the violation matching this submission's action_id;
+            // fall back to the most recent if the API didn't surface that field.
+            const match =
+              (submittedActionId && violations.find(v => v.action_id === submittedActionId)) ||
+              violations[0];
+            if (match) {
+              setTestResult({
+                ...result,
+                auditEntry: {
+                  action_id: match.action_id,
+                  timestamp: match.timestamp,
+                  audit_hash: match.audit_hash,
+                },
+              });
+            }
+          }
+        } catch (chainErr) {
+          // Don't fail the whole test action just because the loop-close
+          // couldn't fetch — log and move on. The user still sees the
+          // pending_review result without the chain entry.
+          console.warn("[PolicyEditor] Audit chain fetch failed:", chainErr);
+        }
+      }
     } catch (err) {
       console.error("[PolicyEditor] Test action submit failed:", err);
       setTestError("Network error. Check your connection and try again.");
