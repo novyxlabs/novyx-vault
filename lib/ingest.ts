@@ -89,26 +89,65 @@ function isBlockedUrl(urlStr: string): boolean {
   }
 }
 
+const MAX_REDIRECTS = 5;
+
+/**
+ * Fetch a URL with manual redirect handling so every hop is re-validated
+ * against the blocklist. `redirect: "follow"` on stock fetch() would let
+ * an attacker URL 302 to localhost, 169.254.169.254 (cloud metadata), or
+ * any private-network host without our check firing a second time.
+ *
+ * Security properties:
+ * - Initial URL and every Location header are validated against isBlockedUrl
+ * - Max 5 hops (more is almost always a loop or abuse)
+ * - Relative Location headers are resolved against the current URL
+ * - Non-http(s) Location headers are rejected
+ */
 async function fetchHtml(url: string): Promise<string> {
   if (isBlockedUrl(url)) {
     throw new Error("URL targets a blocked address");
   }
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; NovyxVault/1.0)",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    },
-    signal: AbortSignal.timeout(10000),
-    redirect: "follow",
-  });
+  let currentUrl = url;
+  let hops = 0;
 
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  while (true) {
+    const res = await fetch(currentUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; NovyxVault/1.0)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(10000),
+      redirect: "manual",
+    });
+
+    // Handle redirect responses manually
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) {
+        throw new Error(`HTTP ${res.status} with no Location header`);
+      }
+      if (hops >= MAX_REDIRECTS) {
+        throw new Error("Too many redirects");
+      }
+      // Resolve relative against the current URL, so a Location of "/foo"
+      // becomes "https://current.host/foo" — not vulnerable to host confusion.
+      const nextUrl = new URL(location, currentUrl).toString();
+      if (isBlockedUrl(nextUrl)) {
+        throw new Error("Redirect targets a blocked address");
+      }
+      currentUrl = nextUrl;
+      hops++;
+      continue;
+    }
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const text = await res.text();
+    return text.substring(0, 100000);
   }
-
-  const text = await res.text();
-  return text.substring(0, 100000);
 }
 
 async function extractYouTube(url: string): Promise<IngestResult> {

@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { listNotes, readNote, writeNote, createFolder, deleteNote } from "@/lib/notes";
 import { getStorageContext } from "@/lib/auth";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
+import { InvalidPathError } from "@/lib/storage/path-validator";
+
+function errorResponse(e: unknown) {
+  if (e instanceof Response) return e;
+  if (e instanceof InvalidPathError) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+  const message = e instanceof Error ? e.message : "Unknown error";
+  return NextResponse.json({ error: message }, { status: 500 });
+}
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -16,9 +26,7 @@ export async function GET(req: NextRequest) {
     const notes = await listNotes(undefined, ctx);
     return NextResponse.json({ notes });
   } catch (e) {
-    if (e instanceof Response) return e;
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(e);
   }
 }
 
@@ -51,9 +59,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (e) {
-    if (e instanceof Response) return e;
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(e);
   }
 }
 
@@ -72,9 +78,7 @@ export async function PUT(req: NextRequest) {
     await writeNote(notePath, content, ctx);
     return NextResponse.json({ success: true });
   } catch (e) {
-    if (e instanceof Response) return e;
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(e);
   }
 }
 
@@ -93,8 +97,6 @@ export async function DELETE(req: NextRequest) {
     await deleteNote(notePath, ctx);
     return NextResponse.json({ success: true });
   } catch (e) {
-    if (e instanceof Response) return e;
-    const message = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(e);
   }
 }

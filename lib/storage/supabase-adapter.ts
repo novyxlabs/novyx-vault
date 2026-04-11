@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabase } from "../supabase";
 import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile } from "./types";
+import { validateNotePath, tryValidateNotePath } from "./path-validator";
 
 export class SupabaseAdapter implements StorageAdapter {
   private supabase: SupabaseClient;
@@ -99,6 +100,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async readNote(notePath: string): Promise<string> {
+    validateNotePath(notePath);
     const normalized = notePath.replace(/\.md$/, "");
     const { data, error } = await this.supabase
       .from("notes")
@@ -113,6 +115,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async writeNote(notePath: string, content: string): Promise<void> {
+    validateNotePath(notePath);
     const normalized = notePath.replace(/\.md$/, "");
     const name = normalized.split("/").pop() ?? normalized;
 
@@ -166,6 +169,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async createFolder(folderPath: string): Promise<void> {
+    validateNotePath(folderPath);
     const normalized = folderPath.replace(/^\/+|\/+$/g, "");
     const name = normalized.split("/").pop() ?? normalized;
 
@@ -192,6 +196,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async deleteNote(notePath: string): Promise<void> {
+    validateNotePath(notePath);
     const normalized = notePath.replace(/\.md$/, "");
 
     // Check if it's a folder — if so, trash all children too
@@ -245,6 +250,8 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async renameNote(oldPath: string, newPath: string): Promise<void> {
+    validateNotePath(oldPath);
+    validateNotePath(newPath);
     const normalizedOld = oldPath.replace(/\.md$/, "");
     const normalizedNew = newPath.replace(/\.md$/, "");
     const newName = normalizedNew.split("/").pop() ?? normalizedNew;
@@ -408,10 +415,28 @@ export class SupabaseAdapter implements StorageAdapter {
 
   async exportAll(): Promise<{ name: string; data: Buffer }[]> {
     const notes = await this.walkAllNotes();
-    return notes.map((n) => ({
-      name: n.relPath,
-      data: Buffer.from(n.content, "utf-8"),
-    }));
+    const out: { name: string; data: Buffer }[] = [];
+    for (const n of notes) {
+      // Strip .md to validate the logical path, then restore it.
+      // Pre-existing notes in the DB may have been written before the
+      // shared validator landed, so we defensively re-check here to
+      // prevent ZIP-slip in the exported archive. Any note with a path
+      // that fails validation is skipped (never dropped silently —
+      // logged so admins can investigate and clean up).
+      const logical = n.relPath.replace(/\.md$/, "");
+      const safe = tryValidateNotePath(logical);
+      if (safe === null) {
+        console.warn(
+          `[export] skipping note with invalid path: ${JSON.stringify(n.relPath)}`
+        );
+        continue;
+      }
+      out.push({
+        name: safe + ".md",
+        data: Buffer.from(n.content, "utf-8"),
+      });
+    }
+    return out;
   }
 
   async listVersions(notePath: string): Promise<{ timestamp: number; filename: string }[]> {

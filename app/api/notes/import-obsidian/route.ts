@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { inflateRawSync } from "zlib";
 import { getStorageContext } from "@/lib/auth";
 import { writeNote } from "@/lib/notes";
+import { tryValidateNotePath } from "@/lib/storage/path-validator";
 
 export const runtime = "nodejs";
 
@@ -82,6 +83,17 @@ export async function POST(req: NextRequest) {
         skipped++;
         continue;
       }
+
+      // Validate the post-stripped path against the shared validator so
+      // malicious ZIP entry names (../../etc, //, absolute paths, control
+      // chars) can never reach the storage layer. FS mode had its own
+      // check downstream; cloud mode did not — this closes that gap.
+      const validated = tryValidateNotePath(notePath);
+      if (validated === null) {
+        skipped++;
+        continue;
+      }
+      notePath = validated;
 
       // Extract tags from content
       const tagMatches = content.match(/#[a-zA-Z][\w-]*/g);

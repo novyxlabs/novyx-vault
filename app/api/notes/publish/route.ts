@@ -84,8 +84,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ isPublished: false, slug: null });
     }
 
-    // Publish
-    let slug = customSlug || note.slug || slugify(note.name);
+    // Publish — run customSlug through the same slugify policy as auto-generated
+    // slugs. Previously customSlug was trusted raw, allowing slashes, unicode
+    // confusables, path-looking strings, and over-length values into /p/{slug}.
+    // If the caller explicitly requested a custom slug but it normalizes to
+    // empty (e.g. all symbols), return 400 instead of silently falling back.
+    let slug: string;
+    if (typeof customSlug === "string" && customSlug.trim().length > 0) {
+      const normalized = slugify(customSlug);
+      if (!normalized) {
+        return NextResponse.json(
+          { error: "Custom slug contains no valid characters" },
+          { status: 400 }
+        );
+      }
+      slug = normalized;
+    } else {
+      slug = note.slug || slugify(note.name);
+    }
     if (!slug) slug = `note-${Date.now()}`;
 
     // Check slug uniqueness
