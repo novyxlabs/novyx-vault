@@ -188,8 +188,11 @@ Or connect to [Vercel](https://vercel.com) for automatic deployments.
 | `npm run lint` | ESLint |
 | `npm run test` | Playwright E2E tests |
 | `npm run test:unit` | Vitest unit tests |
+| `npm run test:cloud-smoke` | Opt-in Playwright smoke test against a deployed cloud URL |
 | `npm run tauri:dev` | Tauri desktop dev |
 | `npm run tauri:build` | Tauri desktop build |
+
+`npm run test:cloud-smoke` requires `CLOUD_SMOKE_BASE_URL`, `CLOUD_SMOKE_EMAIL`, and `CLOUD_SMOKE_PASSWORD`. Use a disposable cloud account because the suite creates, publishes, unpublishes, deletes, and purges a note under `Smoke Tests/`.
 
 ## Tech stack
 
