@@ -3,7 +3,7 @@ import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 import { getKnowledgeGraph } from "@/lib/memory";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export async function GET() {
   try {

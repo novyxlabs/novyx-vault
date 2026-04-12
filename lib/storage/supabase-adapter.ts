@@ -100,8 +100,8 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async readNote(notePath: string): Promise<string> {
-    validateNotePath(notePath);
-    const normalized = notePath.replace(/\.md$/, "");
+    const safePath = validateNotePath(notePath);
+    const normalized = safePath.replace(/\.md$/, "");
     const { data, error } = await this.supabase
       .from("notes")
       .select("content")
@@ -115,8 +115,8 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async writeNote(notePath: string, content: string): Promise<void> {
-    validateNotePath(notePath);
-    const normalized = notePath.replace(/\.md$/, "");
+    const safePath = validateNotePath(notePath);
+    const normalized = safePath.replace(/\.md$/, "");
     const name = normalized.split("/").pop() ?? normalized;
 
     // Ensure parent folders exist
@@ -169,8 +169,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async createFolder(folderPath: string): Promise<void> {
-    validateNotePath(folderPath);
-    const normalized = folderPath.replace(/^\/+|\/+$/g, "");
+    const normalized = validateNotePath(folderPath).replace(/\/+$/g, "");
     const name = normalized.split("/").pop() ?? normalized;
 
     await this.ensureFolders(normalized);
@@ -196,8 +195,8 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async deleteNote(notePath: string): Promise<void> {
-    validateNotePath(notePath);
-    const normalized = notePath.replace(/\.md$/, "");
+    const safePath = validateNotePath(notePath);
+    const normalized = safePath.replace(/\.md$/, "");
 
     // Check if it's a folder — if so, trash all children too
     const { data: target } = await this.supabase
@@ -250,10 +249,10 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async renameNote(oldPath: string, newPath: string): Promise<void> {
-    validateNotePath(oldPath);
-    validateNotePath(newPath);
-    const normalizedOld = oldPath.replace(/\.md$/, "");
-    const normalizedNew = newPath.replace(/\.md$/, "");
+    const safeOldPath = validateNotePath(oldPath);
+    const safeNewPath = validateNotePath(newPath);
+    const normalizedOld = safeOldPath.replace(/\.md$/, "");
+    const normalizedNew = safeNewPath.replace(/\.md$/, "");
     const newName = normalizedNew.split("/").pop() ?? normalizedNew;
 
     // Ensure new parent folders exist
@@ -440,7 +439,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async listVersions(notePath: string): Promise<{ timestamp: number; filename: string }[]> {
-    const normalized = notePath.replace(/\.md$/, "");
+    const normalized = validateNotePath(notePath).replace(/\.md$/, "");
 
     // Find the note ID
     const { data: note } = await this.supabase
@@ -469,7 +468,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async readVersion(notePath: string, timestamp: string): Promise<string> {
-    const normalized = notePath.replace(/\.md$/, "");
+    const normalized = validateNotePath(notePath).replace(/\.md$/, "");
 
     const { data: note } = await this.supabase
       .from("notes")
@@ -493,7 +492,7 @@ export class SupabaseAdapter implements StorageAdapter {
   }
 
   async saveVersion(notePath: string, content: string): Promise<number> {
-    const normalized = notePath.replace(/\.md$/, "");
+    const normalized = validateNotePath(notePath).replace(/\.md$/, "");
 
     const { data: note } = await this.supabase
       .from("notes")

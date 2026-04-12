@@ -4,23 +4,29 @@ import { config } from "dotenv";
 // Load .env.local so TEST_ANTHROPIC_API_KEY is available in tests
 config({ path: ".env.local" });
 
+const localBaseURL = "http://localhost:3001";
+const cloudSmokeBaseURL = process.env.CLOUD_SMOKE_BASE_URL || localBaseURL;
+const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
+
 export default defineConfig({
   testDir: "./tests",
   timeout: 180_000,
   expect: { timeout: 10_000 },
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: localBaseURL,
     viewport: { width: 1440, height: 900 },
     launchOptions: {
       slowMo: 0,
     },
   },
-  webServer: {
-    command: "STORAGE_MODE= npx next dev --port 3001",
-    url: "http://localhost:3001",
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  webServer: skipWebServer
+    ? undefined
+    : {
+        command: "STORAGE_MODE= npx next dev --port 3001",
+        url: localBaseURL,
+        reuseExistingServer: true,
+        timeout: 60_000,
+      },
   projects: [
     {
       name: "functional",
@@ -45,6 +51,15 @@ export default defineConfig({
         browserName: "chromium",
         headless: false,
         video: "on",
+      },
+    },
+    {
+      name: "cloud-smoke",
+      testMatch: /cloud-smoke\.spec\.ts/,
+      use: {
+        browserName: "chromium",
+        headless: true,
+        baseURL: cloudSmokeBaseURL,
       },
     },
   ],

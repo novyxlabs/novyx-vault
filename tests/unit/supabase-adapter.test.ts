@@ -206,6 +206,58 @@ describe("SupabaseAdapter.deleteNote — folder trash preserves child paths", ()
   });
 });
 
+describe("SupabaseAdapter — path normalization", () => {
+  it("stores the normalized validator result when writing a note", async () => {
+    const upsertPayloads: Array<Record<string, unknown>> = [];
+    const mockSupa = {
+      from: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+        insert: vi.fn().mockResolvedValue({ error: null }),
+        upsert: vi.fn().mockImplementation((payload: Record<string, unknown>) => {
+          upsertPayloads.push(payload);
+          return Promise.resolve({ error: null });
+        }),
+      })),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.writeNote("/folder/note", "body");
+
+    expect(upsertPayloads.at(-1)?.path).toBe("folder/note");
+    expect(upsertPayloads.at(-1)?.name).toBe("note");
+  });
+
+  it("queries the normalized validator result when reading a note", async () => {
+    let orClause = "";
+    const mockSupa = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        or: vi.fn().mockImplementation((clause: string) => {
+          orClause = clause;
+          return {
+            single: vi.fn().mockResolvedValue({
+              data: { content: "body" },
+              error: null,
+            }),
+          };
+        }),
+      }),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await expect(adapter.readNote("/folder/note")).resolves.toBe("body");
+    expect(orClause).toBe("path.eq.folder/note,path.eq.folder/note.md");
+  });
+});
+
 describe("SupabaseAdapter.restoreFromTrash — folder restore includes children", () => {
   it("restores a trashed folder and all its trashed children", async () => {
     const updateCalls: { data: Record<string, unknown>; id: string }[] = [];
