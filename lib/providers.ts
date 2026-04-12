@@ -536,10 +536,19 @@ export async function syncSettingsToCloud(): Promise<void> {
 /** Load cloud settings and merge into localStorage (cloud fills gaps, doesn't overwrite) */
 export async function loadCloudSettings(): Promise<void> {
   try {
-    // Fetch settings and encrypted keys in parallel
+    // Only reveal (decrypt) server-side keys when local has NO ai settings
+    // yet — i.e. first login on a new device, cleared storage, etc.
+    // On subsequent loads, local already has the keys and the ambient
+    // GET /api/settings/keys returns only provider names (no values).
+    // This stops "load settings == decrypt every key into browser memory".
+    const localHasKeys = Boolean(localStorage.getItem("noctivault-ai-settings"));
+    const keysUrl = localHasKeys
+      ? "/api/settings/keys"
+      : "/api/settings/keys?reveal=true";
+
     const [settingsRes, keysRes] = await Promise.all([
       fetch("/api/settings"),
-      fetch("/api/settings/keys").catch(() => null),
+      fetch(keysUrl).catch(() => null),
     ]);
 
     const { settings } = settingsRes.ok
