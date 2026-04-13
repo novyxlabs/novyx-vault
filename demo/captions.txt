@@ -1,0 +1,22 @@
+# Demo video caption guide
+# Add these at each scene transition in your editor of choice.
+# Keep them short, lower-third, white text on semi-transparent black.
+
+# SCENE 1 — The vault (0:00–0:10)
+"This is my second brain. Every note, every decision, every idea."
+
+# SCENE 2 — Knowledge graph (0:10–0:18)
+"Every note is connected. The graph shows how your thinking links together."
+
+# SCENE 3 — Memory persistence (0:18–0:35)
+"The AI remembers decisions from weeks ago — even ones I never wrote down."
+
+# SCENE 4 — Memory rollback (0:35–0:55)
+"When the AI learns something wrong, roll it back. Like git for your AI's brain."
+
+# SCENE 5 — Research depth (0:55–1:15)
+"Wiki-links, backlinks, and Ghost Connections — ideas find each other."
+
+# SCENE 6 — End card (1:15–1:25)
+"Novyx Vault. Open source. Free."
+"vault.novyxlabs.com"

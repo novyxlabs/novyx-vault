@@ -55,3 +55,4 @@ demo-record*.mjs
 
 # gstack (QA tool artifacts)
 .gstack/
+demo/output/
