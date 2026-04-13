@@ -2,19 +2,16 @@
  * Demo recording script — drives the Vault UI through the key moments
  * while Playwright records video at 1080p.
  *
- * Run:
- *   NOVYX_MEMORY_API_KEY=your_key npm run dev &
- *   npx playwright test demo/scripts/record-demo.spec.ts --headed
+ * Run from repo root:
+ *   npm run demo
  *
- * Output: demo/output/demo-recording.webm
+ * Output: demo/output/test-results/.../video.webm
  *
  * Post-production: add captions, music, intro/outro in iMovie or DaVinci Resolve.
  * Or use ffmpeg for basic caption overlays — see demo/scripts/add-captions.sh.
  */
 
-import { test, expect } from "@playwright/test";
-
-const BASE_URL = process.env.DEMO_BASE_URL || "http://localhost:3000";
+import { test } from "@playwright/test";
 
 // Timing helpers — slow enough for humans to follow in a video
 const PAUSE_SHORT = 1500; // between quick actions
@@ -22,23 +19,12 @@ const PAUSE_READ = 3000; // let the viewer read something
 const PAUSE_MOMENT = 4000; // dramatic pause for "wow" moments
 const PAUSE_TRANSITION = 2000; // between scenes
 
-test.use({
-  viewport: { width: 1920, height: 1080 },
-  video: {
-    mode: "on",
-    size: { width: 1920, height: 1080 },
-  },
-  launchOptions: {
-    slowMo: 150, // slight slowdown makes interactions look natural
-  },
-});
-
 test("Novyx Vault demo recording", async ({ page }) => {
   // =========================================================================
   // SCENE 1: The vault — show a lived-in second brain
   // =========================================================================
 
-  await page.goto(BASE_URL);
+  await page.goto("/");
   await page.waitForTimeout(PAUSE_READ);
 
   // Expand the Projects folder to show notes

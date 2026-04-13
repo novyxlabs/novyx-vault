@@ -39,7 +39,8 @@
     "test": "npx playwright test --project=functional",
     "test:unit": "vitest run",
     "test:cloud-smoke": "PLAYWRIGHT_SKIP_WEBSERVER=1 npx playwright test --project=cloud-smoke",
-    "test:demo": "npx playwright test --project=demo"
+    "test:demo": "npx playwright test --project=demo",
+    "demo": "npx playwright test --config=demo/playwright.config.ts --headed"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.2",
