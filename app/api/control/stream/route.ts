@@ -2,6 +2,11 @@ import { NextRequest } from "next/server";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 
+// INVARIANT: Vault maps 1 Supabase user → 1 Novyx tenant via profiles.novyx_api_key.
+// Novyx enforces hard tenant isolation on streams (event.tenant_id filter), so
+// forwarding a client-supplied space_id cannot leak cross-tenant data today.
+// If this ever becomes many-to-one (teams, shared workspaces, etc.), add a
+// nx.getSpace(spaceId) ownership check here before forwarding to upstream.
 const BASE_URL = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
 
 export async function GET(req: NextRequest) {
