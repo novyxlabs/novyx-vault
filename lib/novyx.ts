@@ -39,6 +39,14 @@ function getOrCreateClient(apiKey: string): Novyx {
  * Get the Novyx API key for a user.
  * Cloud mode: reads from profiles.novyx_api_key
  * Desktop mode: falls back to NOVYX_MEMORY_API_KEY env var
+ *
+ * INVARIANT: In cloud mode, each Supabase user maps to exactly one Novyx
+ * tenant via profiles.novyx_api_key. Novyx itself enforces isolation per API
+ * key but has no per-user-within-tenant ACL. If a future feature shares one
+ * key across users (teams, workspaces), destructive operations and stream
+ * subscriptions need explicit per-user ACL checks (e.g. nx.getSpace()) before
+ * forwarding to Novyx. See app/api/control/stream/route.ts for the matching
+ * invariant at the stream boundary.
  */
 export async function getUserNovyxKey(
   userId?: string,

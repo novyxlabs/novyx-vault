@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock, Check, BookOpen, GitPullRequest, RotateCcw } from "lucide-react";
+import { X, Search, Brain, Trash2, Loader2, Sparkles, Clock, Zap, Share2, CalendarDays, History, Shield, Lock, Check, BookOpen, GitPullRequest, RotateCcw, AlertTriangle, Info, ExternalLink } from "lucide-react";
 import MemoryGraph from "./MemoryGraph";
 import DraftReview from "./DraftReview";
 
@@ -263,6 +263,14 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   const [rollbackPreviewLoading, setRollbackPreviewLoading] = useState(false);
   const [rollbackExecuting, setRollbackExecuting] = useState(false);
   const [rollbackResult, setRollbackResult] = useState<Record<string, unknown> | null>(null);
+  const [rollbackError, setRollbackError] = useState<
+    | { kind: "quota"; body: Record<string, unknown> }
+    | { kind: "error"; message: string }
+    | null
+  >(null);
+  // Backend rollback is not idempotent — each call burns a monthly quota slot.
+  // Short debounce guards against double-clicks and post-error retries.
+  const rollbackDebounceRef = useRef<{ target: string; at: number } | null>(null);
 
   // Learned tab state
   const [learnedMemories, setLearnedMemories] = useState<Memory[]>([]);
@@ -403,6 +411,17 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
 
   const handleRollbackExecute = useCallback(async () => {
     if (!rollbackTarget) return;
+    const now = Date.now();
+    const last = rollbackDebounceRef.current;
+    if (last && last.target === rollbackTarget && now - last.at < 5000) {
+      setRollbackError({
+        kind: "error",
+        message: "Rollback already submitted. Wait a moment before retrying.",
+      });
+      return;
+    }
+    rollbackDebounceRef.current = { target: rollbackTarget, at: now };
+    setRollbackError(null);
     setRollbackExecuting(true);
     try {
       const res = await fetch("/api/memory/rollback", {
@@ -410,13 +429,25 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ target: rollbackTarget }),
       });
-      if (res.ok) {
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        setRollbackError({ kind: "quota", body: body as Record<string, unknown> });
+      } else if (res.ok) {
         const result = await res.json();
         setRollbackResult(result);
-        // Refresh replay entries after rollback
         setReplayFetched(false);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        const message =
+          (body as { error?: string }).error || `Rollback failed (${res.status})`;
+        setRollbackError({ kind: "error", message });
       }
-    } catch { /* silent */ }
+    } catch {
+      setRollbackError({
+        kind: "error",
+        message: "Network error. Check your connection and try again.",
+      });
+    }
     setRollbackExecuting(false);
   }, [rollbackTarget]);
 
@@ -424,6 +455,10 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     setRollbackTarget(null);
     setRollbackPreview(null);
     setRollbackResult(null);
+    setRollbackError(null);
+    // Intentionally do NOT clear rollbackDebounceRef here — it self-expires
+    // via the 5s timestamp check. Clearing on dismiss would defeat the guard
+    // for the Confirm → Done → reopen → Confirm pattern.
   }, []);
 
   // Lightweight instrumentation for Learned tab usage
@@ -1354,24 +1389,150 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                     className="relative w-full max-w-sm mx-4 bg-sidebar-bg border border-sidebar-border rounded-xl shadow-2xl p-6"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {rollbackResult ? (
+                    {rollbackError?.kind === "quota" ? (
+                      (() => {
+                        const body = rollbackError.body as {
+                          message?: string;
+                          current?: number;
+                          limit?: number;
+                          plan?: string;
+                          upgrade_url?: string;
+                          resets_at?: string;
+                        };
+                        const upgradeUrl = body.upgrade_url || "https://novyxlabs.com/pricing";
+                        return (
+                          <div className="text-center">
+                            <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center mx-auto mb-3">
+                              <Lock size={20} className="text-amber-400" />
+                            </div>
+                            <h3 className="text-sm font-semibold text-foreground mb-1">Rollback Quota Reached</h3>
+                            <p className="text-xs text-muted mb-1">
+                              {body.message ||
+                                `You've used ${body.current ?? "all"} of ${body.limit ?? "your"} rollbacks this month${body.plan ? ` on the ${body.plan} plan` : ""}.`}
+                            </p>
+                            {body.resets_at ? (
+                              <p className="text-[11px] text-muted mb-4">Resets {new Date(body.resets_at).toLocaleString()}</p>
+                            ) : (
+                              <p className="text-[11px] text-muted mb-4">Quota resets at the start of next month (UTC).</p>
+                            )}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleRollbackCancel}
+                                className="flex-1 px-3 py-2 rounded-md text-sm text-muted hover:text-foreground border border-sidebar-border hover:border-foreground/20 transition-colors"
+                              >
+                                Dismiss
+                              </button>
+                              <a
+                                href={upgradeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 px-3 py-2 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent-hover transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                Upgrade
+                                <ExternalLink size={12} />
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })()
+                    ) : rollbackError?.kind === "error" ? (
                       <div className="text-center">
-                        <div className="w-10 h-10 rounded-full bg-green-400/10 flex items-center justify-center mx-auto mb-3">
-                          <Check size={20} className="text-green-400" />
+                        <div className="w-10 h-10 rounded-full bg-red-400/10 flex items-center justify-center mx-auto mb-3">
+                          <AlertTriangle size={20} className="text-red-400" />
                         </div>
-                        <h3 className="text-sm font-semibold text-foreground mb-1">Rollback Complete</h3>
-                        <p className="text-xs text-muted mb-4">
-                          {(rollbackResult as Record<string, number>).artifacts_restored
-                            ? `${(rollbackResult as Record<string, number>).artifacts_restored} memories restored`
-                            : "Memory state has been rolled back."}
-                        </p>
+                        <h3 className="text-sm font-semibold text-foreground mb-1">Rollback Failed</h3>
+                        <p className="text-xs text-muted mb-4">{rollbackError.message}</p>
                         <button
                           onClick={handleRollbackCancel}
                           className="px-4 py-2 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent-hover transition-colors"
                         >
-                          Done
+                          Dismiss
                         </button>
                       </div>
+                    ) : rollbackResult ? (
+                      (() => {
+                        const result = rollbackResult as {
+                          status?: string;
+                          artifacts_affected?: number;
+                          artifacts_restored?: number;
+                          errors?: unknown[];
+                        };
+                        const errorList = Array.isArray(result.errors) ? result.errors : [];
+                        const isPartial = result.status === "partial_success" || errorList.length > 0;
+                        const isZeroOps =
+                          !isPartial && (result.artifacts_affected === 0 || (!result.artifacts_restored && !result.artifacts_affected));
+                        if (isPartial) {
+                          return (
+                            <div className="text-center">
+                              <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center mx-auto mb-3">
+                                <AlertTriangle size={20} className="text-amber-400" />
+                              </div>
+                              <h3 className="text-sm font-semibold text-foreground mb-1">Rollback Partially Completed</h3>
+                              <p className="text-xs text-muted mb-2">
+                                {result.artifacts_restored
+                                  ? `${result.artifacts_restored} memories restored, but some operations failed.`
+                                  : "Some operations failed during rollback."}
+                              </p>
+                              {errorList.length > 0 && (
+                                <ul className="text-[11px] text-muted text-left bg-card-bg border border-sidebar-border rounded-md p-2 mb-4 max-h-32 overflow-auto space-y-1">
+                                  {errorList.slice(0, 10).map((err, i) => (
+                                    <li key={i} className="truncate">
+                                      {typeof err === "string" ? err : JSON.stringify(err)}
+                                    </li>
+                                  ))}
+                                  {errorList.length > 10 && (
+                                    <li className="text-muted">…and {errorList.length - 10} more</li>
+                                  )}
+                                </ul>
+                              )}
+                              <button
+                                onClick={handleRollbackCancel}
+                                className="px-4 py-2 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent-hover transition-colors"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          );
+                        }
+                        if (isZeroOps) {
+                          return (
+                            <div className="text-center">
+                              <div className="w-10 h-10 rounded-full bg-sidebar-border/40 flex items-center justify-center mx-auto mb-3">
+                                <Info size={20} className="text-muted" />
+                              </div>
+                              <h3 className="text-sm font-semibold text-foreground mb-1">Nothing to Roll Back</h3>
+                              <p className="text-xs text-muted mb-4">
+                                The target is outside the memory history window, or no operations occurred after it. Nothing was changed.
+                              </p>
+                              <button
+                                onClick={handleRollbackCancel}
+                                className="px-4 py-2 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent-hover transition-colors"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="text-center">
+                            <div className="w-10 h-10 rounded-full bg-green-400/10 flex items-center justify-center mx-auto mb-3">
+                              <Check size={20} className="text-green-400" />
+                            </div>
+                            <h3 className="text-sm font-semibold text-foreground mb-1">Rollback Complete</h3>
+                            <p className="text-xs text-muted mb-4">
+                              {result.artifacts_restored
+                                ? `${result.artifacts_restored} memories restored`
+                                : "Memory state has been rolled back."}
+                            </p>
+                            <button
+                              onClick={handleRollbackCancel}
+                              className="px-4 py-2 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent-hover transition-colors"
+                            >
+                              Done
+                            </button>
+                          </div>
+                        );
+                      })()
                     ) : (
                       <>
                         <div className="flex items-center gap-2 mb-3">
