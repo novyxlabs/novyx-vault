@@ -1,4 +1,5 @@
 import { Novyx } from "novyx";
+import { isCloudMode } from "./auth";
 import { getNovyxForKey } from "./novyx";
 
 const NOVYX_TIMEOUT_MS = 3000;
@@ -7,6 +8,7 @@ const NOVYX_TIMEOUT_MS = 3000;
 function resolveClient(apiKey?: string): Novyx | null {
   if (apiKey) return getNovyxForKey(apiKey);
   // Desktop fallback
+  if (isCloudMode()) return null;
   const envKey = process.env.NOVYX_MEMORY_API_KEY;
   return envKey ? getNovyxForKey(envKey) : null;
 }

@@ -5,9 +5,14 @@ vi.mock("@/lib/novyx", () => ({
   getNovyxForKey: vi.fn(),
 }));
 
+vi.mock("@/lib/auth", () => ({
+  isCloudMode: vi.fn(() => false),
+}));
+
 describe("memory functions", () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.clearAllMocks();
     delete process.env.NOVYX_MEMORY_API_KEY;
   });
 
@@ -35,6 +40,20 @@ describe("memory functions", () => {
     const result = await recallMemories("test", "user1", "key");
     expect(result).toEqual(["memory 1", "memory 2"]);
     expect(mockRecall).toHaveBeenCalledWith("test", { tags: ["user:user1"] });
+  });
+
+  it("does not use NOVYX_MEMORY_API_KEY fallback in cloud mode", async () => {
+    process.env.NOVYX_MEMORY_API_KEY = "global-key";
+    const { isCloudMode } = await import("@/lib/auth");
+    vi.mocked(isCloudMode).mockReturnValue(true);
+
+    const { getNovyxForKey } = await import("@/lib/novyx");
+    const { recallMemories } = await import("@/lib/memory");
+
+    const result = await recallMemories("test query");
+
+    expect(result).toEqual([]);
+    expect(getNovyxForKey).not.toHaveBeenCalled();
   });
 
   it("recallMemories returns empty array on SDK error", async () => {
