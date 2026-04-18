@@ -122,21 +122,36 @@ export class SupabaseAdapter implements StorageAdapter {
     // Ensure parent folders exist
     await this.ensureFolders(normalized);
 
-    const { error } = await this.supabase
+    const now = new Date().toISOString();
+    const { data: existing, error: lookupError } = await this.supabase
       .from("notes")
-      .upsert(
-        {
-          user_id: this.userId,
-          path: normalized,
-          name,
-          content,
-          is_folder: false,
-          is_trashed: false,
-          modified_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,path" }
-      );
-    if (error) throw new Error(error.message);
+      .select("id")
+      .eq("user_id", this.userId)
+      .eq("path", normalized)
+      .eq("is_trashed", false)
+      .maybeSingle();
+    this.assertNoError(lookupError, `Failed to find note ${normalized}`);
+
+    if (existing?.id) {
+      await this.updateById(existing.id, {
+        name,
+        content,
+        is_folder: false,
+        modified_at: now,
+      });
+      return;
+    }
+
+    const { error } = await this.supabase.from("notes").insert({
+      user_id: this.userId,
+      path: normalized,
+      name,
+      content,
+      is_folder: false,
+      is_trashed: false,
+      modified_at: now,
+    });
+    this.assertNoError(error, `Failed to create note ${normalized}`);
   }
 
   private async ensureFolders(notePath: string): Promise<void> {

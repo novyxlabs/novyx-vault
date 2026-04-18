@@ -207,17 +207,17 @@ describe("SupabaseAdapter.deleteNote — folder trash preserves child paths", ()
 });
 
 describe("SupabaseAdapter — path normalization", () => {
-  it("stores the normalized validator result when writing a note", async () => {
-    const upsertPayloads: Array<Record<string, unknown>> = [];
+  it("inserts a new note with the normalized validator result", async () => {
+    const insertPayloads: Array<Record<string, unknown>> = [];
     const mockSupa = {
       from: vi.fn().mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnThis(),
           single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
-        insert: vi.fn().mockResolvedValue({ error: null }),
-        upsert: vi.fn().mockImplementation((payload: Record<string, unknown>) => {
-          upsertPayloads.push(payload);
+        insert: vi.fn().mockImplementation((payload: Record<string, unknown>) => {
+          insertPayloads.push(payload);
           return Promise.resolve({ error: null });
         }),
       })),
@@ -228,8 +228,79 @@ describe("SupabaseAdapter — path normalization", () => {
 
     await adapter.writeNote("/folder/note", "body");
 
-    expect(upsertPayloads.at(-1)?.path).toBe("folder/note");
-    expect(upsertPayloads.at(-1)?.name).toBe("note");
+    expect(insertPayloads.at(-1)?.path).toBe("folder/note");
+    expect(insertPayloads.at(-1)?.name).toBe("note");
+    expect(insertPayloads.at(-1)?.content).toBe("body");
+  });
+
+  it("updates an existing non-trashed note instead of using upsert", async () => {
+    const updateCalls: Array<{ data: Record<string, unknown>; id: string }> = [];
+    const mockSupa = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: "note-1" },
+            error: null,
+          }),
+        }),
+        insert: vi.fn().mockResolvedValue({ error: null }),
+        update: vi.fn().mockImplementation((data: Record<string, unknown>) => ({
+          eq: vi.fn().mockImplementation((_col: string, id: string) => {
+            updateCalls.push({ data, id });
+            return Promise.resolve({ error: null });
+          }),
+        })),
+      }),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.writeNote("/note", "updated body");
+
+    expect(mockSupa.from().insert).not.toHaveBeenCalled();
+    expect(updateCalls).toHaveLength(1);
+    expect(updateCalls[0].id).toBe("note-1");
+    expect(updateCalls[0].data).toMatchObject({
+      name: "note",
+      content: "updated body",
+      is_folder: false,
+    });
+  });
+
+  it("inserts a new note when only a trashed row shares the path", async () => {
+    const eqCalls: Array<[string, unknown]> = [];
+    const insertPayloads: Array<Record<string, unknown>> = [];
+    const query = {
+      eq: vi.fn().mockImplementation((col: string, value: unknown) => {
+        eqCalls.push([col, value]);
+        return query;
+      }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const mockSupa = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue(query),
+        insert: vi.fn().mockImplementation((payload: Record<string, unknown>) => {
+          insertPayloads.push(payload);
+          return Promise.resolve({ error: null });
+        }),
+      }),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.writeNote("/note", "new body");
+
+    expect(eqCalls).toContainEqual(["is_trashed", false]);
+    expect(insertPayloads).toHaveLength(1);
+    expect(insertPayloads[0]).toMatchObject({
+      path: "note",
+      content: "new body",
+      is_trashed: false,
+    });
   });
 
   it("queries the normalized validator result when reading a note", async () => {
