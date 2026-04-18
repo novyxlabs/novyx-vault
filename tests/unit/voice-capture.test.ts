@@ -16,6 +16,7 @@ vi.mock("@/lib/auth", () => ({
     userId: "user-123",
     cookieHeader: "cookie=val",
   }),
+  isCloudMode: vi.fn(() => false),
 }));
 
 // Mock rate limiter — always allow
