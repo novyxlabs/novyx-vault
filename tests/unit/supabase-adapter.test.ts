@@ -269,6 +269,40 @@ describe("SupabaseAdapter — path normalization", () => {
     });
   });
 
+  it("inserts a new note when only a trashed row shares the path", async () => {
+    const eqCalls: Array<[string, unknown]> = [];
+    const insertPayloads: Array<Record<string, unknown>> = [];
+    const query = {
+      eq: vi.fn().mockImplementation((col: string, value: unknown) => {
+        eqCalls.push([col, value]);
+        return query;
+      }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const mockSupa = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue(query),
+        insert: vi.fn().mockImplementation((payload: Record<string, unknown>) => {
+          insertPayloads.push(payload);
+          return Promise.resolve({ error: null });
+        }),
+      }),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.writeNote("/note", "new body");
+
+    expect(eqCalls).toContainEqual(["is_trashed", false]);
+    expect(insertPayloads).toHaveLength(1);
+    expect(insertPayloads[0]).toMatchObject({
+      path: "note",
+      content: "new body",
+      is_trashed: false,
+    });
+  });
+
   it("queries the normalized validator result when reading a note", async () => {
     let orClause = "";
     const mockSupa = {
