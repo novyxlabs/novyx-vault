@@ -92,6 +92,48 @@ test.describe("Cloud smoke", () => {
 
     expect(res.status()).toBe(400);
   });
+
+  // Non-destructive. Exercises Novyx SDK 3.x rollbackPreview against the
+  // deployed tenant. Skips the destructive POST rollback on purpose — the
+  // preview path shares trace-id/semantic parsing with the actual rollback,
+  // so if preview returns a well-formed response the mutation path will too.
+  // Unit tests cover the POST response shape.
+  test("memory rollback preview works against deployed SDK", async ({ page }) => {
+    await login(page);
+
+    const runId = Date.now().toString(36);
+    const marker = `[smoke-rollback-${runId}]`;
+    const observation = `${marker} verifying rollback preview`;
+
+    const target = new Date().toISOString();
+    await new Promise((r) => setTimeout(r, 1_500));
+
+    let createdId: string | undefined;
+
+    try {
+      let res = await page.request.post("/api/memory", { data: { observation } });
+      expect(res.ok(), await responseBody(res)).toBeTruthy();
+
+      res = await page.request.get("/api/memory?limit=50");
+      expect(res.ok(), await responseBody(res)).toBeTruthy();
+      const listed = (await res.json()) as { memories: Array<{ uuid: string; observation: string }> };
+      const created = listed.memories.find((m) => m.observation.includes(marker));
+      expect(created, "created memory should appear in list").toBeTruthy();
+      createdId = created?.uuid;
+
+      res = await page.request.get(`/api/memory/rollback?target=${encodeURIComponent(target)}`);
+      expect(res.ok(), await responseBody(res)).toBeTruthy();
+      const preview = await res.json();
+      expect(preview.mode).toBe("preview");
+      expect(preview.rollback_target).toBe(target);
+    } finally {
+      if (createdId) {
+        await page.request
+          .delete("/api/memory", { data: { id: createdId } })
+          .catch(() => undefined);
+      }
+    }
+  });
 });
 
 async function login(page: Page) {

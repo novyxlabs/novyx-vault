@@ -7,6 +7,10 @@ config({ path: ".env.local" });
 const localBaseURL = "http://localhost:3001";
 const cloudSmokeBaseURL = process.env.CLOUD_SMOKE_BASE_URL || localBaseURL;
 const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
+const vercelBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const cloudSmokeExtraHeaders = vercelBypass
+  ? { "x-vercel-protection-bypass": vercelBypass, "x-vercel-set-bypass-cookie": "true" }
+  : undefined;
 
 export default defineConfig({
   testDir: "./tests",
@@ -60,6 +64,7 @@ export default defineConfig({
         browserName: "chromium",
         headless: true,
         baseURL: cloudSmokeBaseURL,
+        extraHTTPHeaders: cloudSmokeExtraHeaders,
       },
     },
   ],
