@@ -105,7 +105,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             The only open-source second brain with AI memory that persists across every session.
-            Roll back what your AI knows at any point. Connect 20+ providers &mdash; your keys never leave your browser.
+            Roll back what your AI knows at any point. Connect 20+ providers &mdash; bring your own key, encrypted at rest.
           </motion.p>
           <motion.div
             className="flex flex-wrap items-center justify-center gap-4"
@@ -227,7 +227,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={<Key size={24} />}
               title="Bring Your Own AI"
-              description="18+ providers — OpenAI, Anthropic, Gemini, Ollama. Your keys stay in your browser."
+              description="18+ providers — OpenAI, Anthropic, Gemini, Ollama. Bring your own key — encrypted at rest."
               className="lg:col-span-4"
             />
             <FeatureCard
@@ -392,7 +392,7 @@ export default function LandingPage() {
               <h2 className="text-2xl sm:text-3xl font-bold [text-wrap:balance]">Works with the AI you already use</h2>
             </div>
             <p className="text-muted mb-6 max-w-xl">
-              Connect your own API key. Your keys stay in your browser &mdash; they never touch our servers.
+              Connect your own API key. Keys are encrypted at rest and used server-side only to call the provider you selected &mdash; never shared beyond that.
               Switch providers anytime without losing your memory or notes.
             </p>
             <div className="flex flex-wrap gap-2">

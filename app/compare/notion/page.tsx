@@ -241,8 +241,9 @@ export default function CompareNotionPage() {
                 infrastructure if you want full control.
               </p>
               <p>
-                With Vault&apos;s BYOK model, your AI API keys stay in your browser. Novyx never
-                sees them. With Notion, your data passes through their AI pipeline.
+                With Vault&apos;s BYOK model, your AI API keys are encrypted at rest and used only
+                to call the provider you configured. Novyx Labs never rebrokers them. With Notion,
+                your data passes through their AI pipeline.
               </p>
             </div>
           </div>
