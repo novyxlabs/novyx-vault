@@ -93,7 +93,7 @@ I built Novyx Vault — an open-source second brain where the AI has actual pers
 **Technical details:**
 - Memory powered by Novyx Core (separate memory infrastructure with rollback, audit trails, knowledge graph)
 - Same memory layer works across Vault, Claude Code, and Cursor via MCP
-- 20+ AI providers via BYOK (your keys, your browser)
+- 20+ AI providers via BYOK (your keys, encrypted at rest)
 - MIT open source, self-hostable
 
 The underlying premise: as AI agents get more capable, the ability to *remember and learn* across sessions becomes more important than the ability to *search your files*. RAG was step one. Persistent memory is step two.
