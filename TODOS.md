@@ -111,7 +111,7 @@
 **Completed:** v0.3.0 (2026-03-15)
 
 ### Novyx SDK upgrade to v2.11.0
-**What:** Upgraded `novyx` 2.10.0 → 2.11.0. Rewrote lib/control.ts and lib/drafts.ts from raw fetch to SDK methods. Eliminated all hardcoded Novyx API URLs from lib layer.
+**What:** Upgraded `novyx` 2.10.0 → 2.11.0. Rewrote lib/control.ts and lib/drafts.ts from raw fetch to SDK methods. Most hardcoded Novyx API URLs removed from the lib layer — `lib/novyx.ts` provisioning and `app/api/memory/health` URL derivation landed later as launch-gate follow-ups.
 **Completed:** v0.3.0 (2026-03-24)
 
 ### E2E tests for core views
