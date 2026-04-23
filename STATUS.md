@@ -1,5 +1,5 @@
 # Novyx Vault — Master Status Summary
-**Date**: March 18, 2026
+**Date**: April 23, 2026
 **Live**: https://vault.novyxlabs.com
 **Repo**: https://github.com/novyxlabs/novyx-vault
 **Deploys**: Vercel auto-deploy from `main` (region: iad1)
@@ -67,9 +67,8 @@
 ### Novyx Memory (AI Companion Layer)
 | Feature | Component | Status |
 |---|---|---|
-| Remember / Recall | `RelatedMemories`, `/api/memory` | Working |
+| Remember / Recall | `/api/memory` | Working |
 | Memory context (per-note) | `/api/memory/context` | Working |
-| Memory briefing | `MemoryBriefing` | Working |
 | Memory dashboard | `MemoryDashboard` | Working |
 | Knowledge graph | `MemoryGraph`, `/api/memory/graph` | Pro-gated |
 | Insights | `/api/memory/insights` | Pro-gated |
