@@ -94,8 +94,6 @@ export function getNovyxForKey(apiKey: string | null | undefined): Novyx | null 
 
 // --- Provisioning ---
 
-const PROVISION_URL = "https://novyx-ram-api.fly.dev/v1/provision";
-
 /**
  * Generate a time-bound HMAC-signed admin token for Novyx provisioning.
  * Tokens expire after 5 minutes on the server side.
@@ -114,9 +112,10 @@ export async function provisionNovyxKey(
     throw new Error("NOVYX_ADMIN_KEY not configured");
   }
 
+  const baseUrl = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
   const token = generateAdminToken(adminKey);
 
-  const res = await fetch(PROVISION_URL, {
+  const res = await fetch(`${baseUrl}/v1/provision`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
