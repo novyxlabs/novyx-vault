@@ -244,9 +244,8 @@ export default function FeaturesPage() {
           >
             <p>
               Novyx Vault works with the AI provider you already use. Connect your own API key
-              and choose from 18+ providers. In cloud mode, keys are encrypted at rest and
-              decrypted server-side only when you make an AI request. In desktop mode, keys
-              stay on your local machine. Switch providers anytime without losing your memory or notes.
+              and choose from 18+ providers. Your keys are stored in your browser only &mdash;
+              we never store them on our servers. Switch providers anytime without losing your memory or notes.
             </p>
             <Providers />
             <BYOKDemo />

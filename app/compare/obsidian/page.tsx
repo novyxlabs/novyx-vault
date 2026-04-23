@@ -239,9 +239,8 @@ export default function CompareObsidianPage() {
                 but you cannot modify or redistribute it. With Vault, you can verify and fork it.
               </p>
               <p>
-                Vault&apos;s BYOK model means your AI API keys are encrypted at rest (cloud) or
-                kept on your device (desktop), and are used only to call the provider you
-                configured. Novyx Labs never rebrokers them, giving you full control over which AI
+                Vault&apos;s BYOK model means your AI API keys never touch Novyx servers. They
+                stay in your browser&apos;s local storage, giving you full control over which AI
                 provider sees your data.
               </p>
             </div>

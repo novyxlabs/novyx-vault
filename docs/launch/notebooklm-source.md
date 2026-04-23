@@ -40,7 +40,7 @@ Everything you'd expect from a modern second brain:
 
 ## 20+ AI Providers
 
-Bring Your Own Key: OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Ollama, LM Studio, and more. Your API keys are encrypted at rest (cloud) or stay on your device (desktop) and are used only to call the provider you configured. Switch providers without losing your memory or notes.
+Bring Your Own Key: OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Ollama, LM Studio, and more. Your API keys stay in your browser — never stored on servers. Switch providers without losing your memory or notes.
 
 ## Local-First and Open Source
 

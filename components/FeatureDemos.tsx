@@ -600,7 +600,7 @@ export function BYOKDemo() {
               sk-...••••••••••••
             </span>
           </div>
-          <p className="text-[8px] text-[#71717a] mt-1.5">Encrypted at rest — decrypted only for your AI requests.</p>
+          <p className="text-[8px] text-[#71717a] mt-1.5">Stored in your browser only — never sent to our servers.</p>
         </div>
       </div>
     </DemoCard>

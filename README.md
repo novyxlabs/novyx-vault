@@ -118,7 +118,7 @@ The core differentiator. Powered by [Novyx Core](https://novyxlabs.com).
 
 OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Nvidia NIM, Hyperbolic, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter, Ollama, LM Studio.
 
-Keys are encrypted at rest in cloud mode and stay on your device in desktop mode. Switch providers without losing memory or notes.
+Your keys stay in your browser. We never store them on our servers. Switch providers without losing memory or notes.
 
 ### Local-first & open source
 

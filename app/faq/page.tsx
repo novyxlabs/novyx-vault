@@ -28,7 +28,7 @@ const faqs = [
   {
     question: "Can I use my own AI provider with Novyx Vault?",
     answer:
-      "Yes. Vault supports 20+ AI providers through BYOK (Bring Your Own Key), including OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, and more. In cloud mode your keys are encrypted at rest and decrypted server-side only for your AI requests; in desktop mode they stay on your machine. Either way, Novyx Labs never shares them beyond the provider you configured.",
+      "Yes. Vault supports 20+ AI providers through BYOK (Bring Your Own Key), including OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, and more. Your API keys are stored in your browser only and never sent to Novyx servers.",
   },
   {
     question: "Is Novyx Vault open source?",
@@ -58,7 +58,7 @@ const faqs = [
   {
     question: "Is my data private in Novyx Vault?",
     answer:
-      "Yes. In desktop mode, your notes are plain markdown files on your machine that never leave your computer. In cloud mode, data is stored in Supabase with row-level security. AI provider API keys are encrypted at rest in cloud mode and stay on your machine in desktop mode. The codebase is open source so you can verify exactly how your data is handled.",
+      "Yes. In desktop mode, your notes are plain markdown files on your machine that never leave your computer. In cloud mode, data is stored in Supabase with row-level security. API keys are stored in your browser only. The codebase is open source so you can verify exactly how your data is handled.",
   },
   {
     question: "Can I import from Obsidian?",
