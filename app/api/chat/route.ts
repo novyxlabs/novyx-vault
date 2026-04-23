@@ -9,7 +9,6 @@ import { getUserNovyxKey } from "@/lib/novyx";
 import { validateProviderBaseURL } from "@/lib/providers";
 import { resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
-import { getTrialStatus, incrementTrialUsage, getTrialProviderConfig } from "@/lib/trial";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -161,37 +160,17 @@ export async function POST(req: NextRequest) {
   const apiKey = await getUserNovyxKey(ctx.userId, ctx.cookieHeader);
   const { messages, noteContext, provider: rawProvider } = (await req.json()) as ChatRequest;
 
-  // Trial mode: when client sends "trial" as baseURL, use server-side shared provider
-  let provider = rawProvider;
-  let isTrialCall = false;
-  if (provider?.baseURL === "trial" || !provider?.model) {
-    if (ctx.userId) {
-      const trialConfig = getTrialProviderConfig();
-      const trialStatus = await getTrialStatus(ctx.userId);
-      if (trialConfig && trialStatus.eligible) {
-        provider = trialConfig;
-        isTrialCall = true;
-      } else if (!provider?.model) {
-        return new Response(
-          JSON.stringify({
-            error: trialStatus.remaining <= 0
-              ? "Free trial exhausted. Add your own AI provider in Settings to continue."
-              : "No model configured. Add an AI provider in Settings.",
-          }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
-        );
-      }
-    } else if (!provider?.model) {
-      return new Response(
-        JSON.stringify({ error: "No model configured" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
+  const provider = rawProvider;
+  if (!provider?.model) {
+    return new Response(
+      JSON.stringify({ error: "No AI provider configured. Add one in Settings." }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   // Local providers (Ollama, LM Studio) don't require API keys
   const isLocal = provider.baseURL.includes("localhost") || provider.baseURL.includes("127.0.0.1");
-  if (!isLocal && !provider.apiKey && !isTrialCall) {
+  if (!isLocal && !provider.apiKey) {
     return new Response(
       JSON.stringify({ error: "No API key configured for this provider" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
@@ -328,10 +307,6 @@ export async function POST(req: NextRequest) {
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           // Store user message in memory with AI response as context (fire-and-forget)
           rememberExchange(latestUserMessage, fullResponse, ctx.userId, apiKey ?? undefined).catch(() => {});
-          // Increment trial usage if this was a trial call
-          if (isTrialCall && ctx.userId) {
-            incrementTrialUsage(ctx.userId).catch(() => {});
-          }
         } catch (err) {
           const message = err instanceof Error ? err.message : "Stream error";
           controller.enqueue(
