@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const res = await fetch("https://novyx-ram-api.fly.dev/health", {
+    const baseUrl = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
+    const res = await fetch(`${baseUrl}/health`, {
       signal: AbortSignal.timeout(5000),
     });
     const data = await res.json();
