@@ -95,3 +95,57 @@ describe("getUserNovyxKey", () => {
     expect(key).toBeNull();
   });
 });
+
+describe("provisionNovyxKey — base URL derivation", () => {
+  const originalApiUrl = process.env.NOVYX_API_URL;
+  const originalAdminKey = process.env.NOVYX_ADMIN_KEY;
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.NOVYX_ADMIN_KEY = "test-admin-key";
+  });
+
+  afterEach(() => {
+    if (originalApiUrl === undefined) delete process.env.NOVYX_API_URL;
+    else process.env.NOVYX_API_URL = originalApiUrl;
+    if (originalAdminKey === undefined) delete process.env.NOVYX_ADMIN_KEY;
+    else process.env.NOVYX_ADMIN_KEY = originalAdminKey;
+    vi.restoreAllMocks();
+  });
+
+  it("derives /v1/provision from NOVYX_API_URL when set", async () => {
+    process.env.NOVYX_API_URL = "https://staging.novyx.example";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ api_key: "k", tenant_id: "t", tier: "free" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+
+    const { provisionNovyxKey } = await import("@/lib/novyx");
+    await provisionNovyxKey("user@example.com");
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://staging.novyx.example/v1/provision",
+      expect.any(Object)
+    );
+  });
+
+  it("falls back to the prod fly.dev host when NOVYX_API_URL is unset", async () => {
+    delete process.env.NOVYX_API_URL;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ api_key: "k", tenant_id: "t", tier: "free" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+
+    const { provisionNovyxKey } = await import("@/lib/novyx");
+    await provisionNovyxKey("user@example.com");
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://novyx-ram-api.fly.dev/v1/provision",
+      expect.any(Object)
+    );
+  });
+});
