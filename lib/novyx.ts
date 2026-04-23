@@ -114,6 +114,9 @@ export async function provisionNovyxKey(
 
   const baseUrl = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
   const token = generateAdminToken(adminKey);
+  // Tag Preview traffic so Core can exclude it from analytics/billing rollups.
+  // Core stores this on metadata.provisioned_by.
+  const source = process.env.VERCEL_ENV === "preview" ? "vault-preview" : "novyx-vault";
 
   const res = await fetch(`${baseUrl}/v1/provision`, {
     method: "POST",
@@ -121,7 +124,7 @@ export async function provisionNovyxKey(
       "Content-Type": "application/json",
       "X-Admin-Token": token,
     },
-    body: JSON.stringify({ email, source: "novyx-vault" }),
+    body: JSON.stringify({ email, source }),
   });
 
   if (!res.ok) {

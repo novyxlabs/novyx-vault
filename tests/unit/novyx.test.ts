@@ -149,3 +149,52 @@ describe("provisionNovyxKey — base URL derivation", () => {
     );
   });
 });
+
+describe("provisionNovyxKey — source tag by Vercel env", () => {
+  const originalVercelEnv = process.env.VERCEL_ENV;
+  const originalAdminKey = process.env.NOVYX_ADMIN_KEY;
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.NOVYX_ADMIN_KEY = "test-admin-key";
+  });
+
+  afterEach(() => {
+    if (originalVercelEnv === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = originalVercelEnv;
+    if (originalAdminKey === undefined) delete process.env.NOVYX_ADMIN_KEY;
+    else process.env.NOVYX_ADMIN_KEY = originalAdminKey;
+    vi.restoreAllMocks();
+  });
+
+  async function callProvision(): Promise<Record<string, unknown>> {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ api_key: "k", tenant_id: "t", tier: "free" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+    const { provisionNovyxKey } = await import("@/lib/novyx");
+    await provisionNovyxKey("user@example.com");
+    const init = fetchSpy.mock.calls[0][1] as RequestInit;
+    return JSON.parse(init.body as string) as Record<string, unknown>;
+  }
+
+  it("tags source as vault-preview when VERCEL_ENV=preview", async () => {
+    process.env.VERCEL_ENV = "preview";
+    const body = await callProvision();
+    expect(body.source).toBe("vault-preview");
+  });
+
+  it("tags source as novyx-vault in production", async () => {
+    process.env.VERCEL_ENV = "production";
+    const body = await callProvision();
+    expect(body.source).toBe("novyx-vault");
+  });
+
+  it("tags source as novyx-vault when VERCEL_ENV is unset (local dev)", async () => {
+    delete process.env.VERCEL_ENV;
+    const body = await callProvision();
+    expect(body.source).toBe("novyx-vault");
+  });
+});
