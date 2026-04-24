@@ -64,11 +64,13 @@ export default function TermsPage() {
 
         <Section title="4. AI Features">
           Novyx Vault connects to AI providers (OpenAI, Anthropic, and others)
-          using API keys you provide. Your API keys are stored in your browser
-          only and are sent to our server solely to proxy requests to the AI
-          provider. We do not store your AI provider API keys on our servers.
-          Novyx-powered memory features (remember, recall, cortex) are processed
-          through the Novyx API using a per-user key provisioned at sign-up.
+          using API keys you provide. In cloud mode, your API keys are encrypted
+          with a server-held secret and stored encrypted at rest in your account
+          settings; they are decrypted server-side only to proxy requests to the
+          AI provider you configured. In desktop mode, keys remain in your
+          local browser and are not transmitted to our servers. Novyx-powered
+          memory features (remember, recall, cortex) are processed through the
+          Novyx API using a per-user key provisioned at sign-up.
         </Section>
 
         <Section title="5. Acceptable Use">

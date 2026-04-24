@@ -4,7 +4,7 @@ import { Github } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Privacy Policy for Novyx Vault. Learn how we handle your data, API keys, and notes. Your keys never leave your browser.",
+  description: "Privacy Policy for Novyx Vault. How we handle your data, API keys, and notes — including server-side encryption of provider keys in cloud mode.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p className="text-sm text-muted mb-8">
-          Last updated: March 2026
+          Last updated: April 2026
         </p>
 
         <Section title="What We Collect">
@@ -59,14 +59,19 @@ export default function PrivacyPage() {
           <strong>Analytics:</strong> We use Vercel Analytics, which collects
           anonymized page view data. No personal information or note content is
           included in analytics.
+          <br /><br />
+          <strong>AI provider API keys:</strong> In cloud mode, API keys for
+          providers you configure (OpenAI, Anthropic, and others) are encrypted
+          with a server-held secret and stored encrypted at rest in your account
+          settings. They are decrypted server-side only when you make an AI
+          request, and the plaintext value is never returned to the client except
+          through an explicit, rate-limited reveal action in Settings. In
+          desktop mode, keys are stored in your browser&apos;s localStorage and are
+          not transmitted to our servers. We do not share your keys with any
+          party other than the AI provider you configure each key for.
         </Section>
 
         <Section title="What We Do NOT Collect or Store">
-          <strong>AI provider API keys:</strong> Your OpenAI, Anthropic, or other
-          AI provider API keys are stored in your browser&apos;s localStorage only.
-          They are sent to our server to proxy AI requests but are never persisted
-          on our servers or in any database.
-          <br /><br />
           <strong>Note content for training:</strong> We do not use your notes or
           AI conversations to train any models. Your content is yours.
         </Section>
