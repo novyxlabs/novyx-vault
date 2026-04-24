@@ -29,7 +29,6 @@ import {
   CheckSquare,
   CheckCheck,
   TrendingUp,
-  Lightbulb,
   Scissors,
   Sparkles,
   CalendarRange,
@@ -45,6 +44,7 @@ import {
   Github,
   HardDrive,
   Cloud,
+  Zap,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
@@ -82,9 +82,9 @@ interface SidebarProps {
   onOpenTasks: () => void;
   onOpenTags: () => void;
   onOpenThinking: () => void;
+  onOpenQuickCapture: () => void;
   onOpenBrainDump: () => void;
   onOpenVoiceCapture: () => void;
-  onOpenWritingCoach: () => void;
   onOpenClipRemix: () => void;
   onOpenWeeklyReview: () => void;
   onOpenReflect: () => void;
@@ -487,9 +487,9 @@ export default function Sidebar({
   onOpenTasks,
   onOpenTags,
   onOpenThinking,
+  onOpenQuickCapture,
   onOpenBrainDump,
   onOpenVoiceCapture,
-  onOpenWritingCoach,
   onOpenClipRemix,
   onOpenWeeklyReview,
   onOpenReflect,
@@ -979,12 +979,12 @@ export default function Sidebar({
             </div>
             <div className="grid grid-cols-4 gap-1">
               <button
-                onClick={onOpenBrainDump}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-400/70 hover:bg-purple-400/10 hover:text-purple-400 transition-all"
-                title="Brain Dump — dump thoughts, AI structures them"
+                onClick={onOpenQuickCapture}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-accent/70 hover:bg-accent/10 hover:text-accent transition-all"
+                title="Quick Capture — save a raw thought to the local vault"
               >
-                <Sparkles size={16} />
-                <span className="text-[9px] leading-none font-medium">Dump</span>
+                <Zap size={16} />
+                <span className="text-[9px] leading-none font-medium">Quick</span>
               </button>
               <button
                 onClick={onOpenVoiceCapture}
@@ -1003,12 +1003,12 @@ export default function Sidebar({
                 <span className="text-[9px] leading-none font-medium">Clip</span>
               </button>
               <button
-                onClick={onOpenWritingCoach}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-amber-400/70 hover:bg-amber-400/10 hover:text-amber-400 transition-all"
-                title="Writing Coach — what should you write about?"
+                onClick={onOpenBrainDump}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-400/70 hover:bg-purple-400/10 hover:text-purple-400 transition-all"
+                title="Brain Dump — dump thoughts, AI structures them"
               >
-                <Lightbulb size={16} />
-                <span className="text-[9px] leading-none font-medium">Coach</span>
+                <Sparkles size={16} />
+                <span className="text-[9px] leading-none font-medium">Dump</span>
               </button>
             </div>
           </div>

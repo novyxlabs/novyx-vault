@@ -10,8 +10,10 @@ import {
   Link,
   ExternalLink,
   Sparkles,
+  FolderOpen,
 } from "lucide-react";
 import { loadSettings, getActiveProvider } from "@/lib/providers";
+import { buildCaptureNoteContent, buildCaptureNotePath } from "@/lib/capture";
 
 interface NoteEntry {
   name: string;
@@ -129,25 +131,18 @@ export default function ClipRemix({
   const handleSave = async () => {
     if (!result || !editableTitle.trim()) return;
 
-    const sanitizedTitle = editableTitle
-      .replace(/[/\\:*?"<>|#]/g, "")
-      .trim()
-      .substring(0, 80);
-
-    const notePath = `Remixes/${sanitizedTitle}`;
-
-    // Build the full note content
-    const fullContent = `# ${sanitizedTitle}\n\n${result.content}`;
+    const capturedAt = new Date();
+    const title = editableTitle.trim();
+    const notePath = buildCaptureNotePath("clip", title, capturedAt);
+    const fullContent = buildCaptureNoteContent({
+      kind: "clip",
+      title,
+      content: result.content,
+      capturedAt,
+      sourceUrl,
+    });
 
     try {
-      // Ensure Remixes folder exists
-      await fetch("/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: "Remixes", isFolder: true }),
-      });
-
-      // Create the note
       await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -333,6 +328,12 @@ export default function ClipRemix({
                   ))}
                 </div>
               )}
+
+              {/* Source attribution */}
+              <div className="flex items-center gap-1.5 text-xs text-muted">
+                <FolderOpen size={12} />
+                <span className="font-mono">Captures/YYYY-MM-DD</span>
+              </div>
 
               {/* Source attribution */}
               {sourceUrl && (

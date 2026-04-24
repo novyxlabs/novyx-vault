@@ -732,9 +732,9 @@ export default function AppShell() {
         onOpenTasks={() => { closeAllModals(); setIsTasksOpen(true); }}
         onOpenTags={() => { closeAllModals(); setIsTagsOpen(true); }}
         onOpenThinking={() => { closeAllModals(); setIsThinkingOpen(true); }}
+        onOpenQuickCapture={() => { closeAllModals(); setIsQuickCaptureOpen(true); }}
         onOpenBrainDump={() => { closeAllModals(); setIsBrainDumpOpen(true); }}
         onOpenVoiceCapture={() => { closeAllModals(); setIsVoiceCaptureOpen(true); }}
-        onOpenWritingCoach={() => { closeAllModals(); setIsWritingCoachOpen(true); }}
         onOpenClipRemix={() => { closeAllModals(); setIsClipRemixOpen(true); }}
         onOpenWeeklyReview={() => { closeAllModals(); setIsWeeklyReviewOpen(true); }}
         onOpenReflect={() => { closeAllModals(); setIsReflectOpen(true); }}
@@ -886,7 +886,7 @@ export default function AppShell() {
       isOpen={isQuickCaptureOpen}
       onClose={() => setIsQuickCaptureOpen(false)}
       onCreateNote={(name, noteContent) => {
-        handleCreateNoteWithContent(name, noteContent);
+        return handleCreateNoteWithContent(name, noteContent);
       }}
     />
     <HelpModal

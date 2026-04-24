@@ -811,6 +811,44 @@ test.describe("Quick capture", () => {
     // Quick capture should appear
     await expect(page.locator("text=Quick Capture").first()).toBeVisible({ timeout: 5000 });
   });
+
+  test("saves quick capture into the daily Captures folder with metadata", async ({ page }) => {
+    const capturedBodies: { path?: string; content?: string }[] = [];
+
+    await page.route("**/api/notes", async (route) => {
+      const request = route.request();
+      if (request.method() === "POST") {
+        const body = request.postDataJSON() as { path?: string; content?: string };
+        if (body.path?.startsWith("Captures/")) {
+          capturedBodies.push(body);
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ success: true }),
+          });
+          return;
+        }
+      }
+      await route.continue();
+    });
+
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.down("Control");
+    await page.keyboard.down("Shift");
+    await page.keyboard.press("N");
+    await page.keyboard.up("Shift");
+    await page.keyboard.up("Control");
+
+    await page.getByPlaceholder("What's on your mind?").fill("Follow up on the local vault capture workflow");
+    await page.getByRole("button", { name: "Capture" }).click();
+
+    await expect.poll(() => capturedBodies[0]?.path).toContain(`Captures/${new Date().toISOString().slice(0, 10)}/`);
+    expect(capturedBodies[0]?.content).toContain('capture_type: "quick"');
+    expect(capturedBodies[0]?.content).toContain('capture_source: "Quick Capture"');
+    expect(capturedBodies[0]?.content).toContain("Follow up on the local vault capture workflow");
+  });
 });
 
 // ---------------------------------------------------------------------------
