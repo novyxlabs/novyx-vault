@@ -7,7 +7,8 @@ import {
 } from "@/lib/capture";
 
 describe("capture note contract", () => {
-  const capturedAt = new Date("2026-04-24T13:45:06.000Z");
+  const capturedAt = new Date(2026, 3, 24, 13, 45, 6);
+  const capturedAtIso = capturedAt.toISOString();
 
   it("builds stable capture paths under the daily Captures folder", () => {
     expect(buildCaptureNotePath("quick", "Ship the vault mode cleanup", capturedAt)).toBe(
@@ -33,7 +34,7 @@ describe("capture note contract", () => {
 
     expect(content).toContain('capture_type: "clip"');
     expect(content).toContain('capture_source: "Clip & Remix"');
-    expect(content).toContain('captured_at: "2026-04-24T13:45:06.000Z"');
+    expect(content).toContain(`captured_at: "${capturedAtIso}"`);
     expect(content).toContain('source_url: "https://example.com/article"');
     expect(content).toContain("# Interesting Article\n\nA remixed note.");
   });

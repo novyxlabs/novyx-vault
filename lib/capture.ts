@@ -50,11 +50,15 @@ export function buildCaptureNotePath(
   title: string,
   capturedAt = new Date(),
 ): string {
-  const day = capturedAt.toISOString().slice(0, 10);
+  const day = [
+    capturedAt.getFullYear(),
+    pad(capturedAt.getMonth() + 1),
+    pad(capturedAt.getDate()),
+  ].join("-");
   const time = [
-    pad(capturedAt.getUTCHours()),
-    pad(capturedAt.getUTCMinutes()),
-    pad(capturedAt.getUTCSeconds()),
+    pad(capturedAt.getHours()),
+    pad(capturedAt.getMinutes()),
+    pad(capturedAt.getSeconds()),
   ].join("");
   const prefix = CAPTURE_PREFIXES[kind];
   const slug = slugifyCaptureTitle(title);
