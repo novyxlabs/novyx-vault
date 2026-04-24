@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import NoteEditor from "@/components/NoteEditor";
-import CommandPalette from "@/components/CommandPalette";
+import CommandPalette, { type CommandAction } from "@/components/CommandPalette";
 import ChatSidebar from "@/components/ChatSidebar";
 import SettingsModal from "@/components/SettingsModal";
 import GraphView from "@/components/GraphView";
@@ -37,7 +37,23 @@ import { useMemoryStream } from "@/hooks/useMemoryStream";
 import { resolveWikiLink } from "@/lib/wikilink";
 import { loadCloudSettings, syncSettingsToCloud, clearUserLocalStorage } from "@/lib/providers";
 import type { VaultStatus } from "@/lib/vault-status";
-import { Upload, Menu, Search, MessageSquare, ChevronLeft } from "lucide-react";
+import {
+  Upload,
+  Menu,
+  Search,
+  MessageSquare,
+  ChevronLeft,
+  Plus,
+  Zap,
+  CalendarDays,
+  Network,
+  Settings,
+  HelpCircle,
+  Mic,
+  Scissors,
+  Sparkles,
+  Brain,
+} from "lucide-react";
 
 interface NoteEntry {
   name: string;
@@ -483,6 +499,89 @@ export default function AppShell() {
     }
   }, [loadNotes]);
 
+  const commandActions = useMemo<CommandAction[]>(() => [
+    {
+      id: "new-note",
+      label: "New note",
+      description: "Create a blank markdown note",
+      keywords: ["create", "file"],
+      icon: <Plus size={16} />,
+      run: () => handleCreateNote(""),
+    },
+    {
+      id: "quick-capture",
+      label: "Quick capture",
+      description: "Save a raw thought into the local vault",
+      keywords: ["capture", "inbox", "thought"],
+      icon: <Zap size={16} />,
+      run: () => { closeAllModals(); setIsQuickCaptureOpen(true); },
+    },
+    {
+      id: "brain-dump",
+      label: "Brain dump",
+      description: "Turn messy text into a structured capture note",
+      keywords: ["capture", "dump", "ai"],
+      icon: <Sparkles size={16} />,
+      run: () => { closeAllModals(); setIsBrainDumpOpen(true); },
+    },
+    {
+      id: "voice-capture",
+      label: "Voice capture",
+      description: "Record audio and structure it into markdown",
+      keywords: ["capture", "record", "audio", "transcribe"],
+      icon: <Mic size={16} />,
+      run: () => { closeAllModals(); setIsVoiceCaptureOpen(true); },
+    },
+    {
+      id: "clip-remix",
+      label: "Clip & Remix",
+      description: "Rewrite clipped text in your voice",
+      keywords: ["capture", "clip", "remix", "source"],
+      icon: <Scissors size={16} />,
+      run: () => { closeAllModals(); setIsClipRemixOpen(true); },
+    },
+    {
+      id: "daily-note",
+      label: "Daily note",
+      description: "Open today's daily note",
+      keywords: ["today", "journal"],
+      icon: <CalendarDays size={16} />,
+      run: () => handleDailyNote(),
+    },
+    {
+      id: "graph",
+      label: "Graph view",
+      description: "Open the note graph",
+      keywords: ["links", "network"],
+      icon: <Network size={16} />,
+      run: () => { closeAllModals(); setIsGraphOpen(true); },
+    },
+    {
+      id: "memory",
+      label: "Memory",
+      description: "Open memory timeline and controls",
+      keywords: ["ai", "learned", "timeline"],
+      icon: <Brain size={16} />,
+      run: () => { closeAllModals(); setIsMemoryOpen(true); },
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      description: "Providers, vault mode, and account controls",
+      keywords: ["provider", "vault", "mode", "account"],
+      icon: <Settings size={16} />,
+      run: () => { closeAllModals(); setIsSettingsOpen(true); },
+    },
+    {
+      id: "help",
+      label: "Keyboard shortcuts",
+      description: "Show help and available shortcuts",
+      keywords: ["help", "shortcuts"],
+      icon: <HelpCircle size={16} />,
+      run: () => { closeAllModals(); setIsHelpOpen(true); },
+    },
+  ], [closeAllModals, handleCreateNote, handleDailyNote]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -664,6 +763,7 @@ export default function AppShell() {
         handleSelectNote(path);
         setIsCommandPaletteOpen(false);
       }}
+      commands={commandActions}
     />
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
       {/* Mobile Header */}
