@@ -654,35 +654,35 @@ export function LocalFirstDemo() {
   );
 }
 
-/* ========== 9. Cloud Sync ========== */
+/* ========== 9. Cloud Mode ========== */
 
-export function CloudSyncDemo() {
+export function CloudModeDemo() {
   const { ref, inView } = useInView();
 
   return (
     <DemoCard>
       <div ref={ref} className="flex items-center justify-center gap-4 sm:gap-8 h-full">
-        {/* Device 1 — Laptop */}
+        {/* Local device */}
         <div className="flex flex-col items-center gap-1.5">
           <div className="w-16 sm:w-20 h-10 sm:h-12 rounded-md border border-[#27272a] bg-[#161618] flex items-center justify-center">
             <span className="text-[18px] sm:text-[22px]">💻</span>
           </div>
           <span className="text-[9px] text-[#71717a]">Desktop</span>
         </div>
-        {/* Sync arrows */}
+        {/* Hosted access */}
         <div className="flex flex-col items-center gap-0.5">
           <div className={`text-[#8b5cf6] text-sm ${inView ? "demo-sync-pulse" : ""}`}>→</div>
           <div className={`text-[#8b5cf6] text-[9px] font-medium ${inView ? "demo-sync-pulse" : ""}`} style={inView ? { animationDelay: "500ms" } : undefined}>
-            sync
+            cloud
           </div>
           <div className={`text-[#8b5cf6] text-sm ${inView ? "demo-sync-pulse" : ""}`} style={inView ? { animationDelay: "1000ms" } : undefined}>←</div>
         </div>
-        {/* Device 2 — Phone */}
+        {/* Hosted workspace */}
         <div className="flex flex-col items-center gap-1.5">
           <div className="w-10 sm:w-12 h-14 sm:h-16 rounded-lg border border-[#27272a] bg-[#161618] flex items-center justify-center">
-            <span className="text-[18px] sm:text-[22px]">📱</span>
+            <span className="text-[18px] sm:text-[22px]">☁️</span>
           </div>
-          <span className="text-[9px] text-[#71717a]">Mobile</span>
+          <span className="text-[9px] text-[#71717a]">Hosted</span>
         </div>
       </div>
     </DemoCard>

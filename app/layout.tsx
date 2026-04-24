@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | Novyx Vault",
   },
   description:
-    "The only note app where AI gets smarter the longer you use it. Open-source, local-first knowledge base with persistent AI memory.",
+    "Open-source markdown workspace with persistent AI memory, desktop-local notes, and optional cloud mode.",
   metadataBase: new URL("https://vault.novyxlabs.com"),
   alternates: {
     canonical: "/",
@@ -48,6 +48,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const enableAnalytics = process.env.NODE_ENV === "production";
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -70,7 +72,8 @@ const jsonLd = {
         "Wiki-style note linking with backlinks",
         "Interactive knowledge graph",
         "Multi-provider AI (OpenAI, Anthropic, Ollama, 18+)",
-        "Local-first with optional cloud sync",
+        "Desktop-local markdown notes",
+        "Optional cloud mode for account-based access and publishing",
         "Memory rollback and timeline",
         "Ghost Connections — AI-discovered note relationships",
       ],
@@ -99,15 +102,19 @@ export default function RootLayout({
         {/* External script to prevent theme flash */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/theme-init.js" />
-        <script
-          async
-          src="https://plausible.io/js/pa-xBu4TREpIrvhU1jTXnxON.js"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
-          }}
-        />
+        {enableAnalytics ? (
+          <>
+            <script
+              async
+              src="https://plausible.io/js/pa-xBu4TREpIrvhU1jTXnxON.js"
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`,
+              }}
+            />
+          </>
+        ) : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -117,7 +124,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <Analytics />
+        {enableAnalytics ? <Analytics /> : null}
       </body>
     </html>
   );

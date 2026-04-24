@@ -37,10 +37,7 @@
     ],
     "macOS": {
       "entitlements": null,
-      "infoPlist": {
-        "NSMicrophoneUsageDescription": "Novyx Vault needs microphone access to record and transcribe audio.",
-        "NSScreenCaptureUsageDescription": "Novyx Vault needs screen capture access to record system audio from meetings and webinars."
-      }
+      "infoPlist": "Info.plist"
     }
   }
 }

@@ -49,15 +49,6 @@ export default defineConfig({
       },
     },
     {
-      name: "demo",
-      testMatch: /demo.*\.spec\.ts/,
-      use: {
-        browserName: "chromium",
-        headless: false,
-        video: "on",
-      },
-    },
-    {
       name: "cloud-smoke",
       testMatch: /cloud-smoke\.spec\.ts/,
       use: {

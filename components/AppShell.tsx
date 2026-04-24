@@ -28,7 +28,6 @@ import ReflectTimeline from "@/components/ReflectTimeline";
 import UsageView from "@/components/UsageView";
 import AuditTrailView from "@/components/AuditTrailView";
 import RollbackHistoryView from "@/components/RollbackHistoryView";
-import ControlView from "@/components/ControlView";
 import MissionControl from "@/components/MissionControl";
 import NovyxErrorBoundary from "@/components/NovyxErrorBoundary";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -37,6 +36,7 @@ import ImportPrompt from "@/components/ImportPrompt";
 import { useMemoryStream } from "@/hooks/useMemoryStream";
 import { resolveWikiLink } from "@/lib/wikilink";
 import { loadCloudSettings, syncSettingsToCloud, clearUserLocalStorage } from "@/lib/providers";
+import type { VaultStatus } from "@/lib/vault-status";
 import { Upload, Menu, Search, MessageSquare, ChevronLeft } from "lucide-react";
 
 interface NoteEntry {
@@ -49,6 +49,7 @@ interface NoteEntry {
 
 export default function AppShell() {
   const [notes, setNotes] = useState<NoteEntry[]>([]);
+  const [vaultStatus, setVaultStatus] = useState<VaultStatus | null>(null);
   const [activeNote, setActiveNote] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -78,7 +79,6 @@ export default function AppShell() {
   const [isUsageOpen, setIsUsageOpen] = useState(false);
   const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
   const [isRollbackHistoryOpen, setIsRollbackHistoryOpen] = useState(false);
-  const [isControlOpen, setIsControlOpen] = useState(false);
   const [isMissionControlOpen, setIsMissionControlOpen] = useState(false);
   const closeAllModals = useCallback(() => {
     setIsGraphOpen(false);
@@ -96,7 +96,6 @@ export default function AppShell() {
     setIsUsageOpen(false);
     setIsAuditTrailOpen(false);
     setIsRollbackHistoryOpen(false);
-    setIsControlOpen(false);
     setIsMissionControlOpen(false);
     setIsHelpOpen(false);
     setIsTrashOpen(false);
@@ -251,6 +250,10 @@ export default function AppShell() {
 
   useEffect(() => {
     loadNotes();
+    fetch("/api/vault/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((status) => setVaultStatus(status))
+      .catch(() => {});
     // Hydrate localStorage state after mount to avoid SSR mismatch
     try {
       setRecentNotes(JSON.parse(localStorage.getItem("noctivault-recent") || "[]"));
@@ -744,8 +747,9 @@ export default function AppShell() {
           clearUserLocalStorage();
           await fetch("/api/auth/signout", { method: "POST" });
           window.location.href = "/login";
-        } : undefined}        onGoHome={() => { setActiveNote(null); setContent(""); }}
-        recentNotes={recentNotes}
+        } : undefined}
+        onGoHome={() => { setActiveNote(null); setContent(""); }}
+        vaultStatus={vaultStatus}
         onDuplicateNote={handleDuplicateNote}
         pinnedNotes={pinnedNotes}
         onTogglePin={handleTogglePin}
@@ -824,6 +828,7 @@ export default function AppShell() {
     <SettingsModal
       isOpen={isSettingsOpen}
       onClose={() => setIsSettingsOpen(false)}
+      vaultStatus={vaultStatus}
     />
     <GraphView
       isOpen={isGraphOpen}
@@ -862,12 +867,6 @@ export default function AppShell() {
       <MissionControl
         isOpen={isMissionControlOpen}
         onClose={() => setIsMissionControlOpen(false)}
-      />
-    </NovyxErrorBoundary>
-    <NovyxErrorBoundary fallbackTitle="Control failed to load" onClose={() => setIsControlOpen(false)}>
-      <ControlView
-        isOpen={isControlOpen}
-        onClose={() => setIsControlOpen(false)}
       />
     </NovyxErrorBoundary>
     <NewNoteModal

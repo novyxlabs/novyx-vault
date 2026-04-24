@@ -4,7 +4,7 @@ import { Github } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Privacy Policy for Novyx Vault. Learn how we handle your data, API keys, and notes. Your keys never leave your browser.",
+  description: "Privacy Policy for Novyx Vault. Learn how we handle your data, API keys, notes, and cloud memory.",
   alternates: { canonical: "/privacy" },
 };
 
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p className="text-sm text-muted mb-8">
-          Last updated: March 2026
+          Last updated: April 2026
         </p>
 
         <Section title="What We Collect">
@@ -62,10 +62,12 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="What We Do NOT Collect or Store">
-          <strong>AI provider API keys:</strong> Your OpenAI, Anthropic, or other
-          AI provider API keys are stored in your browser&apos;s localStorage only.
-          They are sent to our server to proxy AI requests but are never persisted
-          on our servers or in any database.
+          <strong>AI provider API keys:</strong> In desktop mode, your provider
+          keys stay on your machine. In cloud mode, your provider keys are stored
+          encrypted at rest so the hosted app can use them for your requests.
+          They are decrypted server-side only when needed to call the provider you
+          configured. We do not sell, rebroker, or share those keys beyond the AI
+          provider you selected.
           <br /><br />
           <strong>Note content for training:</strong> We do not use your notes or
           AI conversations to train any models. Your content is yours.

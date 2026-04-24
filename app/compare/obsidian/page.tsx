@@ -31,7 +31,7 @@ const sections = [
       { feature: "Memory rollback & audit trail", vault: true, obsidian: false },
       { feature: "Ghost Connections (AI-discovered links)", vault: true, obsidian: false },
       { feature: "Entity extraction & insights", vault: true, obsidian: false },
-      { feature: "20+ AI providers (BYOK)", vault: true, obsidian: false },
+      { feature: "BYOK AI providers", vault: true, obsidian: "Plugin-dependent" },
       { feature: "Voice capture & transcription", vault: true, obsidian: false },
       { feature: "AI writing tools (Brain Dump, Clip Remix)", vault: true, obsidian: false },
     ],
@@ -50,7 +50,7 @@ const sections = [
     name: "Privacy & Ownership",
     rows: [
       { feature: "Open source", vault: "MIT License", obsidian: "Source-available" },
-      { feature: "Local-first / offline mode", vault: true, obsidian: true },
+      { feature: "Desktop-local files", vault: true, obsidian: true },
       { feature: "Self-hostable", vault: true, obsidian: false },
       { feature: "Plain markdown files on disk", vault: true, obsidian: true },
       { feature: "BYOK (no vendor AI lock-in)", vault: true, obsidian: false },
@@ -61,7 +61,7 @@ const sections = [
     name: "Pricing",
     rows: [
       { feature: "Free tier", vault: "Yes (full editor + BYOK)", obsidian: "Yes (personal use)" },
-      { feature: "Sync across devices", vault: "Free (cloud mode)", obsidian: "$50/year" },
+      { feature: "Hosted cloud workspace", vault: "Optional", obsidian: "$50/year" },
       { feature: "Publish to web", vault: "Free", obsidian: "$8/month" },
       { feature: "Pro / AI memory features", vault: "$9/month", obsidian: "N/A" },
     ],
@@ -201,9 +201,9 @@ export default function CompareObsidianPage() {
                 timeline with audit trail.
               </p>
               <p>
-                Vault supports 20+ AI providers through BYOK (Bring Your Own Key), including
-                OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, and local models via LM Studio.
-                Obsidian&apos;s AI is limited to fewer provider options.
+                Vault supports BYOK (Bring Your Own Key) across hosted providers,
+                OpenAI-compatible endpoints, and local options such as Ollama and LM Studio.
+                Obsidian&apos;s provider support depends on its first-party AI and plugins.
               </p>
             </div>
           </div>
@@ -229,8 +229,9 @@ export default function CompareObsidianPage() {
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
                 Both tools respect privacy. Obsidian stores notes locally by default and offers
-                end-to-end encrypted sync. Vault also stores notes locally in desktop mode as plain
-                markdown files, and is fully self-hostable.
+                a paid encrypted multi-device service. Vault stores notes locally in desktop mode as plain
+                markdown files and is self-hostable; its hosted cloud mode is a separate workspace
+                model rather than local-file mirroring.
               </p>
               <p>
                 The key difference is openness. Vault is open source under the MIT license &mdash;
@@ -251,14 +252,15 @@ export default function CompareObsidianPage() {
             <h2 className="text-xl font-bold mb-3">Pricing</h2>
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
-                Obsidian is free for personal use, but sync costs $50/year and publish costs
+                Obsidian is free for personal use, but its multi-device service costs $50/year and publish costs
                 $8/month. These add up quickly if you use both. Commercial use requires a $50/year
                 license per user.
               </p>
               <p>
-                Vault&apos;s free tier includes the full editor, wiki-links, knowledge graph, 20+
-                AI providers, cloud sync, and publishing. The $9/month Pro plan adds persistent AI
-                memory, Ghost Connections, cortex insights, voice capture, and the full audit trail.
+                Vault&apos;s free tier includes the full editor, wiki-links, knowledge graph, BYOK
+                provider setup, the desktop/local app, and publishing. The $9/month Pro plan adds
+                persistent AI memory, Ghost Connections, cortex insights, voice capture, audit
+                history, and hosted cloud features such as account-backed access and sharing.
               </p>
             </div>
           </div>
@@ -312,7 +314,6 @@ export default function CompareObsidianPage() {
             <Link href="/features" className="hover:text-foreground transition-colors">Features</Link>
             <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
             <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
-            <Link href="/compare/notion" className="hover:text-foreground transition-colors">vs Notion</Link>
           </nav>
         </div>
       </footer>

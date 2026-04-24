@@ -1,6 +1,7 @@
 import path from "path";
 import { getStorage } from "./storage";
 import type { StorageContext } from "./notes";
+import type { NoteFile, SearchFilters } from "./storage";
 
 export interface SearchResult {
   name: string;
@@ -52,11 +53,6 @@ function extractSnippet(content: string, matchIndex: number, queryLength: number
   return { snippet, matchStart, matchEnd };
 }
 
-interface SearchFilters {
-  folder?: string;
-  tag?: string;
-}
-
 // Per-request cache: avoids repeated walkAllNotes calls within the same tick.
 // Keyed by userId (or "local"), auto-expires after 5 seconds.
 let _cachedNotes: { key: string; notes: Awaited<ReturnType<ReturnType<typeof getStorage>["walkAllNotes"]>>; expiresAt: number } | null = null;
@@ -73,8 +69,16 @@ export async function getCachedNotes(ctx?: StorageContext) {
   return notes;
 }
 
+async function getSearchCandidates(query: string, maxResults: number, filters?: SearchFilters, ctx?: StorageContext): Promise<{ notes: NoteFile[]; indexed: boolean }> {
+  const storage = getStorage(ctx?.userId, ctx?.cookieHeader);
+  if (typeof storage.searchNoteFiles === "function") {
+    return { notes: await storage.searchNoteFiles(query, maxResults, filters), indexed: true };
+  }
+  return { notes: await getCachedNotes(ctx), indexed: false };
+}
+
 export async function searchNotes(query: string, maxResults = 20, filters?: SearchFilters, ctx?: StorageContext): Promise<SearchResult[]> {
-  const notes = await getCachedNotes(ctx);
+  const { notes, indexed } = await getSearchCandidates(query, maxResults, filters, ctx);
   const results: SearchResult[] = [];
   const lowerQuery = query.toLowerCase();
 
@@ -92,8 +96,16 @@ export async function searchNotes(query: string, maxResults = 20, filters?: Sear
       if (!tagPattern.test(note.content)) continue;
     }
 
-    const matchIndex = note.content.toLowerCase().indexOf(lowerQuery);
-    if (matchIndex === -1) continue;
+    const lowerContent = note.content.toLowerCase();
+    let matchIndex = lowerContent.indexOf(lowerQuery);
+
+    if (matchIndex === -1) {
+      const lowerName = note.name.toLowerCase();
+      if (!lowerName.includes(lowerQuery)) {
+        if (!indexed) continue;
+      }
+      matchIndex = 0;
+    }
 
     const { snippet, matchStart, matchEnd } = extractSnippet(note.content, matchIndex, query.length);
 

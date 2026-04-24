@@ -1,7 +1,7 @@
 import type { StorageAdapter } from "./types";
 import { FsAdapter } from "./fs-adapter";
 
-export type { StorageAdapter, NoteEntry, TrashEntry, NoteFile } from "./types";
+export type { StorageAdapter, NoteEntry, TrashEntry, NoteFile, SearchFilters } from "./types";
 
 export function getStorage(userId?: string, cookieHeader?: string): StorageAdapter {
   if (process.env.STORAGE_MODE === "supabase") {

@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Brain, FileText, Network, GitBranch, History, Sparkles,
-  Key, WifiOff, Wifi, Zap, BookOpen, ArrowRight, Link2, Mic,
+  Key, WifiOff, Cloud, Zap, BookOpen, ArrowRight, Link2, Mic,
 } from "lucide-react";
 import {
   MarkdownEditorDemo, MemoryDemo, WikiLinkDemo, GhostConnectionsDemo, KnowledgeGraphDemo,
   MemoryRollbackDemo, CortexInsightsDemo, BYOKDemo, LocalFirstDemo,
-  CloudSyncDemo, WritingToolsDemo, VoiceCaptureDemo, OpenSourceDemo,
+  CloudModeDemo, WritingToolsDemo, VoiceCaptureDemo, OpenSourceDemo,
 } from "@/components/FeatureDemos";
 import { FadeInSection } from "@/components/FadeInSection";
 
@@ -57,7 +57,7 @@ export default function FeaturesPage() {
             <p>
               A fast, keyboard-driven editor built on CodeMirror 6. Live preview, syntax highlighting,
               and familiar shortcuts. Your notes are plain markdown files &mdash; open them in any text
-              editor, sync them with Git, or back them up however you want.
+              editor, mirror them with Git, or back them up with the tool you already trust.
             </p>
             <ul>
               <li>Live preview with full GitHub-flavored markdown support</li>
@@ -244,7 +244,7 @@ export default function FeaturesPage() {
           >
             <p>
               Novyx Vault works with the AI provider you already use. Connect your own API key
-              and choose from 18+ providers. In cloud mode, keys are encrypted at rest and
+              and choose from a broad set of hosted and local providers. In cloud mode, keys are encrypted at rest and
               decrypted server-side only when you make an AI request. In desktop mode, keys
               stay on your local machine. Switch providers anytime without losing your memory or notes.
             </p>
@@ -254,37 +254,37 @@ export default function FeaturesPage() {
 
           <Feature
             icon={<WifiOff size={28} />}
-            title="Desktop App — Local & Offline"
+            title="Desktop App — Local Files"
             id="local-first"
           >
             <p>
               In desktop mode, your notes are plain markdown files in a folder on your machine.
-              No database, no cloud, no account required. Works offline, starts instantly, and gives
+              No database, no cloud account required. Core editing works offline and gives
               you complete ownership of your data.
             </p>
             <ul>
               <li>Plain markdown files on disk</li>
-              <li>Works completely offline</li>
+              <li>Core note editing works offline</li>
               <li>Zero lock-in &mdash; your files are always yours</li>
             </ul>
             <LocalFirstDemo />
           </Feature>
 
           <Feature
-            icon={<Wifi size={28} />}
-            title="Cloud Sync"
-            id="cloud-sync"
+            icon={<Cloud size={28} />}
+            title="Cloud Mode"
+            id="cloud-workspace"
           >
             <p>
-              For cross-device access, cloud mode syncs your notes securely. Settings, themes,
-              and pinned notes carry over everywhere. Sign in with GitHub or Google.
+              For hosted access, cloud mode stores your notes and settings in Supabase with
+              account-level isolation. Sign in with GitHub or Google.
             </p>
             <ul>
-              <li>Secure sync across devices</li>
+              <li>Account-backed cloud storage</li>
               <li>Publish notes with a shareable link</li>
               <li>Daily digest emails with AI-surfaced highlights</li>
             </ul>
-            <CloudSyncDemo />
+            <CloudModeDemo />
           </Feature>
 
           <Feature
@@ -337,7 +337,6 @@ export default function FeaturesPage() {
             <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
             <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
             <Link href="/compare/obsidian" className="hover:text-foreground transition-colors">vs Obsidian</Link>
-            <Link href="/compare/notion" className="hover:text-foreground transition-colors">vs Notion</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           </nav>

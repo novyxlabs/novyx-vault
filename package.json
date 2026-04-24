@@ -34,12 +34,11 @@
     "start": "next start",
     "lint": "eslint",
     "tauri:dev": "STORAGE_MODE= NEXT_PUBLIC_SUPABASE_URL= tauri dev",
-    "tauri:prepare": "STORAGE_MODE= NEXT_PUBLIC_SUPABASE_URL= TAURI=1 npm run build && rm -rf .tauri-dist && cp -R .next/standalone .tauri-dist && mv .tauri-dist/node_modules .tauri-dist/deps && cp -R .next/static .tauri-dist/.next/static && cp -R public .tauri-dist/public",
+    "tauri:prepare": "STORAGE_MODE= NEXT_PUBLIC_SUPABASE_URL= TAURI=1 npm run build && node scripts/prepare-tauri-dist.mjs",
     "tauri:build": "STORAGE_MODE= NEXT_PUBLIC_SUPABASE_URL= TAURI=1 tauri build",
     "test": "npx playwright test --project=functional",
     "test:unit": "vitest run",
-    "test:cloud-smoke": "PLAYWRIGHT_SKIP_WEBSERVER=1 npx playwright test --project=cloud-smoke",
-    "test:demo": "npx playwright test --project=demo"
+    "test:cloud-smoke": "PLAYWRIGHT_SKIP_WEBSERVER=1 npx playwright test --project=cloud-smoke"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.2",

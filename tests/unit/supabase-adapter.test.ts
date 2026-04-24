@@ -145,6 +145,95 @@ describe("SupabaseAdapter.listNotes — buildTree", () => {
   });
 });
 
+describe("SupabaseAdapter.searchNoteFiles", () => {
+  it("uses the indexed fts column and maps results to note files", async () => {
+    const calls: Array<[string, unknown]> = [];
+    const rows = [
+      {
+        path: "Projects/alpha",
+        name: "alpha",
+        content: "Alpha project note",
+        modified_at: "2026-01-02T03:04:05.000Z",
+      },
+    ];
+    const query = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockImplementation((column: string, value: unknown) => {
+        calls.push([column, value]);
+        return query;
+      }),
+      textSearch: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+      like: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
+    };
+    const mockSupa = {
+      from: vi.fn().mockReturnValue(query),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const result = await adapter.searchNoteFiles("alpha project", 5);
+
+    expect(mockSupa.from).toHaveBeenCalledWith("notes");
+    expect(query.select).toHaveBeenCalledWith("path, name, content, modified_at");
+    expect(calls).toContainEqual(["user_id", "user1"]);
+    expect(calls).toContainEqual(["is_trashed", false]);
+    expect(calls).toContainEqual(["is_folder", false]);
+    expect(query.textSearch).toHaveBeenCalledWith("fts", "alpha project", {
+      type: "websearch",
+      config: "english",
+    });
+    expect(query.order).toHaveBeenCalledWith("modified_at", { ascending: false });
+    expect(query.limit).toHaveBeenCalledWith(5);
+    expect(result).toEqual([
+      {
+        relPath: "Projects/alpha.md",
+        name: "alpha",
+        content: "Alpha project note",
+        modifiedAt: new Date("2026-01-02T03:04:05.000Z"),
+      },
+    ]);
+  });
+
+  it("applies folder and tag filters to indexed search", async () => {
+    const query = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      textSearch: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      like: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+    const mockSupa = {
+      from: vi.fn().mockReturnValue(query),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.searchNoteFiles("alpha", 10, { folder: "/Projects/", tag: "launch" });
+
+    expect(query.like).toHaveBeenCalledWith("path", "Projects/%");
+    expect(query.ilike).toHaveBeenCalledWith("content", "%#launch%");
+  });
+
+  it("returns an empty list for short queries without touching Supabase", async () => {
+    const mockSupa = {
+      from: vi.fn(),
+    };
+
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await expect(adapter.searchNoteFiles("a")).resolves.toEqual([]);
+    expect(mockSupa.from).not.toHaveBeenCalled();
+  });
+});
+
 describe("SupabaseAdapter.deleteNote — folder trash preserves child paths", () => {
   it("sets each child's own path as original_path when trashing a folder", async () => {
     const updateCalls: { data: Record<string, unknown>; id: string }[] = [];
@@ -152,7 +241,7 @@ describe("SupabaseAdapter.deleteNote — folder trash preserves child paths", ()
     const mockSupa = {
       from: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockImplementation(function (this: unknown, _col: string, val: string) {
+          eq: vi.fn().mockImplementation(function (this: unknown) {
             // Return folder target on first chain, children on second
             const self = this as { _eqCount?: number };
             if (!self._eqCount) self._eqCount = 0;

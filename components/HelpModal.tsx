@@ -5,7 +5,6 @@ import {
   X,
   Keyboard,
   Search,
-  FileText,
   CalendarDays,
   Zap,
   Maximize2,
@@ -17,8 +16,6 @@ import {
   Globe,
   BookOpen,
   Eye,
-  Code,
-  Columns,
   Trash2,
   Type,
   Sun,
@@ -134,7 +131,7 @@ const features: Feature[] = [
   {
     icon: <Download size={14} />,
     label: "Export",
-    description: "Download individual notes or export all as a ZIP from the sidebar footer.",
+    description: "Download individual notes or export your markdown files as a ZIP from the sidebar footer.",
   },
   {
     icon: <Trash2 size={14} />,
