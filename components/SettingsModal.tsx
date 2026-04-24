@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Plus, Trash2, Check, ChevronDown, LogOut, Sparkles, Zap, Globe, Server, Brain, Eye, EyeOff, Terminal } from "lucide-react";
+import { X, Plus, Trash2, Check, ChevronDown, LogOut, Sparkles, Zap, Globe, Server, Brain, Eye, EyeOff, Terminal, HardDrive, Cloud } from "lucide-react";
 import ObsidianImport from "./ObsidianImport";
 import {
   PROVIDER_PRESETS,
@@ -13,10 +13,12 @@ import {
   type ProviderConfig,
   type ProviderPreset,
 } from "@/lib/providers";
+import type { VaultStatus } from "@/lib/vault-status";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  vaultStatus: VaultStatus | null;
 }
 
 // Popular providers shown as cards in the empty state
@@ -32,7 +34,7 @@ const PROVIDER_ICONS: Record<string, { icon: typeof Sparkles; color: string }> =
   ollama: { icon: Server, color: "text-emerald-400" },
 };
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, vaultStatus }: SettingsModalProps) {
   const [settings, setSettings] = useState<AISettings>(() => loadSettings());
   const [showPresets, setShowPresets] = useState(false);
   const [showAllProviders, setShowAllProviders] = useState(false);
@@ -286,6 +288,45 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Vault Mode */}
+          <div className="rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
+                {vaultStatus?.mode === "cloud" ? (
+                  <Cloud size={15} className="text-accent" />
+                ) : (
+                  <HardDrive size={15} className="text-accent" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-sm font-medium text-foreground">Vault Mode</span>
+                    <p className="text-[11px] text-muted mt-0.5">
+                      {vaultStatus?.mode === "cloud" ? "Cloud Workspace" : "Local Vault"}
+                    </p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-muted bg-background border border-sidebar-border rounded-full px-2 py-1">
+                    {vaultStatus?.storageDriver || "filesystem"}
+                  </span>
+                </div>
+                <p className="text-xs text-muted leading-relaxed mt-2">
+                  {vaultStatus?.mode === "cloud"
+                    ? "Notes are stored in hosted Supabase storage with account auth, publishing, and indexed search."
+                    : "Markdown files are primary and live in your local vault at ~/SecondBrain. Core note editing works offline."}
+                </p>
+                <div className="mt-2 text-[11px] text-muted/80">
+                  Root: <span className="font-mono text-foreground/80">{vaultStatus?.rootLabel || "~/SecondBrain"}</span>
+                </div>
+                {vaultStatus?.warnings.map((warning) => (
+                  <p key={warning} className="text-[11px] text-amber-300/80 mt-2">
+                    {warning}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Novyx Memory Key Section */}
           {(
             <div className="rounded-lg overflow-hidden border border-purple-500/20" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(168,85,247,0.02) 100%)" }}>
@@ -403,7 +444,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </summary>
             <div className="px-4 pb-3 space-y-2.5">
               <p className="text-[11px] text-muted leading-relaxed">
-                Install <code className="text-[10px] bg-muted-bg px-1 py-0.5 rounded">novyx-mcp</code> in Claude Desktop or Cursor to give your AI agent persistent memory. Memories sync to Vault automatically.
+                Install <code className="text-[10px] bg-muted-bg px-1 py-0.5 rounded">novyx-mcp</code> in Claude Desktop or Cursor to give your AI agent persistent memory. Memories appear in Vault through the Novyx Memory API.
               </p>
               <div className="relative">
                 <pre className="text-[10px] bg-background rounded-md border border-sidebar-border p-2.5 overflow-x-auto font-mono text-muted leading-relaxed">

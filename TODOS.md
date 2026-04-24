@@ -1,119 +1,47 @@
 # TODOS
 
-## Launch
+## Product Direction
 
-### Make repo public on GitHub
+Novyx Vault is being tightened around one target: Obsidian-class markdown knowledge work, plus durable AI memory that is inspectable, reversible, and portable.
 
-**What:** Flip novyxlabs/novyx-vault from private to public.
+## P0
 
-**Why:** Vault is positioned as an open-source reference implementation for building on Novyx Core. Can't launch without public access.
+### Consolidate navigation around Vault, Capture, and Memory
 
-**Context:** LICENSE (MIT) and CONTRIBUTING.md already added. Sensitive env vars stripped. Security audit passed (March 12). QA audit passed (March 13). All blockers cleared.
+The sidebar should keep advanced agent-control surfaces out of the primary flow. Core surfaces are notes, search, graph, capture, memory, tags, tasks, stats, settings, import, export, and trash.
 
-**Effort:** XS
-**Priority:** P0
-**Depends on:** None
+### Remove stale marketing and demo collateral
 
-### Demo video
+Launch drafts, SEO audit artifacts, demo-only Playwright projects, and non-Obsidian comparison pages should stay out of the product repo unless they are actively maintained.
 
-**What:** Record a 2-3 minute walkthrough showing Vault's key features — notes, AI chat with memory, Control, Draft Review.
+### Fix production truth gaps
 
-**Why:** Landing page needs a hero video. "Show don't tell" for the Obsidian-alternative positioning.
+Audit README, public pages, and FAQ for claims about sync, offline AI, cloud mode, provider security, and desktop readiness. Claims must match implementation.
 
-**Context:** Plan saved to `memory/demo-video-plan.md`. Build AFTER launch — don't block on it.
+## P1
 
-**Effort:** M
-**Priority:** P1
-**Depends on:** Repo public
+### Replace full-vault scan search
 
-## Frontend
+Cloud mode should use indexed database search. Desktop mode should use a local index instead of repeatedly walking every markdown file.
 
-### Tauri desktop build verification
+### Unify Capture
 
-**What:** Full test pass of Tauri desktop build — compile, launch, create note, verify offline mode.
+Brain Dump, Voice Capture, Clip Remix, Link Ingest, and Quick Capture should feel like one capture workflow, not unrelated modals.
 
-**Why:** Desktop app is part of the free tier story. Last verified March 10 — needs re-check after recent changes (Mission Control, Draft Review, Control rewire).
+### Unify Memory
 
-**Context:** `tauri:dev`/`tauri:build` scripts blank STORAGE_MODE and SUPABASE_URL. Port 3333. 21MB release binary last time. DMG needs `brew install create-dmg`.
+Memory Dashboard, Reflect, Audit Trail, Rollback History, and Thinking Evolution should converge into a single Memory surface with tabs or subviews.
 
-**Effort:** M
-**Priority:** P2
-**Depends on:** None
+### Verify desktop-local behavior
 
-### Mobile responsive pass on Mission Control
+Build and run the Tauri app, verify local markdown storage, offline note CRUD, import/export, and basic capture behavior.
 
-**What:** Test and fix Mission Control layout on mobile viewports (375px, 390px).
+## P2
 
-**Why:** Mission Control is a full-screen overlay — if it breaks on mobile, users can't close it or navigate tabs.
+### Attachments and Obsidian import depth
 
-**Context:** Built March 14, not yet tested on mobile viewports. Escape key handler added but touch users need visible close button.
+Support common Obsidian vault realities: attachments, embedded images, nested folders, frontmatter, aliases, and external edits.
 
-**Effort:** S
-**Priority:** P2
-**Depends on:** None
+### Advanced agent-control quarantine
 
-### Drafts tab loading state on API error
-
-**What:** Drafts tab in Mission Control shows infinite spinner when the drafts API returns 500.
-
-**Why:** QA finding from March 14 — catch block sets empty array but spinner doesn't resolve visually.
-
-**Context:** `components/MissionControl.tsx` line ~170. The `fetchDrafts` catch sets `setDrafts([])` and `setDraftsLoading(false)` — may be a race condition or the loading state isn't checked correctly in the render.
-
-**Effort:** S
-**Priority:** P2
-**Depends on:** None
-
-## Backend
-
-## Testing
-
-## Completed
-
-### Voice Capture
-**What:** Record, transcribe (local Whisper or cloud API), 18+ providers), and AI-structure voice memos into markdown notes.
-**Completed:** v0.3.0 (2026-03-17)
-
-### Self-serve billing via Stripe
-**What:** Pro upgrade flow with Stripe Checkout, customer portal for subscription management.
-**Completed:** v0.3.0 (2026-03-17)
-
-### QA audit — mobile responsive fixes
-**What:** Hamburger nav on mobile, comparison table overflow fix, footer touch targets.
-**Completed:** v0.3.0 (2026-03-18)
-
-### Mission Control dashboard
-**What:** Full mission control UI with approvals, activity stream, drafts, policies, health tabs.
-**Completed:** v0.2.0 (2026-03-14)
-
-### Draft Review UI
-**What:** Visual draft review with diff view, merge/reject, branch overview.
-**Completed:** v0.2.0 (2026-03-14)
-
-### Security audit fixes
-**What:** 8 findings fixed — XSS, path traversal, SSRF, import route guard.
-**Completed:** v0.2.0 (2026-03-15)
-
-### Control wired to live Core endpoints
-**What:** Dropped NOVYX_CONTROL_URL, all Control routes now proxy through Novyx RAM API.
-**Completed:** v0.2.0 (2026-03-14)
-
-### Landing page repositioned as Obsidian alternative
-**What:** Complete rewrite — "A notes app where your AI actually remembers you."
-**Completed:** v0.1.0 (2026-03-12)
-
-### E2E tests for Mission Control
-**What:** 8 Playwright tests covering open/close, tabs, Escape key, empty states, error states, SSE cleanup.
-**Completed:** v0.3.0 (2026-03-15)
-
-### E2E tests for Draft Review
-**What:** 3 Playwright tests covering tab access, draft list/empty state, close/reopen.
-**Completed:** v0.3.0 (2026-03-15)
-
-### Novyx SDK upgrade to v2.11.0
-**What:** Upgraded `novyx` 2.10.0 → 2.11.0. Rewrote lib/control.ts and lib/drafts.ts from raw fetch to SDK methods. Most hardcoded Novyx API URLs removed from the lib layer — `lib/novyx.ts` provisioning and `app/api/memory/health` URL derivation landed later as launch-gate follow-ups.
-**Completed:** v0.3.0 (2026-03-24)
-
-### E2E tests for core views
-**What:** 85 Playwright tests covering UsageView, AuditTrailView, RollbackHistoryView, onboarding, error boundaries.
-**Completed:** v0.1.0 (2026-03-12)
+Mission Control and governed action APIs can remain available under Advanced, but should not shape the primary Vault product.

@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+const scriptSrc = [
+  "script-src 'self' 'unsafe-inline'",
+  process.env.NODE_ENV === "development" ? "'unsafe-eval'" : "",
+  "https://plausible.io",
+]
+  .filter(Boolean)
+  .join(" ");
+
 const nextConfig: NextConfig = {
   devIndicators: false,
   poweredByHeader: false,
@@ -22,7 +30,7 @@ const nextConfig: NextConfig = {
         key: "Content-Security-Policy",
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' https://plausible.io",
+          scriptSrc,
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: blob: https://avatars.githubusercontent.com",
           "font-src 'self'",

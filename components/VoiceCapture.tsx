@@ -21,6 +21,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { loadSettings, getActiveProvider } from "@/lib/providers";
+import { buildCaptureNoteContent, buildCaptureNotePath } from "@/lib/capture";
 import { transcribeLocal, isLocalWhisperSupported } from "@/lib/transcribe";
 
 interface VoiceCaptureProps {
@@ -51,7 +52,6 @@ export default function VoiceCapture({
   const [micError, setMicError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
   const [title, setTitle] = useState("");
-  const [folder, setFolder] = useState("/");
   const [structuredContent, setStructuredContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -75,7 +75,6 @@ export default function VoiceCapture({
       setMicError(null);
       setTranscript("");
       setTitle("");
-      setFolder("/");
       setStructuredContent("");
       setError(null);
       setIsSaving(false);
@@ -436,15 +435,14 @@ export default function VoiceCapture({
     setError(null);
 
     try {
-      const fullContent = `# ${title.trim()}\n\n${structuredContent}`;
-      const sanitizedTitle = title.trim().replace(/[/\\:*?"<>|]/g, "");
-      const folderPath = folder
-        .trim()
-        .replace(/\/+$/, "")
-        .replace(/^\/+/, "");
-      const notePath = folderPath
-        ? `${folderPath}/${sanitizedTitle}.md`
-        : `${sanitizedTitle}.md`;
+      const capturedAt = new Date();
+      const fullContent = buildCaptureNoteContent({
+        kind: "voice",
+        title: title.trim(),
+        content: structuredContent,
+        capturedAt,
+      });
+      const notePath = buildCaptureNotePath("voice", title.trim(), capturedAt);
 
       const res = await fetch("/api/notes", {
         method: "POST",
@@ -781,15 +779,11 @@ export default function VoiceCapture({
               <div>
                 <label className="text-xs text-muted flex items-center gap-1 mb-1.5">
                   <FolderOpen size={11} />
-                  Folder
+                  Vault Path
                 </label>
-                <input
-                  type="text"
-                  value={folder}
-                  onChange={(e) => setFolder(e.target.value)}
-                  placeholder="/"
-                  className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-rose-500/50 font-mono text-xs"
-                />
+                <div className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-muted font-mono text-xs">
+                  Captures/YYYY-MM-DD
+                </div>
               </div>
 
               {/* Tags */}

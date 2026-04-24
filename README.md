@@ -27,22 +27,22 @@
 
 ## The problem
 
-AI in note-taking apps doesn't remember you. Notion AI, Obsidian plugins, Reflect, Mem — they all do the same thing: search your notes when you ask a question (RAG). Close the tab, start a new session, and the AI starts from zero.
+AI in note-taking apps doesn't remember you. Obsidian plugins and most AI note tools do the same thing: search your notes when you ask a question (RAG). Close the tab, start a new session, and the AI starts from zero.
 
 **Novyx Vault is different.** Your AI builds persistent memory from your notes and conversations — memory that survives sessions, consolidates over time, and can be rolled back when it goes wrong. The longer you use it, the smarter it gets.
 
 ## What makes it different
 
-| | Novyx Vault | Obsidian | Notion | Reflect |
-|---|---|---|---|---|
-| **AI remembers across sessions** | Yes — persistent memory | No | No | No |
-| **Memory rollback & audit trail** | Built in | No | Page history only | No |
-| **AI discovers hidden connections** | Built in (Ghost Connections) | No | No | No |
-| **Bring your own AI provider** | 20+ providers | Plugin-dependent | No | 2 models |
-| **Open source** | MIT | Source-available | No | No |
-| **Local-first / offline** | Yes (Tauri desktop) | Yes | No | No |
-| **Markdown files** | Yes | Yes | No | No |
-| **Knowledge graph** | Yes | Yes | No | No |
+| | Novyx Vault | Obsidian |
+|---|---|---|
+| **AI remembers across sessions** | Yes — persistent memory | No |
+| **Memory rollback & audit trail** | Built in | No |
+| **AI discovers hidden connections** | Built in (Ghost Connections) | No |
+| **Bring your own AI provider** | Built in | Plugin-dependent |
+| **Open source** | MIT | Source-available |
+| **Desktop-local files** | Yes (Tauri desktop) | Yes |
+| **Markdown files** | Yes | Yes |
+| **Knowledge graph** | Yes | Yes |
 
 ## Quick start
 
@@ -114,16 +114,16 @@ The core differentiator. Powered by [Novyx Core](https://novyxlabs.com).
 - **Weekly review** — Automated summary of your writing activity.
 - **Writing coach** — AI feedback on clarity, structure, and tone.
 
-### 20+ AI providers (BYOK)
+### AI providers (BYOK)
 
 OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Nvidia NIM, Hyperbolic, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter, Ollama, LM Studio.
 
 Keys are encrypted at rest in cloud mode and stay on your device in desktop mode. Switch providers without losing memory or notes.
 
-### Local-first & open source
+### Desktop-local & open source
 
-- **Desktop app** — Native via Tauri (macOS, Windows, Linux). Notes stored as plain markdown in `~/SecondBrain/`. Works offline.
-- **Cloud sync** — Optional Supabase-powered cloud with row-level security.
+- **Desktop app** — Native via Tauri (macOS, Windows, Linux). Notes stored as plain markdown in `~/SecondBrain/`. Core note editing works offline.
+- **Cloud mode** — Optional Supabase-powered hosted mode with auth, sharing, and publishing.
 - **MIT licensed** — Inspect, contribute, or self-host.
 
 ---
@@ -153,7 +153,7 @@ Memories created in Claude Code appear in Vault. Memories from Vault are availab
 
 ## Cloud deployment
 
-Cloud mode adds auth, sync, sharing, and publishing via Supabase.
+Cloud mode adds auth, account-backed storage, sharing, and publishing via Supabase.
 
 ### Environment variables
 
@@ -198,7 +198,7 @@ Or connect to [Vercel](https://vercel.com) for automatic deployments.
 
 Next.js 16 &middot; React 19 &middot; TypeScript &middot; Tailwind CSS 4 &middot; CodeMirror 6 &middot; Novyx SDK &middot; Supabase &middot; Tauri v2
 
-**53 components &middot; 65 API routes &middot; 20+ AI providers**
+**52 components &middot; 64 API routes &middot; 18+ AI providers**
 
 ## Project structure
 

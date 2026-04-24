@@ -57,7 +57,7 @@ export default function ImportPrompt() {
                     Found {noteCount} local notes
                   </p>
                   <p className="text-xs text-[var(--text-secondary,#a1a1aa)] mb-3">
-                    Import your local ~/SecondBrain notes to the cloud?
+                    Copy your local ~/SecondBrain notes into the hosted cloud workspace?
                   </p>
                   <div className="flex items-center gap-2">
                     <button

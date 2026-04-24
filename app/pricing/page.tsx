@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, ArrowRight } from "lucide-react";
+import { Check } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -13,8 +13,9 @@ const free = [
   "Markdown notes with live preview",
   "Wiki-links & backlinks",
   "Knowledge graph",
-  "20+ AI providers (BYOK)",
-  "Desktop app (offline, local files)",
+  "BYOK AI provider setup",
+  "Desktop/local markdown files",
+  "Publishing",
   "Community support",
 ];
 
@@ -27,17 +28,16 @@ const pro = [
   "Audit Trail with chain verification",
   "Voice Capture & Transcription",
   "Daily Digest Emails",
-  "Cloud Sync & Sharing",
+  "Hosted cloud access & publishing",
   "Priority support",
 ];
 
 const enterprise = [
-  "Everything in Pro",
   "Self-hosted deployment",
-  "SSO / SAML",
-  "Custom memory retention",
-  "Dedicated support",
-  "SLA",
+  "Migration planning",
+  "Architecture review",
+  "Priority onboarding",
+  "Custom commercial terms",
 ];
 
 export default function PricingPage() {
@@ -63,7 +63,7 @@ export default function PricingPage() {
             Pricing
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Free to start. Upgrade when your vault needs a memory.
+            Free to start. Upgrade when you want persistent memory and hosted cloud access.
           </p>
         </section>
 
@@ -112,8 +112,7 @@ export default function PricingPage() {
               href="/login"
               className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              Start Free Trial
-              <ArrowRight size={16} />
+              Get Pro Access
             </a>
           </div>
 
@@ -121,7 +120,7 @@ export default function PricingPage() {
           <div className="rounded-xl border border-sidebar-border bg-card-bg p-6 flex flex-col">
             <h2 className="text-lg font-bold mb-1">Enterprise</h2>
             <p className="text-3xl font-bold mb-1">Custom</p>
-            <p className="text-sm text-muted mb-6">Contact us</p>
+            <p className="text-sm text-muted mb-6">Deployment & rollout support</p>
             <ul className="space-y-3 mb-8 flex-1">
               {enterprise.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-muted">
@@ -155,7 +154,6 @@ export default function PricingPage() {
             <Link href="/features" className="hover:text-foreground transition-colors">Features</Link>
             <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
             <Link href="/compare/obsidian" className="hover:text-foreground transition-colors">vs Obsidian</Link>
-            <Link href="/compare/notion" className="hover:text-foreground transition-colors">vs Notion</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           </nav>

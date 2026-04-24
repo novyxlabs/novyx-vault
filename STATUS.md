@@ -69,7 +69,7 @@
 |---|---|---|
 | Remember / Recall | `/api/memory` | Working |
 | Memory context (per-note) | `/api/memory/context` | Working |
-| Memory dashboard | `MemoryDashboard` | Working |
+| Memory surface | `MemoryDashboard` | Working |
 | Knowledge graph | `MemoryGraph`, `/api/memory/graph` | Pro-gated |
 | Insights | `/api/memory/insights` | Pro-gated |
 | Audit trail | `/api/memory/audit` | Pro-gated |
@@ -160,7 +160,7 @@
 - [x] localStorage cleared on sign-out (prevents cross-user key leakage)
 - [x] Server-side sign-out (httpOnly cookies can't be cleared client-side)
 - [x] SSRF prevention on provider base URLs
-- [x] API keys stripped before cloud sync
+- [x] API keys stripped before cloud settings persistence
 - [x] Auth cookies manually expired on sign-out
 
 ---

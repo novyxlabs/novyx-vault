@@ -54,7 +54,7 @@ export default function ObsidianImport() {
         <h3 className="text-sm font-medium text-foreground">Import from Obsidian</h3>
       </div>
       <p className="text-xs text-muted leading-relaxed">
-        Upload a .zip of your Obsidian vault. Notes, folders, wiki-links, and tags will be preserved.
+        Upload a .zip of your Obsidian vault. In local mode, imported markdown becomes files in ~/SecondBrain; in cloud mode, it is stored in the hosted workspace.
       </p>
 
       <input

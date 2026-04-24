@@ -21,6 +21,11 @@ export interface NoteFile {
   modifiedAt: Date;
 }
 
+export interface SearchFilters {
+  folder?: string;
+  tag?: string;
+}
+
 export interface StorageAdapter {
   // CRUD
   listNotes(dirPath?: string): Promise<NoteEntry[]>;
@@ -38,6 +43,7 @@ export interface StorageAdapter {
 
   // Walk all notes (replaces duplicated walkFiles across routes)
   walkAllNotes(): Promise<NoteFile[]>;
+  searchNoteFiles?(query: string, maxResults?: number, filters?: SearchFilters): Promise<NoteFile[]>;
 
   // Export (binary content for ZIP)
   exportAll(): Promise<{ name: string; data: Buffer }[]>;

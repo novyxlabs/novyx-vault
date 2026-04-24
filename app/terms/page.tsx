@@ -38,14 +38,14 @@ export default function TermsPage() {
           Terms of Service
         </h1>
         <p className="text-sm text-muted mb-8">
-          Last updated: March 2026
+          Last updated: April 2026
         </p>
 
         <Section title="1. What Novyx Vault Is">
           Novyx Vault is an open-source, AI-powered note-taking application built
           by Novyx Labs. You can use it locally on your own machine (desktop
-          mode) or with a cloud account (cloud mode) for syncing and
-          collaboration features.
+          mode) or with a cloud account (cloud mode) for hosted storage,
+          publishing, and account features.
         </Section>
 
         <Section title="2. Accounts">
@@ -64,11 +64,12 @@ export default function TermsPage() {
 
         <Section title="4. AI Features">
           Novyx Vault connects to AI providers (OpenAI, Anthropic, and others)
-          using API keys you provide. Your API keys are stored in your browser
-          only and are sent to our server solely to proxy requests to the AI
-          provider. We do not store your AI provider API keys on our servers.
-          Novyx-powered memory features (remember, recall, cortex) are processed
-          through the Novyx API using a per-user key provisioned at sign-up.
+          using API keys you provide. In desktop mode, those keys stay on your
+          machine. In cloud mode, those keys are stored encrypted at rest and
+          decrypted server-side only to fulfill your requests to the provider you
+          configured. Novyx-powered memory features (remember, recall, cortex)
+          are processed through the Novyx API using a per-user key provisioned
+          at sign-up.
         </Section>
 
         <Section title="5. Acceptable Use">

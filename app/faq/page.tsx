@@ -18,7 +18,7 @@ const faqs = [
   {
     question: "Is Novyx Vault free?",
     answer:
-      "Yes. The free tier includes the full markdown editor, wiki-links, backlinks, knowledge graph, 20+ AI providers (BYOK), cloud sync, and publishing. The $9/month Pro plan adds persistent AI memory, Ghost Connections, cortex insights, voice capture, memory rollback, and the full audit trail.",
+      "Yes. The free tier includes the markdown editor, wiki-links, backlinks, knowledge graph, BYOK provider setup, and desktop/local storage. The $9/month Pro plan adds persistent AI memory, Ghost Connections, cortex insights, voice capture, audit history, and hosted cloud features such as publishing and account-backed access.",
   },
   {
     question: "How does AI memory work in Novyx Vault?",
@@ -28,7 +28,7 @@ const faqs = [
   {
     question: "Can I use my own AI provider with Novyx Vault?",
     answer:
-      "Yes. Vault supports 20+ AI providers through BYOK (Bring Your Own Key), including OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, and more. In cloud mode your keys are encrypted at rest and decrypted server-side only for your AI requests; in desktop mode they stay on your machine. Either way, Novyx Labs never shares them beyond the provider you configured.",
+      "Yes. Vault supports many providers through BYOK (Bring Your Own Key), including OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, and OpenAI-compatible endpoints. In cloud mode your keys are encrypted at rest and used only for your AI requests; in desktop mode they stay on your machine.",
   },
   {
     question: "Is Novyx Vault open source?",
@@ -38,27 +38,27 @@ const faqs = [
   {
     question: "How does Novyx Vault compare to Obsidian?",
     answer:
-      "Both use markdown and support wiki-links, backlinks, and a knowledge graph. Vault wins on AI memory (persistent across sessions), BYOK provider breadth (20+), open source (MIT), and free cloud sync. Obsidian wins on plugin ecosystem (2,000+), mobile apps, and maturity. See our detailed comparison at /compare/obsidian.",
+      "Both use markdown and support wiki-links, backlinks, and a knowledge graph. Vault's difference is persistent AI memory, memory rollback, AI-discovered connections, BYOK provider control, and MIT-licensed source. Obsidian is still stronger on plugins, mobile apps, multi-device file services, and ecosystem depth. See the detailed comparison at /compare/obsidian.",
   },
   {
     question: "Can I self-host Novyx Vault?",
     answer:
-      "Yes. Since Vault is open source, you can self-host the entire application on your own infrastructure. It is built with Next.js, React, TypeScript, and Supabase. The desktop app also runs fully locally without any cloud dependency.",
+      "Yes. Since Vault is open source, you can self-host the app on your own infrastructure. It is built with Next.js, React, TypeScript, and Supabase. Desktop/local mode stores notes as files without requiring a hosted Vault account.",
   },
   {
     question: "Does Novyx Vault work offline?",
     answer:
-      "Yes. The desktop app stores notes as plain markdown files on your machine and works completely offline with no internet connection required. The web app requires an internet connection for cloud sync but caches your notes locally.",
+      "Core note editing works offline in desktop/local mode because notes are plain markdown files on your machine. AI requests, provider setup, publishing, hosted cloud access, and account features require network access unless you configure a local model.",
   },
   {
     question: "What AI providers does Novyx Vault support?",
     answer:
-      "Vault supports OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter, Nvidia NIM, Hyperbolic, and any OpenAI-compatible API endpoint.",
+      "Vault supports OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, LM Studio, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter, Nvidia NIM, Hyperbolic, and OpenAI-compatible API endpoints.",
   },
   {
     question: "Is my data private in Novyx Vault?",
     answer:
-      "Yes. In desktop mode, your notes are plain markdown files on your machine that never leave your computer. In cloud mode, data is stored in Supabase with row-level security. AI provider API keys are encrypted at rest in cloud mode and stay on your machine in desktop mode. The codebase is open source so you can verify exactly how your data is handled.",
+      "In desktop mode, your notes are plain markdown files on your machine. In cloud mode, data is stored in Supabase with row-level security. AI provider API keys are encrypted at rest in cloud mode and stay on your machine in desktop mode. The codebase is open source so you can verify exactly how your data is handled.",
   },
   {
     question: "Can I import from Obsidian?",
@@ -166,7 +166,6 @@ export default function FAQPage() {
             <Link href="/features" className="hover:text-foreground transition-colors">Features</Link>
             <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
             <Link href="/compare/obsidian" className="hover:text-foreground transition-colors">vs Obsidian</Link>
-            <Link href="/compare/notion" className="hover:text-foreground transition-colors">vs Notion</Link>
           </nav>
         </div>
       </footer>

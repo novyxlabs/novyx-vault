@@ -5,6 +5,7 @@ import { Brain, Sparkles, Save, ArrowLeft, Loader2, X, FileText, FolderOpen } fr
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { loadSettings, getActiveProvider } from "@/lib/providers";
+import { buildCaptureNoteContent, buildCaptureNotePath } from "@/lib/capture";
 
 interface BrainDumpProps {
   isOpen: boolean;
@@ -20,7 +21,6 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
   const [phase, setPhase] = useState<Phase>("input");
   const [rawText, setRawText] = useState("");
   const [title, setTitle] = useState("");
-  const [folder, setFolder] = useState("/");
   const [structuredContent, setStructuredContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,7 +32,6 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
       setPhase("input");
       setRawText("");
       setTitle("");
-      setFolder("/");
       setStructuredContent("");
       setError(null);
       setIsSaving(false);
@@ -112,15 +111,14 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
     setError(null);
 
     try {
-      // Build the full note content with title as H1
-      const fullContent = `# ${title.trim()}\n\n${structuredContent}`;
-
-      // Build the path
-      const sanitizedTitle = title.trim().replace(/[/\\:*?"<>|]/g, "");
-      const folderPath = folder.trim().replace(/\/+$/, "").replace(/^\/+/, "");
-      const notePath = folderPath
-        ? `${folderPath}/${sanitizedTitle}.md`
-        : `${sanitizedTitle}.md`;
+      const capturedAt = new Date();
+      const fullContent = buildCaptureNoteContent({
+        kind: "brain-dump",
+        title: title.trim(),
+        content: structuredContent,
+        capturedAt,
+      });
+      const notePath = buildCaptureNotePath("brain-dump", title.trim(), capturedAt);
 
       const res = await fetch("/api/notes", {
         method: "POST",
@@ -285,15 +283,11 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
               <div>
                 <label className="text-xs text-muted flex items-center gap-1 mb-1.5">
                   <FolderOpen size={11} />
-                  Folder
+                  Vault Path
                 </label>
-                <input
-                  type="text"
-                  value={folder}
-                  onChange={(e) => setFolder(e.target.value)}
-                  placeholder="/"
-                  className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-purple-500/50 font-mono text-xs"
-                />
+                <div className="w-full bg-card-bg border border-sidebar-border rounded-lg px-3 py-2 text-muted font-mono text-xs">
+                  Captures/YYYY-MM-DD
+                </div>
               </div>
 
               {/* Tags */}

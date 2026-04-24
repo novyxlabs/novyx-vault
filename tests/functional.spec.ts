@@ -1,7 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 const TEST_NOTE = `_pw_test_note_${Date.now()}`;
-const TEST_FOLDER = `_pw_test_folder_${Date.now()}`;
 
 // Helper: create a note via API
 async function createNote(baseURL: string, path: string, content: string) {
@@ -237,6 +239,42 @@ test.describe("API routes", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toHaveProperty("results");
+  });
+
+  test("GET /api/vault/status returns local vault status", async ({ baseURL }) => {
+    const res = await fetch(`${baseURL}/api/vault/status`);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data).toMatchObject({
+      mode: "local",
+      storageDriver: "filesystem",
+      rootLabel: "~/SecondBrain",
+      capabilities: {
+        localFiles: true,
+        offlineNoteEditing: true,
+        crossDeviceSync: false,
+      },
+    });
+  });
+
+  test("local mode writes notes as markdown files under ~/SecondBrain", async ({ baseURL }) => {
+    const notePath = `_pw_local_disk_${Date.now()}`;
+    const diskPath = path.join(os.homedir(), "SecondBrain", `${notePath}.md`);
+    const content = "# Local Disk Test\n\nPlain markdown on disk.";
+
+    try {
+      const res = await fetch(`${baseURL}/api/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: notePath, content }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(fs.existsSync(diskPath)).toBe(true);
+      expect(fs.readFileSync(diskPath, "utf8")).toBe(content);
+    } finally {
+      fs.rmSync(diskPath, { force: true });
+    }
   });
 
   test("POST /api/notes with no path returns 400", async ({ baseURL }) => {
@@ -523,7 +561,7 @@ test.describe("Dashboard views", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    const usageBtn = page.locator('button[title="Usage & limits"]');
+    const usageBtn = page.locator('button[title="Usage and limits"]');
     await expect(usageBtn).toBeVisible({ timeout: 5000 });
     await usageBtn.click();
 
@@ -535,7 +573,7 @@ test.describe("Dashboard views", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    const auditBtn = page.locator('button[title="Audit trail"]');
+    const auditBtn = page.locator('button[title="Audit trail for memory operations"]');
     await expect(auditBtn).toBeVisible({ timeout: 5000 });
     await auditBtn.click();
 
@@ -557,7 +595,7 @@ test.describe("Dashboard views", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    const memoryBtn = page.locator('button[title="Memory dashboard"]');
+    const memoryBtn = page.locator('button[title="Memory timeline, learned facts, graph, audit, and rollback"]');
     await expect(memoryBtn).toBeVisible({ timeout: 5000 });
     await memoryBtn.click();
 
@@ -594,6 +632,18 @@ test.describe("Settings → provider management", () => {
 
     // Should show AI Providers header
     await expect(page.locator("text=AI Providers").first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test("shows local vault mode copy in settings", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    const dialog = await openSettings(page);
+
+    await expect(dialog.locator("text=Vault Mode").first()).toBeVisible({ timeout: 3000 });
+    await expect(dialog.locator("text=Local Vault").first()).toBeVisible({ timeout: 3000 });
+    await expect(dialog.locator("text=~/SecondBrain").first()).toBeVisible({ timeout: 3000 });
+    await expect(dialog.locator("text=Markdown files are primary").first()).toBeVisible({ timeout: 3000 });
   });
 
   test("shows featured provider cards when no providers configured", async ({ page }) => {
@@ -646,6 +696,35 @@ test.describe("Settings → provider management", () => {
 
     // MCP setup guide should be present as a collapsible details element
     await expect(page.locator("text=Connect via MCP").first()).toBeVisible({ timeout: 3000 });
+  });
+});
+
+test.describe("Vault mode copy", () => {
+  test("public and app copy do not claim cross-device sync", () => {
+    const roots = ["app", "components", "public"].map((dir) => path.join(process.cwd(), dir));
+    const offenders: string[] = [];
+    const blocked = [/cross-device sync/i, /cloud sync/i, /\bsyncing\b/i];
+
+    function walk(dir: string) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+          continue;
+        }
+        if (!/\.(tsx?|jsx?|md|txt|html)$/.test(entry.name)) continue;
+        const content = fs.readFileSync(full, "utf8");
+        for (const pattern of blocked) {
+          if (pattern.test(content)) {
+            offenders.push(path.relative(process.cwd(), full));
+            break;
+          }
+        }
+      }
+    }
+
+    roots.forEach(walk);
+    expect(offenders).toEqual([]);
   });
 });
 
@@ -732,6 +811,44 @@ test.describe("Quick capture", () => {
     // Quick capture should appear
     await expect(page.locator("text=Quick Capture").first()).toBeVisible({ timeout: 5000 });
   });
+
+  test("saves quick capture into the daily Captures folder with metadata", async ({ page }) => {
+    const capturedBodies: { path?: string; content?: string }[] = [];
+
+    await page.route("**/api/notes", async (route) => {
+      const request = route.request();
+      if (request.method() === "POST") {
+        const body = request.postDataJSON() as { path?: string; content?: string };
+        if (body.path?.startsWith("Captures/")) {
+          capturedBodies.push(body);
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ success: true }),
+          });
+          return;
+        }
+      }
+      await route.continue();
+    });
+
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.down("Control");
+    await page.keyboard.down("Shift");
+    await page.keyboard.press("N");
+    await page.keyboard.up("Shift");
+    await page.keyboard.up("Control");
+
+    await page.getByPlaceholder("What's on your mind?").fill("Follow up on the local vault capture workflow");
+    await page.getByRole("button", { name: "Capture" }).click();
+
+    await expect.poll(() => capturedBodies[0]?.path).toContain(`Captures/${new Date().toISOString().slice(0, 10)}/`);
+    expect(capturedBodies[0]?.content).toContain('capture_type: "quick"');
+    expect(capturedBodies[0]?.content).toContain('capture_source: "Quick Capture"');
+    expect(capturedBodies[0]?.content).toContain("Follow up on the local vault capture workflow");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -749,10 +866,9 @@ test.describe("Daily note", () => {
 
     // The daily note path should contain today's date
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const sidebar = page.locator("aside").first();
     // Daily notes typically use date-based names
-    const dayText = sidebar.locator(`text=/${today}|Daily/`);
     // Just verify the editor opened — date format may vary
+    expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   test.afterAll(async () => {
@@ -771,7 +887,7 @@ test.describe("Dashboard close behavior", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Usage & limits"]').click();
+    await page.locator('button[title="Usage and limits"]').click();
     await expect(page.locator("text=Usage & Limits").first()).toBeVisible({ timeout: 5000 });
 
     // Click the backdrop (fixed overlay behind the modal)
@@ -783,11 +899,11 @@ test.describe("Dashboard close behavior", () => {
     await expect(usageHeader).not.toBeVisible({ timeout: 3000 });
   });
 
-  test("Memory dashboard opens and shows tabs", async ({ page }) => {
+  test("Memory surface opens and shows tabs", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Memory dashboard"]').click();
+    await page.locator('button[title="Memory timeline, learned facts, graph, audit, and rollback"]').click();
     const dashboard = page.locator('[aria-label="Memory Dashboard"]');
     await expect(dashboard).toBeVisible({ timeout: 5000 });
 
@@ -1053,7 +1169,7 @@ test.describe("UsageView modal", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Usage & limits"]').click();
+    await page.locator('button[title="Usage and limits"]').click();
     await expect(page.locator("text=Usage & Limits").first()).toBeVisible({ timeout: 5000 });
 
     // After loading, should show either plan info or error message
@@ -1071,7 +1187,7 @@ test.describe("UsageView modal", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Usage & limits"]').click();
+    await page.locator('button[title="Usage and limits"]').click();
     // Target the modal h2 header, not the sidebar button label
     const modalHeader = page.locator("h2:has-text('Usage & Limits')");
     await expect(modalHeader).toBeVisible({ timeout: 5000 });
@@ -1101,7 +1217,7 @@ test.describe("AuditTrailView modal", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Audit trail"]').click();
+    await page.locator('button[title="Audit trail for memory operations"]').click();
     await expect(page.locator("text=Audit Trail").first()).toBeVisible({ timeout: 5000 });
 
     // Wait for data to load
@@ -1123,7 +1239,7 @@ test.describe("AuditTrailView modal", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Audit trail"]').click();
+    await page.locator('button[title="Audit trail for memory operations"]').click();
     const modalHeader = page.locator("h2:has-text('Audit Trail')");
     await expect(modalHeader).toBeVisible({ timeout: 5000 });
 
@@ -1146,7 +1262,7 @@ test.describe("AuditTrailView modal", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Audit trail"]').click();
+    await page.locator('button[title="Audit trail for memory operations"]').click();
     await expect(page.locator("text=Audit Trail").first()).toBeVisible({ timeout: 5000 });
     await page.waitForTimeout(3000);
 
@@ -1235,8 +1351,6 @@ test.describe("Onboarding empty state", () => {
     await expect(page.locator("text=New Note").first()).toBeVisible({ timeout: 3000 });
 
     // Template options should be visible (at least the default one)
-    const templates = page.locator('[role="dialog"] button, [role="dialog"] [data-template]');
-    const templateCount = await templates.count();
     // Should have at least the name input and create button
     const nameInput = page.locator('input[placeholder="Note name..."]');
     await expect(nameInput).toBeVisible();
@@ -1285,13 +1399,13 @@ test.describe("Error boundary resilience", () => {
 
     // Open each dashboard view and verify the app doesn't crash
     // Usage
-    await page.locator('button[title="Usage & limits"]').click();
+    await page.locator('button[title="Usage and limits"]').click();
     await expect(page.locator("text=Usage & Limits").first()).toBeVisible({ timeout: 5000 });
     await page.mouse.click(10, 10);
     await page.waitForTimeout(500);
 
     // Audit
-    await page.locator('button[title="Audit trail"]').click();
+    await page.locator('button[title="Audit trail for memory operations"]').click();
     await expect(page.locator("text=Audit Trail").first()).toBeVisible({ timeout: 5000 });
     await page.mouse.click(10, 10);
     await page.waitForTimeout(500);
@@ -1319,11 +1433,16 @@ test.describe("Error boundary resilience", () => {
 // Mission Control
 // ---------------------------------------------------------------------------
 test.describe("Mission Control", () => {
-  test("opens from sidebar Control button", async ({ page }) => {
+  async function openAdvancedMissionControl(page: import("@playwright/test").Page) {
+    await page.locator("button:has-text('Advanced')").click();
+    await page.locator('button[title="Experimental: governed agent actions"]').click();
+  }
+
+  test("opens from Advanced Control button", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
 
     // Mission Control full-screen overlay should appear
     const dialog = page.locator('[role="dialog"][aria-label="Mission Control"]');
@@ -1335,7 +1454,7 @@ test.describe("Mission Control", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
 
     // All 6 tabs should be present (Governance added as default in PR #11)
@@ -1351,7 +1470,7 @@ test.describe("Mission Control", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
 
     // Default tab is Governance (changed in PR #11). Click Approvals to switch.
@@ -1383,7 +1502,7 @@ test.describe("Mission Control", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
     const dialog = page.locator('[role="dialog"][aria-label="Mission Control"]');
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
@@ -1395,7 +1514,7 @@ test.describe("Mission Control", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
     const dialog = page.locator('[role="dialog"][aria-label="Mission Control"]');
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
@@ -1407,7 +1526,7 @@ test.describe("Mission Control", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
 
     // Default tab is Governance (changed in PR #11). Click Approvals to switch.
@@ -1426,7 +1545,7 @@ test.describe("Mission Control", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
 
     await page.locator("button:has-text('Health')").click();
@@ -1447,7 +1566,7 @@ test.describe("Mission Control", () => {
     await page.waitForTimeout(1000);
 
     // Open and close Mission Control
-    await page.locator('button[title="Control — governed actions"]').click();
+    await openAdvancedMissionControl(page);
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).toBeVisible({ timeout: 5000 });
     await page.keyboard.press("Escape");
     await expect(page.locator('[role="dialog"][aria-label="Mission Control"]')).not.toBeVisible({ timeout: 3000 });
@@ -1471,7 +1590,7 @@ test.describe("Draft Review", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Memory dashboard"]').click();
+    await page.locator('button[title="Memory timeline, learned facts, graph, audit, and rollback"]').click();
     await page.waitForTimeout(1000);
 
     // Review tab should be visible in the Memory Dashboard tabs
@@ -1486,7 +1605,7 @@ test.describe("Draft Review", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Memory dashboard"]').click();
+    await page.locator('button[title="Memory timeline, learned facts, graph, audit, and rollback"]').click();
     await page.waitForTimeout(1000);
 
     await page.locator("button:has-text('Review')").nth(1).click();
@@ -1508,7 +1627,7 @@ test.describe("Draft Review", () => {
     await page.goto("/");
     await page.waitForTimeout(1000);
 
-    await page.locator('button[title="Memory dashboard"]').click();
+    await page.locator('button[title="Memory timeline, learned facts, graph, audit, and rollback"]').click();
     await page.waitForTimeout(1000);
 
     await page.locator("button:has-text('Review')").nth(1).click();

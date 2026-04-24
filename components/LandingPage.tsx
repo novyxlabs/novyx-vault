@@ -105,7 +105,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             The only open-source second brain with AI memory that persists across every session.
-            Roll back what your AI knows at any point. Connect 20+ providers &mdash; bring your own key, encrypted at rest.
+            Roll back what your AI knows at any point. Bring your own provider key and keep your notes in markdown.
           </motion.p>
           <motion.div
             className="flex flex-wrap items-center justify-center gap-4"
@@ -233,7 +233,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={<Download size={24} />}
               title="Local-First & Open Source"
-              description="Desktop app stores files on your machine. Cloud syncs across devices. Export anytime."
+              description="Desktop app stores markdown files on your machine. Cloud mode adds authenticated hosted access. Export anytime."
               className="lg:col-span-6"
             />
             <FeatureCard
@@ -350,26 +350,24 @@ export default function LandingPage() {
                   <th className="text-left py-3 pr-2 sm:pr-4 font-medium text-muted" />
                   <th className="text-center py-3 px-2 sm:px-4 font-semibold text-emerald-400">Novyx Vault</th>
                   <th className="text-center py-3 px-2 sm:px-4 font-medium text-muted">Obsidian</th>
-                  <th className="text-center py-3 px-2 sm:px-4 font-medium text-muted">Notion</th>
                 </tr>
               </thead>
               <tbody className="text-muted">
                 {[
-                  ["Markdown files", "Yes", "Yes", "No"],
-                  ["Wiki-links & backlinks", "Yes", "Yes", "Yes"],
-                  ["Knowledge graph", "Yes", "Yes", "No"],
-                  ["AI with persistent memory", "Built in", "No", "Workspace only"],
-                  ["AI-discovered connections", "Built in", "No", "No"],
-                  ["Memory rollback & audit", "Built in", "No", "Page history"],
-                  ["Voice capture & transcription", "Built in", "Recording only", "Yes (paid)"],
-                  ["Bring your own AI provider", "20+", "No", "No"],
-                  ["Open source", "Yes", "No", "No"],
-                ].map(([feature, vault, obsidian, notion], i, arr) => (
+                  ["Markdown files", "Yes", "Yes"],
+                  ["Wiki-links & backlinks", "Yes", "Yes"],
+                  ["Knowledge graph", "Yes", "Yes"],
+                  ["AI with persistent memory", "Built in", "No"],
+                  ["AI-discovered connections", "Built in", "No"],
+                  ["Memory rollback & audit", "Built in", "No"],
+                  ["Voice capture & transcription", "Built in", "Recording only"],
+                  ["Bring your own AI provider", "Built in", "Plugin-dependent"],
+                  ["Open source", "MIT", "Source-available"],
+                ].map(([feature, vault, obsidian], i, arr) => (
                   <tr key={feature} className={i < arr.length - 1 ? "border-b border-sidebar-border/50" : ""}>
                     <td className="py-3 pr-2 sm:pr-4">{feature}</td>
                     <td className="text-center py-3 px-2 sm:px-4 text-emerald-400">{vault}</td>
                     <td className="text-center py-3 px-2 sm:px-4">{obsidian === "No" ? <span className="text-muted/50">{obsidian}</span> : obsidian}</td>
-                    <td className="text-center py-3 px-2 sm:px-4">{notion === "No" ? <span className="text-muted/50">{notion}</span> : notion}</td>
                   </tr>
                 ))}
               </tbody>
@@ -392,7 +390,7 @@ export default function LandingPage() {
               <h2 className="text-2xl sm:text-3xl font-bold [text-wrap:balance]">Works with the AI you already use</h2>
             </div>
             <p className="text-muted mb-6 max-w-xl">
-              Connect your own API key. Keys are encrypted at rest and used server-side only to call the provider you selected &mdash; never shared beyond that.
+              Connect your own API key. In cloud mode, keys are encrypted at rest and used only to call the provider you selected.
               Switch providers anytime without losing your memory or notes.
             </p>
             <div className="flex flex-wrap gap-2">
@@ -434,8 +432,8 @@ export default function LandingPage() {
             >
               <h3 className="text-xl font-semibold mb-3">Desktop App</h3>
               <p className="text-muted leading-relaxed mb-4">
-                Free, private, offline. Your notes live as plain markdown files on your machine.
-                No account needed. Works without internet.
+                Your notes live as plain markdown files on your machine.
+                No hosted account needed. Core note editing works without internet.
               </p>
               <p className="text-sm text-muted/60">
                 macOS, Windows, and Linux via Tauri.
@@ -448,7 +446,7 @@ export default function LandingPage() {
             >
               <h3 className="text-xl font-semibold mb-3">Cloud</h3>
               <p className="text-muted leading-relaxed mb-4">
-                Sync across devices, publish notes, share with a link, and get daily digest emails.
+                Sign in for hosted access, publishing, share links, and daily digest emails.
               </p>
               <p className="text-sm text-muted/60">
                 Free tier. No credit card required.

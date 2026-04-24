@@ -27,10 +27,8 @@ import {
   X,
   Loader2,
   CheckSquare,
-  Square,
   CheckCheck,
   TrendingUp,
-  Lightbulb,
   Scissors,
   Sparkles,
   CalendarRange,
@@ -44,9 +42,13 @@ import {
   Mic,
   ArrowUpRight,
   Github,
+  HardDrive,
+  Cloud,
+  Zap,
 } from "lucide-react";
 import ThemePicker, { initAccentColor } from "./ThemePicker";
 import { syncSettingsToCloud } from "@/lib/providers";
+import type { VaultStatus } from "@/lib/vault-status";
 
 const PAID_TIERS = ["starter", "pro", "enterprise"];
 
@@ -80,9 +82,9 @@ interface SidebarProps {
   onOpenTasks: () => void;
   onOpenTags: () => void;
   onOpenThinking: () => void;
+  onOpenQuickCapture: () => void;
   onOpenBrainDump: () => void;
   onOpenVoiceCapture: () => void;
-  onOpenWritingCoach: () => void;
   onOpenClipRemix: () => void;
   onOpenWeeklyReview: () => void;
   onOpenReflect: () => void;
@@ -93,7 +95,7 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onSignOut?: () => void;
   onGoHome: () => void;
-  recentNotes: string[];
+  vaultStatus: VaultStatus | null;
   onDuplicateNote: (path: string) => void;
   pinnedNotes: string[];
   onTogglePin: (path: string) => void;
@@ -485,9 +487,9 @@ export default function Sidebar({
   onOpenTasks,
   onOpenTags,
   onOpenThinking,
+  onOpenQuickCapture,
   onOpenBrainDump,
   onOpenVoiceCapture,
-  onOpenWritingCoach,
   onOpenClipRemix,
   onOpenWeeklyReview,
   onOpenReflect,
@@ -498,7 +500,7 @@ export default function Sidebar({
   onOpenSettings,
   onSignOut,
   onGoHome,
-  recentNotes,
+  vaultStatus,
   onDuplicateNote,
   pinnedNotes,
   onTogglePin,
@@ -518,6 +520,7 @@ export default function Sidebar({
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [sortBy, setSortBy] = useState<string>("default");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [userTier, setUserTier] = useState<string>("free");
 
@@ -693,6 +696,24 @@ export default function Sidebar({
               title="Graph view"
             >
               <Network size={16} />
+            </button>
+          </div>
+
+          <div className="mb-3">
+            <button
+              onClick={onOpenSettings}
+              className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-sidebar-border bg-card-bg/50 px-2.5 py-1 text-[10px] text-muted hover:text-foreground hover:border-accent/30 transition-colors"
+              title={`Vault mode: ${vaultStatus?.mode === "cloud" ? "Cloud Workspace" : "Local Vault"} (${vaultStatus?.rootLabel || "~/SecondBrain"})`}
+            >
+              {vaultStatus?.mode === "cloud" ? (
+                <Cloud size={11} className="text-accent shrink-0" />
+              ) : (
+                <HardDrive size={11} className="text-accent shrink-0" />
+              )}
+              <span className="truncate">
+                {vaultStatus?.mode === "cloud" ? "Cloud Workspace" : "Local Vault"}
+              </span>
+              <span className="text-muted/50 truncate">{vaultStatus?.rootLabel || "~/SecondBrain"}</span>
             </button>
           </div>
 
@@ -950,25 +971,20 @@ export default function Sidebar({
 
         {/* Footer */}
         <div className="border-t border-sidebar-border">
-          {/* AI Suite */}
+          {/* Capture */}
           <div className="px-2 pt-2.5 pb-1">
-            <div className="text-[9px] uppercase tracking-[0.15em] text-accent/40 font-medium px-1 mb-1.5">AI Suite</div>
-            <div className="grid grid-cols-6 gap-1">
+            <div className="flex items-center justify-between px-1 mb-1.5">
+              <div className="text-[9px] uppercase tracking-[0.15em] text-accent/45 font-medium">Capture</div>
+              <span className="text-[9px] text-muted/40">turn raw input into notes</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1">
               <button
-                onClick={onOpenReflect}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-teal-400/70 hover:bg-teal-400/10 hover:text-teal-400 transition-all"
-                title="Reflect — chronological timeline of notes, memories & insights"
+                onClick={onOpenQuickCapture}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-accent/70 hover:bg-accent/10 hover:text-accent transition-all"
+                title="Quick Capture — save a raw thought to the local vault"
               >
-                <History size={16} />
-                <span className="text-[9px] leading-none font-medium">Reflect</span>
-              </button>
-              <button
-                onClick={onOpenBrainDump}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-400/70 hover:bg-purple-400/10 hover:text-purple-400 transition-all"
-                title="Brain Dump — dump thoughts, AI structures them"
-              >
-                <Sparkles size={16} />
-                <span className="text-[9px] leading-none font-medium">Dump</span>
+                <Zap size={16} />
+                <span className="text-[9px] leading-none font-medium">Quick</span>
               </button>
               <button
                 onClick={onOpenVoiceCapture}
@@ -984,15 +1000,43 @@ export default function Sidebar({
                 title="Clip & Remix — paste anything, AI rewrites in your voice"
               >
                 <Scissors size={16} />
-                <span className="text-[9px] leading-none font-medium">Remix</span>
+                <span className="text-[9px] leading-none font-medium">Clip</span>
               </button>
               <button
-                onClick={onOpenWritingCoach}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-amber-400/70 hover:bg-amber-400/10 hover:text-amber-400 transition-all"
-                title="Writing Coach — what should you write about?"
+                onClick={onOpenBrainDump}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-400/70 hover:bg-purple-400/10 hover:text-purple-400 transition-all"
+                title="Brain Dump — dump thoughts, AI structures them"
               >
-                <Lightbulb size={16} />
-                <span className="text-[9px] leading-none font-medium">Coach</span>
+                <Sparkles size={16} />
+                <span className="text-[9px] leading-none font-medium">Dump</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Memory */}
+          <div className="px-2 pb-1">
+            <div className="flex items-center justify-between px-1 mb-1">
+              <div className="text-[9px] uppercase tracking-[0.15em] text-muted/35 font-medium">Memory</div>
+              {memoryCount !== null && memoryCount > 0 && (
+                <span className="text-[9px] text-purple-300/60">{memoryCount.toLocaleString()} learned</span>
+              )}
+            </div>
+            <div className="grid grid-cols-4 gap-1">
+              <button
+                onClick={onOpenMemory}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-300/70 hover:bg-purple-400/10 hover:text-purple-300 transition-all"
+                title="Memory timeline, learned facts, graph, audit, and rollback"
+              >
+                <Brain size={16} />
+                <span className="text-[9px] leading-none font-medium">Memory</span>
+              </button>
+              <button
+                onClick={onOpenReflect}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-teal-400/70 hover:bg-teal-400/10 hover:text-teal-400 transition-all"
+                title="Reflect — chronological timeline of notes, memories & insights"
+              >
+                <History size={16} />
+                <span className="text-[9px] leading-none font-medium">Reflect</span>
               </button>
               <button
                 onClick={onOpenThinking}
@@ -1002,109 +1046,39 @@ export default function Sidebar({
                 <TrendingUp size={16} />
                 <span className="text-[9px] leading-none font-medium">Evolve</span>
               </button>
+              <button
+                onClick={onOpenAuditTrail}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-emerald-400/70 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all"
+                title="Audit trail for memory operations"
+              >
+                <Shield size={16} />
+                <span className="text-[9px] leading-none font-medium">Audit</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-1 mt-1">
+              <button
+                onClick={onOpenRollbackHistory}
+                className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-amber-400/65 hover:bg-amber-400/10 hover:text-amber-400 transition-all"
+                title="Rollback history"
+              >
+                <History size={13} />
+                <span className="text-[9px] leading-none font-medium">Rollback</span>
+              </button>
+              <button
+                onClick={onOpenUsage}
+                className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-accent/65 hover:bg-accent/10 hover:text-accent transition-all"
+                title="Usage and limits"
+              >
+                <Gauge size={13} />
+                <span className="text-[9px] leading-none font-medium">Usage</span>
+              </button>
             </div>
           </div>
-          {/* Novyx */}
-          <div className="px-2 pb-1">
-            <div className="text-[9px] uppercase tracking-[0.15em] text-muted/30 font-medium px-1 mb-1">Novyx</div>
-            <button
-              onClick={onOpenUsage}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-accent/60 hover:bg-accent/10 hover:text-accent transition-all text-left"
-              title="Usage & limits"
-            >
-              <Gauge size={13} />
-              <span className="text-[10px] leading-none font-medium">Usage & Limits</span>
-            </button>
-            {!PAID_TIERS.includes(userTier) && (
-            <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/billing", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ tier: "pro" }),
-                  });
-                  const data = await res.json();
-                  if (data.checkout_url) {
-                    window.open(data.checkout_url, "_blank");
-                  } else {
-                    window.alert(data.error || "Could not start checkout. Please try again.");
-                  }
-                } catch (err) {
-                  console.error("[Sidebar] Checkout failed:", err);
-                  window.alert("Could not start checkout. Please check your connection and try again.");
-                }
-              }}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
-              title="Upgrade to Pro"
-            >
-              <ArrowUpRight size={13} />
-              <span className="text-[10px] leading-none font-medium">Upgrade</span>
-            </button>
-            )}
-            <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/billing", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ tier: "pro" }),
-                  });
-                  const data = await res.json();
-                  if (data.checkout_url) {
-                    window.open(data.checkout_url, "_blank");
-                  } else {
-                    alert(data.error || "Could not start checkout. Please try again.");
-                  }
-                } catch {
-                  alert("Could not connect to billing. Please try again.");
-                }
-              }}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
-              title="Upgrade to Pro"
-            >
-              <ArrowUpRight size={13} />
-              <span className="text-[10px] leading-none font-medium">Upgrade</span>
-            </button>
-            <button
-              onClick={onOpenAuditTrail}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all text-left"
-              title="Audit trail"
-            >
-              <Shield size={13} />
-              <span className="text-[10px] leading-none font-medium">Audit Trail</span>
-            </button>
-            <button
-              onClick={onOpenRollbackHistory}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-amber-400/60 hover:bg-amber-400/10 hover:text-amber-400 transition-all text-left"
-              title="Rollback history"
-            >
-              <History size={13} />
-              <span className="text-[10px] leading-none font-medium">Rollback History</span>
-            </button>
-            <button
-              onClick={onOpenControl}
-              className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-blue-400/60 hover:bg-blue-400/10 hover:text-blue-400 transition-all text-left"
-              title="Control — governed actions"
-            >
-              <ShieldCheck size={13} />
-              <span className="text-[10px] leading-none font-medium">Control</span>
-            </button>
-          </div>
+
           {/* Vault Tools */}
           <div className="px-2 pb-1.5">
-            <div className="text-[9px] uppercase tracking-[0.15em] text-muted/30 font-medium px-1 mb-1">Tools</div>
-            <div className="grid grid-cols-5 gap-1">
-              <button
-                onClick={onOpenMemory}
-                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-purple-300/60 hover:bg-purple-400/10 hover:text-purple-300 transition-all"
-                title="Memory dashboard"
-              >
-                <Brain size={14} />
-                <span className="text-[9px] leading-none">
-                  {memoryCount !== null && memoryCount > 0 ? memoryCount.toLocaleString() : "Memory"}
-                </span>
-              </button>
+            <div className="text-[9px] uppercase tracking-[0.15em] text-muted/30 font-medium px-1 mb-1">Vault</div>
+            <div className="grid grid-cols-4 gap-1">
               <button
                 onClick={onOpenTasks}
                 className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-emerald-300/60 hover:bg-emerald-400/10 hover:text-emerald-300 transition-all"
@@ -1138,6 +1112,54 @@ export default function Sidebar({
                 <span className="text-[9px] leading-none">Review</span>
               </button>
             </div>
+            <div className="mt-1">
+              <button
+                onClick={() => setIsAdvancedOpen((v) => !v)}
+                className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md text-[10px] text-muted/50 hover:text-foreground hover:bg-muted-bg/50 transition-colors"
+              >
+                <ChevronRight size={11} className={`transition-transform ${isAdvancedOpen ? "rotate-90" : ""}`} />
+                Advanced
+              </button>
+              {isAdvancedOpen && (
+                <div className="grid grid-cols-2 gap-1 mt-1">
+                  <button
+                    onClick={onOpenControl}
+                    className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-blue-400/60 hover:bg-blue-400/10 hover:text-blue-400 transition-all"
+                    title="Experimental: governed agent actions"
+                  >
+                    <ShieldCheck size={13} />
+                    <span className="text-[9px] leading-none font-medium">Control</span>
+                  </button>
+                  {!PAID_TIERS.includes(userTier) && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/billing", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ tier: "pro" }),
+                          });
+                          const data = await res.json();
+                          if (data.checkout_url) {
+                            window.open(data.checkout_url, "_blank");
+                          } else {
+                            window.alert(data.error || "Could not start checkout. Please try again.");
+                          }
+                        } catch (err) {
+                          console.error("[Sidebar] Checkout failed:", err);
+                          window.alert("Could not start checkout. Please check your connection and try again.");
+                        }
+                      }}
+                      className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all"
+                      title="Upgrade to Pro"
+                    >
+                      <ArrowUpRight size={13} />
+                      <span className="text-[9px] leading-none font-medium">Upgrade</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           {/* Bottom utilities bar */}
           <div className="flex items-center justify-between px-3 py-2 border-t border-sidebar-border/50">
@@ -1157,7 +1179,7 @@ export default function Sidebar({
                   a.click();
                 }}
                 className="p-1.5 rounded-md text-muted/40 hover:text-green-400 hover:bg-green-400/10 transition-all"
-                title="Export all notes as ZIP"
+                title="Export all notes as markdown files in a ZIP"
               >
                 <Download size={13} />
               </button>

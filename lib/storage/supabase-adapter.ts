@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabase } from "../supabase";
-import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile } from "./types";
+import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile, SearchFilters } from "./types";
 import { validateNotePath, tryValidateNotePath } from "./path-validator";
 
 export class SupabaseAdapter implements StorageAdapter {
@@ -416,6 +416,41 @@ export class SupabaseAdapter implements StorageAdapter {
       .eq("is_folder", false)
       .order("path");
 
+    if (error) throw new Error(error.message);
+    if (!data) return [];
+
+    return data.map((row) => ({
+      relPath: row.path.endsWith(".md") ? row.path : row.path + ".md",
+      name: row.name,
+      content: row.content ?? "",
+      modifiedAt: new Date(row.modified_at),
+    }));
+  }
+
+  async searchNoteFiles(query: string, maxResults = 20, filters: SearchFilters = {}): Promise<NoteFile[]> {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) return [];
+
+    let request = this.supabase
+      .from("notes")
+      .select("path, name, content, modified_at")
+      .eq("user_id", this.userId)
+      .eq("is_trashed", false)
+      .eq("is_folder", false)
+      .textSearch("fts", trimmed, { type: "websearch", config: "english" });
+
+    if (filters.folder) {
+      const folder = filters.folder.replace(/^\/+|\/+$/g, "");
+      if (folder) request = request.like("path", `${folder}/%`);
+    }
+
+    if (filters.tag) {
+      request = request.ilike("content", `%#${filters.tag}%`);
+    }
+
+    const { data, error } = await request
+      .order("modified_at", { ascending: false })
+      .limit(maxResults);
     if (error) throw new Error(error.message);
     if (!data) return [];
 

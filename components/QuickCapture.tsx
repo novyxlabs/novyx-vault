@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Zap, Brain, FileText, X } from "lucide-react";
+import { Zap, FileText, X } from "lucide-react";
+import { buildCaptureNoteContent, buildCaptureNotePath } from "@/lib/capture";
 
 interface QuickCaptureProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateNote: (name: string, content: string) => void;
+  onCreateNote: (name: string, content: string) => Promise<void> | void;
 }
 
 export default function QuickCapture({ isOpen, onClose, onCreateNote }: QuickCaptureProps) {
   const [text, setText] = useState("");
-  const [saveAs, setSaveAs] = useState<"both" | "memory" | "note">("both");
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -20,7 +20,6 @@ export default function QuickCapture({ isOpen, onClose, onCreateNote }: QuickCap
     if (isOpen) {
       setText("");
       setSaved(false);
-      setSaveAs("both");
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
@@ -40,27 +39,19 @@ export default function QuickCapture({ isOpen, onClose, onCreateNote }: QuickCap
     setIsSaving(true);
 
     try {
-      const promises: Promise<unknown>[] = [];
+      const title = trimmed.length > 48
+        ? `${trimmed.slice(0, 48).replace(/\s+\S*$/, "")}...`
+        : trimmed;
+      const capturedAt = new Date();
+      const name = buildCaptureNotePath("quick", title, capturedAt);
+      const noteContent = buildCaptureNoteContent({
+        kind: "quick",
+        title,
+        content: trimmed,
+        capturedAt,
+      });
 
-      if (saveAs === "memory" || saveAs === "both") {
-        promises.push(
-          fetch("/api/memory", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ observation: trimmed }),
-          })
-        );
-      }
-
-      if (saveAs === "note" || saveAs === "both") {
-        const title = trimmed.length > 40
-          ? trimmed.slice(0, 40).replace(/\s+\S*$/, "") + "..."
-          : trimmed;
-        const name = `Captures/${new Date().toISOString().slice(0, 10)}-${Date.now().toString(36)}`;
-        onCreateNote(name, `# ${title}\n\n${trimmed}\n`);
-      }
-
-      await Promise.all(promises);
+      await onCreateNote(name, noteContent);
       setSaved(true);
       setTimeout(() => onClose(), 600);
     } catch {
@@ -117,34 +108,9 @@ export default function QuickCapture({ isOpen, onClose, onCreateNote }: QuickCap
 
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-2.5 border-t border-sidebar-border">
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setSaveAs("both")}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors ${
-                saveAs === "both" ? "bg-accent/15 text-accent" : "text-muted hover:text-foreground"
-              }`}
-            >
-              <Zap size={10} />
-              Both
-            </button>
-            <button
-              onClick={() => setSaveAs("memory")}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors ${
-                saveAs === "memory" ? "bg-accent/15 text-accent" : "text-muted hover:text-foreground"
-              }`}
-            >
-              <Brain size={10} />
-              Memory Only
-            </button>
-            <button
-              onClick={() => setSaveAs("note")}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors ${
-                saveAs === "note" ? "bg-accent/15 text-accent" : "text-muted hover:text-foreground"
-              }`}
-            >
-              <FileText size={10} />
-              Note Only
-            </button>
+          <div className="flex items-center gap-1.5 text-[10px] text-muted">
+            <FileText size={11} className="text-accent" />
+            <span>Captures/YYYY-MM-DD</span>
           </div>
 
           <button
