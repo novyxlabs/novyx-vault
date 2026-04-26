@@ -103,6 +103,7 @@ export async function POST() {
     // Write each to cloud storage
     const cloudStorage = getStorage(ctx.userId, ctx.cookieHeader);
     let imported = 0;
+    const failures: Array<{ path: string; error: string }> = [];
 
     for (const note of localNotes) {
       try {
@@ -111,7 +112,24 @@ export async function POST() {
         imported++;
       } catch (err) {
         console.error(`Failed to import note ${note.relPath}:`, err);
+        failures.push({
+          path: note.relPath,
+          error: err instanceof Error ? err.message : "Unknown error",
+        });
       }
+    }
+
+    if (failures.length > 0) {
+      return NextResponse.json(
+        {
+          imported,
+          failed: failures.length,
+          total: localNotes.length,
+          completed: false,
+          failures,
+        },
+        { status: imported > 0 ? 207 : 500 }
+      );
     }
 
     // Mark import as completed
@@ -121,7 +139,12 @@ export async function POST() {
       .update({ import_completed_at: new Date().toISOString() })
       .eq("id", ctx.userId);
 
-    return NextResponse.json({ imported });
+    return NextResponse.json({
+      imported,
+      failed: 0,
+      total: localNotes.length,
+      completed: true,
+    });
   } catch (err) {
     console.error("Import failed:", err);
     return NextResponse.json(

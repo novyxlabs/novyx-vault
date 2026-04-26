@@ -165,8 +165,8 @@ Cloud mode adds auth, account-backed storage, sharing, and publishing via Supaba
 | `SUPABASE_SERVICE_ROLE_KEY` | Cloud only | Server-side key. **Never expose to client.** |
 | `NOVYX_MEMORY_API_KEY` | Desktop | Personal Novyx API key |
 | `NOVYX_ADMIN_KEY` | Cloud only | Admin key for per-user provisioning |
-| `UPSTASH_REDIS_REST_URL` | Optional | Redis for rate limiting |
-| `UPSTASH_REDIS_REST_TOKEN` | Optional | Redis auth token |
+| `UPSTASH_REDIS_REST_URL` | Production | Redis for rate limiting. Production fails closed without this. |
+| `UPSTASH_REDIS_REST_TOKEN` | Production | Redis auth token. Production fails closed without this. |
 
 ### Deploy
 

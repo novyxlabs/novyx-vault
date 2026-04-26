@@ -10,11 +10,9 @@ interface Props {
 async function getPublishedNote(slug: string) {
   const supabase = createServiceSupabase();
   const { data } = await supabase
-    .from("notes")
+    .from("published_notes")
     .select("name, content, published_at, slug")
     .eq("slug", slug)
-    .eq("is_published", true)
-    .eq("is_trashed", false)
     .single();
   return data;
 }

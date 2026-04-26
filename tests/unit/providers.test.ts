@@ -1,6 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
-import { validateProviderBaseURL } from "@/lib/providers";
-import { resolveAndValidateHost } from "@/lib/providers.server";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+import {
+  isLocalProviderBaseURL,
+  loadCloudSettings,
+  validateProviderBaseURL,
+} from "@/lib/providers";
+import { createSafeProviderFetch, resolveAndValidateHost } from "@/lib/providers.server";
+
+const originalStorageMode = process.env.STORAGE_MODE;
+
+afterEach(() => {
+  process.env.STORAGE_MODE = originalStorageMode;
+  vi.unstubAllGlobals();
+});
 
 describe("validateProviderBaseURL", () => {
   it("allows known provider HTTPS hosts", () => {
@@ -11,6 +22,7 @@ describe("validateProviderBaseURL", () => {
   it("allows localhost for local providers", () => {
     expect(validateProviderBaseURL("http://localhost:1234")).toBeNull();
     expect(validateProviderBaseURL("http://127.0.0.1:11434")).toBeNull();
+    expect(validateProviderBaseURL("http://[::1]:11434")).toBeNull();
   });
 
   it("allows custom HTTPS hosts with public domains", () => {
@@ -41,6 +53,23 @@ describe("validateProviderBaseURL", () => {
 
   it("rejects non-HTTPS remote hosts", () => {
     expect(validateProviderBaseURL("http://some-remote-host.com/v1")).toBe("Only HTTPS URLs are allowed for remote providers");
+  });
+
+  it("rejects non-HTTPS known provider hosts before allowlisting them", () => {
+    expect(validateProviderBaseURL("http://api.openai.com/v1")).toBe("Only HTTPS URLs are allowed for remote providers");
+    expect(validateProviderBaseURL("http://api.anthropic.com/v1")).toBe("Only HTTPS URLs are allowed for remote providers");
+  });
+});
+
+describe("isLocalProviderBaseURL", () => {
+  it("only treats exact loopback hosts as local providers", () => {
+    expect(isLocalProviderBaseURL("http://localhost:11434/v1")).toBe(true);
+    expect(isLocalProviderBaseURL("http://127.0.0.1:11434/v1")).toBe(true);
+    expect(isLocalProviderBaseURL("http://127.1.2.3:11434/v1")).toBe(true);
+    expect(isLocalProviderBaseURL("http://[::1]:11434/v1")).toBe(true);
+    expect(isLocalProviderBaseURL("https://example.com/localhost")).toBe(false);
+    expect(isLocalProviderBaseURL("https://127.0.0.1.example.com/v1")).toBe(false);
+    expect(isLocalProviderBaseURL("not-a-url")).toBe(false);
   });
 });
 
@@ -126,5 +155,89 @@ describe("resolveAndValidateHost", () => {
     expect(result).toBe("Provider hostname resolves to a private network address");
 
     vi.doUnmock("dns");
+  });
+});
+
+describe("createSafeProviderFetch", () => {
+  it("uses manual redirects for provider requests", async () => {
+    const response = new Response("ok", { status: 200 });
+    const fetchMock = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    const safeFetch = createSafeProviderFetch();
+    await expect(safeFetch("https://custom-provider.example.com/v1/chat", {
+      method: "POST",
+    })).resolves.toBe(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://custom-provider.example.com/v1/chat",
+      expect.objectContaining({ method: "POST", redirect: "manual" })
+    );
+  });
+
+  it("blocks provider redirects to private network targets", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, {
+      status: 302,
+      headers: { location: "http://127.0.0.1:11434/v1" },
+    })));
+
+    const safeFetch = createSafeProviderFetch();
+    await expect(safeFetch("https://custom-provider.example.com/v1/chat")).rejects.toThrow(
+      "Provider redirect blocked"
+    );
+  });
+});
+
+describe("loadCloudSettings", () => {
+  let store: Map<string, string>;
+
+  beforeEach(() => {
+    store = new Map();
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn((key: string) => store.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => {
+        store.set(key, value);
+      }),
+      removeItem: vi.fn((key: string) => {
+        store.delete(key);
+      }),
+      key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
+      clear: vi.fn(() => {
+        store.clear();
+      }),
+      get length() {
+        return store.size;
+      },
+    });
+  });
+
+  it("does not ambiently reveal or restore encrypted provider keys on first cloud load", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      settings: {
+        aiSettings: {
+          activeProviderId: "openai",
+          providers: [{
+            id: "openai",
+            name: "OpenAI",
+            baseURL: "https://api.openai.com/v1",
+            apiKey: "",
+            model: "gpt-4.1-mini",
+          }],
+        },
+      },
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await loadCloudSettings();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith("/api/settings");
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("reveal=true"));
+
+    const restored = JSON.parse(store.get("noctivault-ai-settings") || "{}");
+    expect(restored.providers[0].apiKey).toBe("");
   });
 });

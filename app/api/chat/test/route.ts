@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
-import { validateProviderBaseURL } from "@/lib/providers";
-import { resolveAndValidateHost } from "@/lib/providers.server";
+import { isLocalProviderBaseURL, validateProviderBaseURL } from "@/lib/providers";
+import { createSafeProviderFetch, resolveAndValidateHost } from "@/lib/providers.server";
 import { getStorageContext } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ ok: false, error: dnsError });
     }
 
-    const isLocal = baseURL.includes("localhost") || baseURL.includes("127.0.0.1");
+    const isLocal = isLocalProviderBaseURL(baseURL);
     if (!isLocal && !apiKey) {
       return Response.json({ ok: false, error: "No API key" });
     }
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       apiKey: apiKey || "not-needed",
       baseURL,
       defaultHeaders,
+      fetch: createSafeProviderFetch(),
     });
 
     const response = await client.chat.completions.create({

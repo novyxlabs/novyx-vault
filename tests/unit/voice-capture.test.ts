@@ -30,10 +30,19 @@ vi.mock("@/lib/rate-limit", () => ({
 // Mock provider validation
 vi.mock("@/lib/providers", () => ({
   validateProviderBaseURL: vi.fn().mockReturnValue(null),
+  isLocalProviderBaseURL: vi.fn((baseURL: string) => {
+    try {
+      const host = new URL(baseURL).hostname;
+      return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+    } catch {
+      return false;
+    }
+  }),
 }));
 
 vi.mock("@/lib/providers.server", () => ({
   resolveAndValidateHost: vi.fn().mockResolvedValue(null),
+  createSafeProviderFetch: vi.fn(() => vi.fn()),
 }));
 
 // ---------------------------------------------------------------------------

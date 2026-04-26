@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { createSafeProviderFetch } from "./providers.server";
 
 export interface IngestResult {
   title: string;
@@ -320,6 +321,7 @@ export async function summarizeWithAI(
     apiKey: provider.apiKey,
     baseURL: provider.baseURL,
     defaultHeaders,
+    fetch: createSafeProviderFetch(),
   });
 
   const response = await client.chat.completions.create({

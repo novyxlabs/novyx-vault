@@ -126,6 +126,7 @@ export default function AppShell() {
   const pendingSave = useRef<{ path: string; content: string } | null>(null);
   const lastSnapshotRef = useRef<number>(0);
   const loadedContentLenRef = useRef<number>(0);
+  const lastPersistedContentRef = useRef<string>("");
 
   const loadNotes = useCallback(async () => {
     try {
@@ -152,6 +153,7 @@ export default function AppShell() {
       const noteContent = data.content || "";
       setContent(noteContent);
       loadedContentLenRef.current = noteContent.length;
+      lastPersistedContentRef.current = noteContent;
     } catch (err) {
       console.error("Failed to load note:", err);
     }
@@ -163,8 +165,22 @@ export default function AppShell() {
       saveTimeout.current = null;
     }
     const pending = pendingSave.current;
-    if (pending && pending.content.trim()) {
+    if (pending) {
       try {
+        const previousContent = lastPersistedContentRef.current;
+        const isLargeReduction =
+          previousContent.length > 50 &&
+          pending.content.trim().length < previousContent.trim().length * 0.2 &&
+          pending.content !== previousContent;
+
+        if (isLargeReduction) {
+          await fetch("/api/notes/history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: pending.path, content: previousContent }),
+          }).catch(() => {});
+        }
+
         const res = await fetch("/api/notes", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -175,6 +191,8 @@ export default function AppShell() {
           throw new Error(`Save failed (${res.status}): ${msg}`);
         }
         pendingSave.current = null;
+        lastPersistedContentRef.current = pending.content;
+        loadedContentLenRef.current = pending.content.length;
         setSaveError(null);
       } catch (err) {
         console.error("Failed to flush save:", err);
@@ -187,11 +205,6 @@ export default function AppShell() {
 
   const saveNote = useCallback(
     (path: string, newContent: string) => {
-      // Prevent saving when undo wipes most of the content
-      const loadedLen = loadedContentLenRef.current;
-      if (loadedLen > 50 && newContent.trim().length < loadedLen * 0.2) return;
-      if (!newContent.trim()) return;
-
       if (saveTimeout.current) {
         clearTimeout(saveTimeout.current);
       }
@@ -200,6 +213,20 @@ export default function AppShell() {
       setSaveError(null);
       saveTimeout.current = setTimeout(async () => {
         try {
+          const previousContent = lastPersistedContentRef.current;
+          const isLargeReduction =
+            previousContent.length > 50 &&
+            newContent.trim().length < previousContent.trim().length * 0.2 &&
+            newContent !== previousContent;
+
+          if (isLargeReduction) {
+            await fetch("/api/notes/history", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path, content: previousContent }),
+            }).catch(() => {});
+          }
+
           const res = await fetch("/api/notes", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -210,6 +237,8 @@ export default function AppShell() {
             throw new Error(`Save failed (${res.status}): ${msg}`);
           }
           pendingSave.current = null;
+          lastPersistedContentRef.current = newContent;
+          loadedContentLenRef.current = newContent.length;
           setSaveError(null);
           // Record writing activity for streak tracking
           try {
@@ -250,6 +279,20 @@ export default function AppShell() {
       if (pendingSave.current) {
         // Synchronous send — navigator.sendBeacon for reliability
         const pending = pendingSave.current;
+        const previousContent = lastPersistedContentRef.current;
+        const isLargeReduction =
+          previousContent.length > 50 &&
+          pending.content.trim().length < previousContent.trim().length * 0.2 &&
+          pending.content !== previousContent;
+        if (isLargeReduction) {
+          navigator.sendBeacon(
+            "/api/notes/history",
+            new Blob(
+              [JSON.stringify({ path: pending.path, content: previousContent })],
+              { type: "application/json" }
+            )
+          );
+        }
         navigator.sendBeacon(
           "/api/notes",
           new Blob(
