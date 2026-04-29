@@ -17,6 +17,10 @@ async function getPublishedNote(slug: string) {
   return data;
 }
 
+export function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const note = await getPublishedNote(slug);
@@ -169,7 +173,7 @@ export default async function PublishedNotePage({ params }: Props) {
       <body>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          dangerouslySetInnerHTML={{ __html: safeJsonLd({
             "@context": "https://schema.org",
             "@type": "Article",
             headline: note.name,

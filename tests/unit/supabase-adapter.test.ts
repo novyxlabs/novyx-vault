@@ -292,6 +292,25 @@ describe("SupabaseAdapter.deleteNote — folder trash preserves child paths", ()
     const child2 = childUpdates.find((c) => c.id === "child-2");
     expect(child1?.data.original_path).toBe("projects/note-a");
     expect(child2?.data.original_path).toBe("projects/sub/note-b");
+    expect(child1?.data).toMatchObject({
+      is_published: false,
+      slug: null,
+      published_at: null,
+    });
+    expect(child2?.data).toMatchObject({
+      is_published: false,
+      slug: null,
+      published_at: null,
+    });
+
+    const folderUpdate = updateCalls.find((c) => c.id === "folder-1");
+    expect(folderUpdate?.data).toMatchObject({
+      is_trashed: true,
+      original_path: "projects",
+      is_published: false,
+      slug: null,
+      published_at: null,
+    });
   });
 });
 
@@ -487,5 +506,24 @@ describe("SupabaseAdapter.restoreFromTrash — folder restore includes children"
     expect(child2?.data.is_trashed).toBe(false);
     expect(child1?.data.path).toBe("projects/note-a");
     expect(child2?.data.path).toBe("projects/sub/note-b");
+    expect(child1?.data).toMatchObject({
+      is_published: false,
+      slug: null,
+      published_at: null,
+    });
+    expect(child2?.data).toMatchObject({
+      is_published: false,
+      slug: null,
+      published_at: null,
+    });
+
+    const folder = updateCalls.find((c) => c.id === "folder-1");
+    expect(folder?.data).toMatchObject({
+      is_trashed: false,
+      path: "projects",
+      is_published: false,
+      slug: null,
+      published_at: null,
+    });
   });
 });
