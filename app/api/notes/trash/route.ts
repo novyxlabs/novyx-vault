@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { listTrash, restoreFromTrash, purgeFromTrash, emptyTrash } from "@/lib/notes";
 import { getStorageContext } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET() {
   try {
@@ -27,11 +28,21 @@ export async function POST(req: NextRequest) {
 
     if (action === "purge") {
       if (!id) return Response.json({ error: "Missing id" }, { status: 400 });
+      const rl = await checkRateLimit(
+        getRateLimitKey("trash-purge", ctx.userId, req),
+        RATE_LIMITS.destructive
+      );
+      if (!rl.allowed) return rateLimitResponse(rl.resetMs);
       await purgeFromTrash(id, ctx);
       return Response.json({ success: true });
     }
 
     if (action === "empty") {
+      const rl = await checkRateLimit(
+        getRateLimitKey("trash-empty", ctx.userId, req),
+        RATE_LIMITS.destructive
+      );
+      if (!rl.allowed) return rateLimitResponse(rl.resetMs);
       await emptyTrash(ctx);
       return Response.json({ success: true });
     }

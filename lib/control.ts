@@ -221,10 +221,18 @@ export async function updatePolicy(
   apiKey: string
 ): Promise<ControlPolicy> {
   const nx = requireClient(apiKey);
-  // SDK requires rules; fetch current if caller only sent a partial
-  const rules = (input.rules ?? []) as unknown as Record<string, unknown>[];
+  let rules = input.rules;
+
+  if (!rules) {
+    const current = await withTimeout(nx.listPolicies());
+    const policies = (current as { policies?: ControlPolicy[] }).policies ?? [];
+    const existing = policies.find((policy) => policy.id === policyName || policy.name === policyName);
+    if (!existing) throw new Error("Policy not found");
+    rules = existing.rules;
+  }
+
   const result = await withTimeout(nx.updatePolicy(policyName, {
-    rules,
+    rules: rules as unknown as Record<string, unknown>[],
     description: input.description,
     enabled: input.enabled,
   }));
@@ -254,4 +262,3 @@ export async function submitAction(
   );
   return result as unknown as SubmitActionResult;
 }
-
