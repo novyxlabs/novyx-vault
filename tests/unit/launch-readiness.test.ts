@@ -14,6 +14,7 @@ function restoreEnv() {
     if (!(key in originalEnv)) delete process.env[key];
   }
   Object.assign(process.env, originalEnv);
+  vi.unstubAllEnvs();
 }
 
 describe("Phase 8 deployment readiness config", () => {
@@ -71,7 +72,7 @@ describe("Phase 8 health and readiness endpoints", () => {
   });
 
   it("/api/ready reports ready for local development without requiring cloud secrets", async () => {
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
     delete process.env.STORAGE_MODE;
     const { GET } = await import("@/app/api/ready/route");
 
@@ -85,7 +86,7 @@ describe("Phase 8 health and readiness endpoints", () => {
   });
 
   it("/api/ready reports missing production cloud config without exposing values", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     process.env.STORAGE_MODE = "supabase";
     for (const key of [
       "NEXT_PUBLIC_SUPABASE_URL",
