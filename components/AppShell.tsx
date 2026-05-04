@@ -96,6 +96,7 @@ export default function AppShell() {
   const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
   const [isRollbackHistoryOpen, setIsRollbackHistoryOpen] = useState(false);
   const [isMissionControlOpen, setIsMissionControlOpen] = useState(false);
+  const [blockedNavigationPath, setBlockedNavigationPath] = useState<string | null>(null);
   const closeAllModals = useCallback(() => {
     setIsGraphOpen(false);
     setIsMemoryOpen(false);
@@ -159,7 +160,7 @@ export default function AppShell() {
     }
   }, []);
 
-  const flushSave = useCallback(async () => {
+  const flushSave = useCallback(async (): Promise<boolean> => {
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
       saveTimeout.current = null;
@@ -190,23 +191,40 @@ export default function AppShell() {
           const msg = await res.text().catch(() => "Unknown error");
           throw new Error(`Save failed (${res.status}): ${msg}`);
         }
-        pendingSave.current = null;
+        const savedPendingStillCurrent =
+          pendingSave.current?.path === pending.path &&
+          pendingSave.current.content === pending.content;
+        if (savedPendingStillCurrent) {
+          pendingSave.current = null;
+          setSaveError(null);
+          setBlockedNavigationPath(null);
+        } else {
+          setSaveError("Additional unsaved changes are still pending. Retry before leaving this note.");
+        }
         lastPersistedContentRef.current = pending.content;
         loadedContentLenRef.current = pending.content.length;
-        setSaveError(null);
+        return savedPendingStillCurrent;
       } catch (err) {
         console.error("Failed to flush save:", err);
         setSaveError(err instanceof Error ? err.message : "Save failed");
+        return false;
       } finally {
         setIsSaving(false);
       }
     }
+    setBlockedNavigationPath(null);
+    return true;
   }, []);
 
   const saveNote = useCallback(
     (path: string, newContent: string) => {
       if (saveTimeout.current) {
         clearTimeout(saveTimeout.current);
+      }
+      if (pendingSave.current && pendingSave.current.path !== path) {
+        setSaveError(`Unsaved changes in ${pendingSave.current.path}. Retry or discard before editing another note.`);
+        setIsSaving(false);
+        return;
       }
       pendingSave.current = { path, content: newContent };
       setIsSaving(true);
@@ -236,10 +254,16 @@ export default function AppShell() {
             const msg = await res.text().catch(() => "Unknown error");
             throw new Error(`Save failed (${res.status}): ${msg}`);
           }
-          pendingSave.current = null;
-          lastPersistedContentRef.current = newContent;
-          loadedContentLenRef.current = newContent.length;
-          setSaveError(null);
+          if (
+            pendingSave.current?.path === path &&
+            pendingSave.current.content === newContent
+          ) {
+            pendingSave.current = null;
+            lastPersistedContentRef.current = newContent;
+            loadedContentLenRef.current = newContent.length;
+            setSaveError(null);
+            setBlockedNavigationPath(null);
+          }
           // Record writing activity for streak tracking
           try {
             const today = new Date().toISOString().slice(0, 10);
@@ -326,12 +350,20 @@ export default function AppShell() {
 
   useEffect(() => {
     if (activeNote) {
+      if (pendingSave.current && pendingSave.current.path !== activeNote) {
+        setSaveError(`Unsaved changes in ${pendingSave.current.path}. Retry or discard before loading another note.`);
+        return;
+      }
       loadNote(activeNote);
     }
   }, [activeNote, loadNote]);
 
   const handleSelectNote = async (path: string) => {
-    await flushSave();
+    const saved = await flushSave();
+    if (!saved) {
+      setBlockedNavigationPath(path);
+      return;
+    }
     setActiveNote(path);
     setIsSidebarOpen(false);
     setRecentNotes((prev) => {
@@ -345,6 +377,36 @@ export default function AppShell() {
     setContent(newContent);
     if (activeNote) {
       saveNote(activeNote, newContent);
+    }
+  };
+
+  const handleRetrySave = async () => {
+    const saved = await flushSave();
+    if (saved && blockedNavigationPath) {
+      const nextPath = blockedNavigationPath;
+      setBlockedNavigationPath(null);
+      await handleSelectNote(nextPath);
+    }
+  };
+
+  const handleDiscardPendingSave = () => {
+    const pending = pendingSave.current;
+    pendingSave.current = null;
+    setSaveError(null);
+    setIsSaving(false);
+    setContent(lastPersistedContentRef.current);
+    if (blockedNavigationPath && pending?.path !== blockedNavigationPath) {
+      const nextPath = blockedNavigationPath;
+      setBlockedNavigationPath(null);
+      setActiveNote(nextPath);
+      setIsSidebarOpen(false);
+      setRecentNotes((prev) => {
+        const next = [nextPath, ...prev.filter((p) => p !== nextPath)].slice(0, 10);
+        localStorage.setItem("noctivault-recent", JSON.stringify(next));
+        return next;
+      });
+    } else {
+      setBlockedNavigationPath(null);
     }
   };
 
@@ -802,9 +864,9 @@ export default function AppShell() {
     <CommandPalette
       isOpen={isCommandPaletteOpen}
       onClose={() => setIsCommandPaletteOpen(false)}
-      onSelectNote={(path) => {
-        handleSelectNote(path);
-        setIsCommandPaletteOpen(false);
+      onSelectNote={async (path) => {
+        await handleSelectNote(path);
+        if (!pendingSave.current) setIsCommandPaletteOpen(false);
       }}
       commands={commandActions}
     />
@@ -814,8 +876,14 @@ export default function AppShell() {
         <div className="flex items-center gap-2 min-w-0">
           {activeNote ? (
             <button
-              onClick={() => { setActiveNote(null); setContent(""); }}
+              onClick={async () => {
+                const saved = await flushSave();
+                if (!saved) return;
+                setActiveNote(null);
+                setContent("");
+              }}
               className="p-1.5 -ml-1 rounded-lg text-muted hover:text-accent transition-colors"
+              aria-label="Back to notes"
             >
               <ChevronLeft size={20} />
             </button>
@@ -823,6 +891,7 @@ export default function AppShell() {
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="p-1.5 -ml-1 rounded-lg text-muted hover:text-foreground transition-colors"
+              aria-label="Open sidebar"
             >
               <Menu size={20} />
             </button>
@@ -837,6 +906,7 @@ export default function AppShell() {
               onClick={() => setIsSidebarOpen(true)}
               className="p-2 rounded-lg text-muted hover:text-foreground transition-colors"
               title="Menu"
+              aria-label="Open sidebar"
             >
               <Menu size={16} />
             </button>
@@ -844,6 +914,7 @@ export default function AppShell() {
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
             className="p-2 rounded-lg text-muted hover:text-foreground transition-colors"
+            aria-label="Open command palette"
           >
             <Search size={18} />
           </button>
@@ -851,6 +922,8 @@ export default function AppShell() {
             <button
               onClick={() => setIsChatOpen((prev) => !prev)}
               className={`p-2 rounded-lg transition-colors ${isChatOpen ? "text-accent" : "text-muted hover:text-foreground"}`}
+              aria-label={isChatOpen ? "Close chat" : "Open chat"}
+              aria-pressed={isChatOpen}
             >
               <MessageSquare size={18} />
             </button>
@@ -891,7 +964,12 @@ export default function AppShell() {
           await fetch("/api/auth/signout", { method: "POST" });
           window.location.href = "/login";
         } : undefined}
-        onGoHome={() => { setActiveNote(null); setContent(""); }}
+        onGoHome={async () => {
+          const saved = await flushSave();
+          if (!saved) return;
+          setActiveNote(null);
+          setContent("");
+        }}
         vaultStatus={vaultStatus}
         onDuplicateNote={handleDuplicateNote}
         pinnedNotes={pinnedNotes}
@@ -908,22 +986,47 @@ export default function AppShell() {
               onClose={() => setIsReflectOpen(false)}
             />
           ) : activeNote ? (
-            <NoteEditor
-              notePath={activeNote}
-              content={content}
-              onChange={handleContentChange}
-              isSaving={isSaving}
-              saveError={saveError}
-              onFileDrop={handleFileDrop}
-              onNavigateWikiLink={handleNavigateWikiLink}
-              onSelectNote={handleSelectNote}
-              onToggleChat={() => setIsChatOpen((prev) => !prev)}
-              isChatOpen={isChatOpen}
-              onRestore={handleRestoreVersion}
-              onIngestLink={() => setIngestUrl("")}
-              onPasteUrl={(url) => setIngestUrl(url)}
-              noteModifiedAt={activeNoteModifiedAt}
-            />
+            <div className="flex-1 flex flex-col min-w-0">
+              {saveError && pendingSave.current && (
+                <div className="mx-3 mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <span className="flex-1">
+                    Save failed for {pendingSave.current.path}. Your unsaved changes are still in this editor.
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRetrySave}
+                      className="px-2.5 py-1 rounded-md bg-red-500/20 text-red-100 hover:bg-red-500/30 transition-colors"
+                    >
+                      Retry save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDiscardPendingSave}
+                      className="px-2.5 py-1 rounded-md text-red-100/80 hover:text-red-50 hover:bg-red-500/15 transition-colors"
+                    >
+                      Discard changes
+                    </button>
+                  </div>
+                </div>
+              )}
+              <NoteEditor
+                notePath={activeNote}
+                content={content}
+                onChange={handleContentChange}
+                isSaving={isSaving}
+                saveError={saveError}
+                onFileDrop={handleFileDrop}
+                onNavigateWikiLink={handleNavigateWikiLink}
+                onSelectNote={handleSelectNote}
+                onToggleChat={() => setIsChatOpen((prev) => !prev)}
+                isChatOpen={isChatOpen}
+                onRestore={handleRestoreVersion}
+                onIngestLink={() => setIngestUrl("")}
+                onPasteUrl={(url) => setIngestUrl(url)}
+                noteModifiedAt={activeNoteModifiedAt}
+              />
+            </div>
           ) : (
             <div
               className="flex-1 overflow-y-auto relative"

@@ -410,6 +410,8 @@ ${htmlLines.join("\n")}
                 viewMode === "editor" ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Editor only"
+              aria-label="Editor only"
+              aria-pressed={viewMode === "editor"}
             >
               <Code size={14} />
             </button>
@@ -419,6 +421,8 @@ ${htmlLines.join("\n")}
                 viewMode === "split" ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Split view"
+              aria-label="Split view"
+              aria-pressed={viewMode === "split"}
             >
               <Columns size={14} />
             </button>
@@ -428,6 +432,8 @@ ${htmlLines.join("\n")}
                 viewMode === "preview" ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Preview only"
+              aria-label="Preview only"
+              aria-pressed={viewMode === "preview"}
             >
               <Eye size={14} />
             </button>
@@ -444,6 +450,7 @@ ${htmlLines.join("\n")}
             }}
             className="p-1.5 rounded transition-colors text-muted hover:text-foreground"
             title="Download note"
+            aria-label="Download note"
           >
             <Download size={14} />
           </button>
@@ -453,6 +460,8 @@ ${htmlLines.join("\n")}
               onClick={() => setIsShareOpen((prev) => !prev)}
               className={`p-1.5 rounded transition-colors ${isShareOpen ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"}`}
               title="Share"
+              aria-label="Share note"
+              aria-expanded={isShareOpen}
             >
               <Share2 size={14} />
             </button>
@@ -476,6 +485,7 @@ ${htmlLines.join("\n")}
                     : "text-muted hover:text-foreground"
               }`}
               title="Remember this note"
+              aria-label="Remember this note"
             >
               {rememberState === "saved" ? <Check size={14} /> : <Brain size={14} />}
             </button>
@@ -494,6 +504,8 @@ ${htmlLines.join("\n")}
                 isTocOpen ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Table of Contents"
+              aria-label="Toggle table of contents"
+              aria-expanded={isTocOpen}
             >
               <ListTree size={14} />
             </button>
@@ -505,6 +517,8 @@ ${htmlLines.join("\n")}
                 isInfoOpen ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Note info"
+              aria-label="Toggle note info"
+              aria-expanded={isInfoOpen}
             >
               <Info size={14} />
             </button>
