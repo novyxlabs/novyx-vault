@@ -225,7 +225,7 @@ export async function updatePolicy(
 
   if (!rules) {
     const current = await withTimeout(nx.listPolicies());
-    const policies = (current as { policies?: ControlPolicy[] }).policies ?? [];
+    const policies = (current as unknown as { policies?: ControlPolicy[] }).policies ?? [];
     const existing = policies.find((policy) => policy.id === policyName || policy.name === policyName);
     if (!existing) throw new Error("Policy not found");
     rules = existing.rules;

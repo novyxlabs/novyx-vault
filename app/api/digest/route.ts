@@ -77,7 +77,7 @@ async function sendDigests(targetUserId?: string) {
             : null;
         })
       );
-      users = resolved.filter(Boolean).filter((user) => isDigestDue(user.settings, now, false)) as typeof users;
+      users = resolved.filter(isDigestUser).filter((user) => isDigestDue(user.settings, now, false));
     }
 
     if (!process.env.RESEND_API_KEY) {
@@ -170,6 +170,10 @@ function toDigestSettings(settings: unknown): DigestSettings {
   return settings && typeof settings === "object" && !Array.isArray(settings)
     ? settings as DigestSettings
     : {};
+}
+
+function isDigestUser(user: DigestUser | null): user is DigestUser {
+  return user !== null;
 }
 
 function isDigestDue(settings: DigestSettings, now: Date, requireEnabledAndSchedule: boolean): boolean {
