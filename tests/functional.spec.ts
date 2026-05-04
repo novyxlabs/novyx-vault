@@ -1453,8 +1453,8 @@ test.describe("Error boundary resilience", () => {
 // ---------------------------------------------------------------------------
 test.describe("Mission Control", () => {
   async function openAdvancedMissionControl(page: import("@playwright/test").Page) {
-    await page.locator("button:has-text('Advanced')").click();
-    await page.locator('button[title="Experimental: governed agent actions"]').click();
+    await page.getByRole("button", { name: "Advanced" }).click();
+    await page.getByRole("button", { name: "Control" }).click();
   }
 
   test("opens from Advanced Control button", async ({ page }) => {
