@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import { createServiceSupabase } from "@/lib/supabase";
 import { escapeHtml, formatInlineMarkdown } from "@/lib/sanitize";
 import type { Metadata } from "next";
 
@@ -25,7 +26,20 @@ export async function getPublishedNote(slug: string) {
     .select("name, content, published_at, slug")
     .eq("slug", slug)
     .single();
-  return data;
+  if (data) return data;
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) return null;
+
+  const service = createServiceSupabase();
+  const { data: fallback } = await service
+    .from("notes")
+    .select("name, content, published_at, slug")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .eq("is_trashed", false)
+    .single();
+  return fallback;
 }
 
 export function safeJsonLd(data: unknown): string {
