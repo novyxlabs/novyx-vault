@@ -1116,47 +1116,53 @@ export default function Sidebar({
               <button
                 onClick={() => setIsAdvancedOpen((v) => !v)}
                 className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md text-[10px] text-muted/50 hover:text-foreground hover:bg-muted-bg/50 transition-colors"
+                aria-expanded={isAdvancedOpen}
               >
                 <ChevronRight size={11} className={`transition-transform ${isAdvancedOpen ? "rotate-90" : ""}`} />
                 Advanced
               </button>
               {isAdvancedOpen && (
-                <div className="grid grid-cols-2 gap-1 mt-1">
-                  <button
-                    onClick={onOpenControl}
-                    className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-blue-400/60 hover:bg-blue-400/10 hover:text-blue-400 transition-all"
-                    title="Experimental: governed agent actions"
-                  >
-                    <ShieldCheck size={13} />
-                    <span className="text-[9px] leading-none font-medium">Control</span>
-                  </button>
-                  {!PAID_TIERS.includes(userTier) && (
+                <div className="mt-1">
+                  <p className="px-2 pb-1 text-[9px] leading-relaxed text-muted/45">
+                    Advanced tools may require Pro or a Novyx API key.
+                  </p>
+                  <div className="grid grid-cols-2 gap-1">
                     <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch("/api/billing", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ tier: "pro" }),
-                          });
-                          const data = await res.json();
-                          if (data.checkout_url) {
-                            window.open(data.checkout_url, "_blank");
-                          } else {
-                            window.alert(data.error || "Could not start checkout. Please try again.");
-                          }
-                        } catch (err) {
-                          console.error("[Sidebar] Checkout failed:", err);
-                          window.alert("Could not start checkout. Please check your connection and try again.");
-                        }
-                      }}
-                      className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all"
-                      title="Upgrade to Pro"
+                      onClick={onOpenControl}
+                      className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-blue-400/60 hover:bg-blue-400/10 hover:text-blue-400 transition-all"
+                      title="Requires a Novyx API key with Control enabled"
                     >
-                      <ArrowUpRight size={13} />
-                      <span className="text-[9px] leading-none font-medium">Upgrade</span>
+                      <ShieldCheck size={13} />
+                      <span className="text-[9px] leading-none font-medium">Control</span>
                     </button>
-                  )}
+                    {!PAID_TIERS.includes(userTier) && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch("/api/billing", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ tier: "pro" }),
+                            });
+                            const data = await res.json();
+                            if (data.checkout_url) {
+                              window.open(data.checkout_url, "_blank");
+                            } else {
+                              window.alert(data.error || "Could not start checkout. Please try again.");
+                            }
+                          } catch (err) {
+                            console.error("[Sidebar] Checkout failed:", err);
+                            window.alert("Could not start checkout. Please check your connection and try again.");
+                          }
+                        }}
+                        className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all"
+                        title="Upgrade to Pro"
+                      >
+                        <ArrowUpRight size={13} />
+                        <span className="text-[9px] leading-none font-medium">Upgrade</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

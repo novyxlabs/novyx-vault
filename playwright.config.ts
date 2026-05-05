@@ -14,11 +14,16 @@ const cloudSmokeExtraHeaders = vercelBypass
 
 export default defineConfig({
   testDir: "./tests",
-  timeout: 180_000,
+  timeout: process.env.CI ? 60_000 : 180_000,
   expect: { timeout: 10_000 },
+  reporter: process.env.CI
+    ? [["list"], ["html", { open: "never" }], ["junit", { outputFile: "test-results/playwright-junit.xml" }]]
+    : "list",
   use: {
     baseURL: localBaseURL,
     viewport: { width: 1440, height: 900 },
+    screenshot: "only-on-failure",
+    trace: "retain-on-failure",
     launchOptions: {
       slowMo: 0,
     },
@@ -30,6 +35,8 @@ export default defineConfig({
         url: localBaseURL,
         reuseExistingServer: true,
         timeout: 60_000,
+        stdout: "pipe",
+        stderr: "pipe",
       },
   projects: [
     {

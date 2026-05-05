@@ -362,6 +362,15 @@ const ALLOWED_HOSTS = new Set(
 
 const PRIVATE_IP_RE =
   /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.|169\.254\.)/;
+const LOOPBACK_IPV4_RE = /^127\.(\d{1,3}\.){2}\d{1,3}$/;
+
+function isLoopbackHost(host: string): boolean {
+  return host === "localhost"
+    || host === "127.0.0.1"
+    || host === "::1"
+    || host === "[::1]"
+    || LOOPBACK_IPV4_RE.test(host);
+}
 
 /**
  * Check if an IP address is private/internal (RFC1918, loopback, link-local, etc.)
@@ -372,6 +381,14 @@ function isPrivateIP(ip: string): boolean {
     || ip === "0.0.0.0"
     || ip.startsWith("fc") || ip.startsWith("fd") // IPv6 ULA
     || ip.startsWith("fe80"); // IPv6 link-local
+}
+
+export function isLocalProviderBaseURL(baseURL: string): boolean {
+  try {
+    return isLoopbackHost(new URL(baseURL).hostname);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -387,11 +404,15 @@ export function validateProviderBaseURL(baseURL: string): string | null {
   }
 
   const host = parsed.hostname;
+  const isLocal = isLoopbackHost(host);
 
   // Allow localhost only in desktop mode (local providers like Ollama/LM Studio)
-  if (host === "localhost" || host === "127.0.0.1") {
+  if (isLocal) {
     if (isCloudMode()) {
       return "Localhost providers are not available in cloud mode";
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return "Only HTTP or HTTPS URLs are allowed for local providers";
     }
     return null;
   }
@@ -406,14 +427,16 @@ export function validateProviderBaseURL(baseURL: string): string | null {
     return "Metadata endpoints are not allowed";
   }
 
+  // Security invariant:
+  // A configured provider base URL is not trusted until protocol, hostname,
+  // DNS/IP resolution, and redirect behavior are all validated.
+  if (parsed.protocol !== "https:") {
+    return "Only HTTPS URLs are allowed for remote providers";
+  }
+
   // Allow known provider hosts
   if (ALLOWED_HOSTS.has(host)) {
     return null;
-  }
-
-  // Require HTTPS for custom endpoints
-  if (parsed.protocol !== "https:") {
-    return "Only HTTPS URLs are allowed for remote providers";
   }
 
   // Block custom hosts that look like internal services
@@ -536,65 +559,35 @@ export async function syncSettingsToCloud(): Promise<void> {
 /** Load cloud settings and merge into localStorage (cloud fills gaps, doesn't overwrite) */
 export async function loadCloudSettings(): Promise<void> {
   try {
-    // Only reveal (decrypt) server-side keys when local has NO ai settings
-    // yet — i.e. first login on a new device, cleared storage, etc.
-    // On subsequent loads, local already has the keys and the ambient
-    // GET /api/settings/keys returns only provider names (no values).
-    // This stops "load settings == decrypt every key into browser memory".
-    const localHasKeys = Boolean(localStorage.getItem("noctivault-ai-settings"));
-    const keysUrl = localHasKeys
-      ? "/api/settings/keys"
-      : "/api/settings/keys?reveal=true";
-
-    const [settingsRes, keysRes] = await Promise.all([
-      fetch("/api/settings"),
-      fetch(keysUrl).catch(() => null),
-    ]);
+    const settingsRes = await fetch("/api/settings");
 
     const { settings } = settingsRes.ok
       ? ((await settingsRes.json()) as { settings: CloudSettings | null })
       : { settings: null };
 
-    // Decrypt server-side provider keys
-    const serverKeys: Record<string, string> =
-      keysRes && keysRes.ok ? (await keysRes.json()).keys || {} : {};
-
-    // Merge cloud AI settings with local API keys + server-side keys
+    // Merge cloud AI settings with local API keys only. Full key reveal must
+    // be initiated explicitly by the user, not by first-page-load restore.
     if (settings?.aiSettings) {
       const localRaw = localStorage.getItem("noctivault-ai-settings");
       if (!localRaw) {
-        // No local settings — use cloud config and restore server-side keys
+        // No local settings — use cloud config with empty key slots.
         const restored: AISettings = {
           ...settings.aiSettings,
           providers: settings.aiSettings.providers.map((p) => ({
             ...p,
-            apiKey: serverKeys[p.id] || p.apiKey,
+            apiKey: "",
           })),
         };
         localStorage.setItem("noctivault-ai-settings", JSON.stringify(restored));
       } else {
-        // Merge: prefer local keys, fall back to server-side keys, then cloud (empty)
+        // Merge: prefer local keys and do not repopulate decrypted keys.
         const local: AISettings = JSON.parse(localRaw);
         const localKeyMap = new Map(local.providers.map((p) => [p.id, p.apiKey]));
         const merged: AISettings = {
           ...settings.aiSettings,
           providers: settings.aiSettings.providers.map((p) => ({
             ...p,
-            apiKey: localKeyMap.get(p.id) || serverKeys[p.id] || p.apiKey,
-          })),
-        };
-        localStorage.setItem("noctivault-ai-settings", JSON.stringify(merged));
-      }
-    } else if (Object.keys(serverKeys).length > 0) {
-      // No cloud AI settings but we have server keys — restore into existing local settings
-      const localRaw = localStorage.getItem("noctivault-ai-settings");
-      if (localRaw) {
-        const local: AISettings = JSON.parse(localRaw);
-        const merged: AISettings = {
-          ...local,
-          providers: local.providers.map((p) => ({
-            ...p,
-            apiKey: p.apiKey || serverKeys[p.id] || "",
+            apiKey: localKeyMap.get(p.id) || "",
           })),
         };
         localStorage.setItem("noctivault-ai-settings", JSON.stringify(merged));

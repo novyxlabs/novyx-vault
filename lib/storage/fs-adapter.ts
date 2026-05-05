@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile } from "./types";
+import { validateNotePath } from "./path-validator";
 
 const NOTES_DIR = path.join(os.homedir(), "SecondBrain");
 const TRASH_DIR = path.join(NOTES_DIR, ".trash");
@@ -12,7 +13,8 @@ async function ensureDir(dir: string) {
 }
 
 function sanitizePath(inputPath: string): string {
-  const resolved = path.resolve(NOTES_DIR, inputPath);
+  const safePath = validateNotePath(inputPath);
+  const resolved = path.resolve(NOTES_DIR, safePath);
   // Use NOTES_DIR + separator to prevent sibling-prefix bypass
   // (e.g. /Users/.../SecondBrain-backup matching /Users/.../SecondBrain)
   if (resolved !== NOTES_DIR && !resolved.startsWith(NOTES_DIR + path.sep)) {
@@ -22,7 +24,7 @@ function sanitizePath(inputPath: string): string {
 }
 
 function sanitizeRelativePath(p: string, baseDir: string = HISTORY_DIR): string {
-  const cleaned = p.replace(/^\/+/, "");
+  const cleaned = validateNotePath(p);
   const resolved = path.resolve(baseDir, cleaned);
   if (resolved !== baseDir && !resolved.startsWith(baseDir + path.sep)) {
     throw new Error("Invalid path: outside allowed directory");

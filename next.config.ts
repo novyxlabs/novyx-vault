@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const scriptSrc = [
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   process.env.NODE_ENV === "development" ? "'unsafe-eval'" : "",
   "https://plausible.io",
 ]
@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
       },
       {
         key: "Permissions-Policy",
-        value: "camera=(), microphone=(), geolocation=()",
+        value: "camera=(), microphone=(self), display-capture=(self), geolocation=()",
       },
       {
         key: "Content-Security-Policy",
@@ -34,7 +34,9 @@ const nextConfig: NextConfig = {
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: blob: https://avatars.githubusercontent.com",
           "font-src 'self'",
-          "connect-src 'self' https://*.supabase.co https://api.novyx.ai https://*.vercel-insights.com https://*.vercel-analytics.com https://plausible.io https://*.ingest.sentry.io",
+          "connect-src 'self' https://*.supabase.co https://api.novyx.ai https://*.vercel-insights.com https://*.vercel-analytics.com https://plausible.io https://*.ingest.sentry.io https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://*.hf.co",
+          "worker-src 'self' blob:",
+          "model-src 'self' https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://*.hf.co",
           "frame-ancestors 'none'",
           "base-uri 'self'",
           "form-action 'self' https://*.supabase.co",

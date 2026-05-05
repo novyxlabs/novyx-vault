@@ -60,6 +60,8 @@ npm install && npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). That's it — notes, wiki-links, knowledge graph, and AI chat all work immediately.
 
+Requires Node.js 20.9.0 or newer.
+
 **Add persistent AI memory (optional):**
 
 ```bash
@@ -165,8 +167,10 @@ Cloud mode adds auth, account-backed storage, sharing, and publishing via Supaba
 | `SUPABASE_SERVICE_ROLE_KEY` | Cloud only | Server-side key. **Never expose to client.** |
 | `NOVYX_MEMORY_API_KEY` | Desktop | Personal Novyx API key |
 | `NOVYX_ADMIN_KEY` | Cloud only | Admin key for per-user provisioning |
-| `UPSTASH_REDIS_REST_URL` | Optional | Redis for rate limiting |
-| `UPSTASH_REDIS_REST_TOKEN` | Optional | Redis auth token |
+| `UPSTASH_REDIS_REST_URL` | Production | Redis for rate limiting. Production fails closed without this. |
+| `UPSTASH_REDIS_REST_TOKEN` | Production | Redis auth token. Production fails closed without this. |
+| `NEXT_PUBLIC_SENTRY_DSN` | Optional | Enables Sentry runtime error capture |
+| `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` | Optional | Enables Sentry source map upload during production builds |
 
 ### Deploy
 

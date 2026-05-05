@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceSupabase } from "@/lib/supabase";
 
+type DigestSettings = {
+  digestEnabled?: boolean;
+  digestTime?: string;
+  digestTimezone?: string;
+  digestLastSentAt?: string;
+  digestClaimDay?: string;
+};
+
+type DigestUser = {
+  id: string;
+  email: string;
+  settings: DigestSettings;
+};
+
 function verifyCron(req: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) return false; // No secret configured = deny (prevent unauthenticated access)
@@ -28,20 +42,25 @@ export async function POST(req: NextRequest) {
 async function sendDigests(targetUserId?: string) {
   try {
     const supabase = createServiceSupabase();
+    const now = new Date();
 
-    let users: { id: string; email: string }[];
+    let users: DigestUser[];
 
     if (targetUserId) {
       const { data } = await supabase
         .from("profiles")
-        .select("id")
+        .select("id, settings")
         .eq("id", targetUserId)
         .single();
       if (!data) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
       const { data: authUser } = await supabase.auth.admin.getUserById(targetUserId);
       if (!authUser.user?.email) return NextResponse.json({ error: "No email" }, { status: 400 });
-      users = [{ id: data.id, email: authUser.user.email }];
+      users = [{
+        id: data.id,
+        email: authUser.user.email,
+        settings: toDigestSettings(data.settings),
+      }];
     } else {
       const { data } = await supabase
         .from("profiles")
@@ -53,10 +72,12 @@ async function sendDigests(targetUserId?: string) {
       const resolved = await Promise.all(
         data.map(async (p) => {
           const { data: authUser } = await supabase.auth.admin.getUserById(p.id);
-          return authUser.user?.email ? { id: p.id, email: authUser.user.email } : null;
+          return authUser.user?.email
+            ? { id: p.id, email: authUser.user.email, settings: toDigestSettings(p.settings) }
+            : null;
         })
       );
-      users = resolved.filter(Boolean) as typeof users;
+      users = resolved.filter(isDigestUser).filter((user) => isDigestDue(user.settings, now, false));
     }
 
     if (!process.env.RESEND_API_KEY) {
@@ -66,9 +87,14 @@ async function sendDigests(targetUserId?: string) {
     let sent = 0;
 
     for (const user of users) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const dateStr = yesterday.toISOString().split("T")[0];
+      if (!isDigestDue(user.settings, now, !targetUserId)) continue;
+
+      const timeZone = normalizeTimeZone(user.settings.digestTimezone);
+      if (!timeZone) continue;
+      const dateStr = previousLocalDate(now, timeZone);
+      const digestDay = localDate(now, timeZone);
+      const claimedSettings = await claimDigestSend(supabase, user, digestDay);
+      if (!claimedSettings) continue;
 
       const { data: dailyNote } = await supabase
         .from("notes")
@@ -109,6 +135,12 @@ async function sendDigests(targetUserId?: string) {
       });
 
       if (res.ok) sent++;
+      if (res.ok) {
+        await supabase
+          .from("profiles")
+          .update({ settings: { ...claimedSettings, digestLastSentAt: now.toISOString() } })
+          .eq("id", user.id);
+      }
     }
 
     return NextResponse.json({ sent });
@@ -116,6 +148,92 @@ async function sendDigests(targetUserId?: string) {
     const message = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+async function claimDigestSend(
+  supabase: ReturnType<typeof createServiceSupabase>,
+  user: DigestUser,
+  digestDay: string
+): Promise<DigestSettings | null> {
+  const settings = { ...user.settings, digestClaimDay: digestDay };
+  const { count, error } = await supabase
+    .from("profiles")
+    .update({ settings }, { count: "exact" })
+    .eq("id", user.id)
+    .filter("settings", "eq", JSON.stringify(user.settings));
+
+  if (error || count !== 1) return null;
+  return settings;
+}
+
+function toDigestSettings(settings: unknown): DigestSettings {
+  return settings && typeof settings === "object" && !Array.isArray(settings)
+    ? settings as DigestSettings
+    : {};
+}
+
+function isDigestUser(user: DigestUser | null): user is DigestUser {
+  return user !== null;
+}
+
+function isDigestDue(settings: DigestSettings, now: Date, requireEnabledAndSchedule: boolean): boolean {
+  const timeZone = normalizeTimeZone(settings.digestTimezone);
+  if (!timeZone) return false;
+  const digestTime = settings.digestTime ?? "08:00";
+  if (!/^\d{2}:\d{2}$/.test(digestTime)) return false;
+
+  const today = localDate(now, timeZone);
+  if (settings.digestLastSentAt) {
+    const lastSentAt = new Date(settings.digestLastSentAt);
+    if (!Number.isNaN(lastSentAt.getTime()) && localDate(lastSentAt, timeZone) === today) {
+      return false;
+    }
+  }
+  if (settings.digestClaimDay === today) return false;
+
+  if (!requireEnabledAndSchedule) return true;
+  if (settings.digestEnabled !== true) return false;
+
+  const localTime = localHourMinute(now, timeZone);
+  return localTime >= digestTime;
+}
+
+function normalizeTimeZone(timeZone: unknown): string | null {
+  if (typeof timeZone !== "string" || !timeZone) return "UTC";
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone }).format(new Date());
+    return timeZone;
+  } catch {
+    return null;
+  }
+}
+
+function localDate(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function localHourMinute(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.hour}:${values.minute}`;
+}
+
+function previousLocalDate(date: Date, timeZone: string): string {
+  const [year, month, day] = localDate(date, timeZone).split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day) - 86_400_000).toISOString().slice(0, 10);
 }
 
 function buildDigestEmail({

@@ -5,6 +5,7 @@ const mockActionList = vi.fn();
 const mockListApprovals = vi.fn();
 const mockApproveAction = vi.fn();
 const mockListPolicies = vi.fn();
+const mockUpdatePolicy = vi.fn();
 
 vi.mock("@/lib/novyx", () => ({
   getNovyxForKey: vi.fn((key: string) => {
@@ -14,6 +15,7 @@ vi.mock("@/lib/novyx", () => ({
       listApprovals: mockListApprovals,
       approveAction: mockApproveAction,
       listPolicies: mockListPolicies,
+      updatePolicy: mockUpdatePolicy,
     };
   }),
 }));
@@ -23,6 +25,7 @@ import {
   submitDecision,
   getPolicies,
   getApprovals,
+  updatePolicy,
 } from "@/lib/control";
 
 describe("getActions", () => {
@@ -137,5 +140,42 @@ describe("getPolicies", () => {
     mockListPolicies.mockRejectedValueOnce(new Error("Control API error: 401"));
 
     await expect(getPolicies("nram_test_key")).rejects.toThrow("Control API error: 401");
+  });
+});
+
+describe("updatePolicy", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("preserves existing rules when a partial update omits rules", async () => {
+    const rules = [{ action: "deploy", effect: "require_approval" as const }];
+    mockListPolicies.mockResolvedValueOnce({
+      policies: [{
+        id: "policy-1",
+        name: "Production Deploys",
+        description: "old description",
+        rules,
+      }],
+    });
+    mockUpdatePolicy.mockResolvedValueOnce({
+      id: "policy-1",
+      name: "Production Deploys",
+      description: "new description",
+      rules,
+    });
+
+    await updatePolicy(
+      "policy-1",
+      { enabled: false, description: "new description" },
+      "nram_test_key"
+    );
+
+    expect(mockListPolicies).toHaveBeenCalledOnce();
+    expect(mockUpdatePolicy).toHaveBeenCalledWith("policy-1", {
+      rules,
+      description: "new description",
+      enabled: false,
+    });
   });
 });

@@ -13,6 +13,11 @@ function slugify(text: string): string {
     .slice(0, 80);
 }
 
+function isSlugCollision(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  return error.code === "23505" || /duplicate key|unique constraint|notes_slug_unique/i.test(error.message || "");
+}
+
 // GET — check publish status
 export async function GET(req: NextRequest) {
   try {
@@ -118,18 +123,39 @@ export async function POST(req: NextRequest) {
       slug = `${slug}-${Date.now().toString(36)}`;
     }
 
-    const { error } = await supabase
-      .from("notes")
-      .update({
-        is_published: true,
-        slug,
-        published_at: new Date().toISOString(),
-      })
-      .eq("id", note.id);
+    const baseSlug = slug;
+    let publishError: { code?: string; message?: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        slug = `${baseSlug}-${Date.now().toString(36)}-${attempt}`;
+      }
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      const { error } = await supabase
+        .from("notes")
+        .update({
+          is_published: true,
+          slug,
+          published_at: new Date().toISOString(),
+        })
+        .eq("id", note.id);
 
-    const publicUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://vault.novyxlabs.com"}/p/${slug}`;
+      if (!error) {
+        publishError = null;
+        break;
+      }
+      publishError = error;
+      if (!isSlugCollision(error)) break;
+    }
+
+    if (publishError) {
+      const status = isSlugCollision(publishError) ? 409 : 500;
+      const message = status === 409
+        ? "Slug is already in use. Try another slug."
+        : publishError.message;
+      return NextResponse.json({ error: message }, { status });
+    }
+
+    const publicUrl = `${req.nextUrl.origin}/p/${slug}`;
     return NextResponse.json({ isPublished: true, slug, url: publicUrl });
   } catch (e) {
     if (e instanceof Response) return e;

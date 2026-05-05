@@ -22,7 +22,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { loadSettings, getActiveProvider } from "@/lib/providers";
 import { buildCaptureNoteContent, buildCaptureNotePath } from "@/lib/capture";
-import { transcribeLocal, isLocalWhisperSupported } from "@/lib/transcribe";
+import { transcribeLocal } from "@/lib/transcribe";
 
 interface VoiceCaptureProps {
   isOpen: boolean;
@@ -525,6 +525,7 @@ export default function VoiceCapture({
           <button
             onClick={handleClose}
             className="p-1 rounded text-muted hover:text-foreground transition-colors"
+            aria-label="Close Voice Capture"
           >
             <X size={14} />
           </button>
@@ -538,6 +539,7 @@ export default function VoiceCapture({
               <div className="flex items-center gap-1 bg-card-bg border border-sidebar-border rounded-lg p-1 self-center">
                 <button
                   onClick={() => setTranscriptionMode("local")}
+                  aria-pressed={transcriptionMode === "local"}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     transcriptionMode === "local"
                       ? "bg-rose-500/20 text-rose-300"
@@ -549,6 +551,7 @@ export default function VoiceCapture({
                 </button>
                 <button
                   onClick={() => setTranscriptionMode("cloud")}
+                  aria-pressed={transcriptionMode === "cloud"}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     transcriptionMode === "cloud"
                       ? "bg-rose-500/20 text-rose-300"
@@ -564,6 +567,7 @@ export default function VoiceCapture({
               <div className="flex items-center gap-1 bg-card-bg border border-sidebar-border rounded-lg p-1 self-center">
                 <button
                   onClick={() => setAudioSource("mic")}
+                  aria-pressed={audioSource === "mic"}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     audioSource === "mic"
                       ? "bg-rose-500/20 text-rose-300"
@@ -575,6 +579,7 @@ export default function VoiceCapture({
                 </button>
                 <button
                   onClick={() => setAudioSource("system")}
+                  aria-pressed={audioSource === "system"}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                     audioSource === "system"
                       ? "bg-rose-500/20 text-rose-300"
@@ -589,6 +594,12 @@ export default function VoiceCapture({
               {audioSource === "system" && !isRecording && (
                 <p className="text-[11px] text-muted text-center">
                   Captures audio from a browser tab — meetings, webinars, podcasts
+                </p>
+              )}
+
+              {transcriptionMode === "local" && !isRecording && (
+                <p className="text-[11px] text-muted text-center">
+                  Local transcription downloads the Whisper model on first use; internet is needed for that first run.
                 </p>
               )}
 
@@ -619,12 +630,15 @@ export default function VoiceCapture({
                   <button
                     onClick={startRecording}
                     className="w-20 h-20 rounded-full bg-rose-600 hover:bg-rose-500 transition-all flex items-center justify-center shadow-lg hover:shadow-rose-500/25 hover:scale-105 active:scale-95"
+                    aria-label={`Start ${audioSource === "system" ? "system audio" : "microphone"} recording`}
                   >
                     <Mic size={32} className="text-white" />
                   </button>
                 ) : (
                   <div
                     className="w-20 h-20 rounded-full bg-rose-600 flex items-center justify-center shadow-lg animate-pulse"
+                    role="status"
+                    aria-label="Recording in progress"
                   >
                     <Mic size={32} className="text-white" />
                   </div>
@@ -644,6 +658,7 @@ export default function VoiceCapture({
                   width={480}
                   height={60}
                   className="w-full h-[60px] rounded-lg"
+                  aria-hidden="true"
                 />
               )}
 
@@ -660,6 +675,7 @@ export default function VoiceCapture({
                       onClick={togglePause}
                       className="p-2.5 rounded-full bg-card-bg border border-sidebar-border text-foreground hover:bg-muted-bg transition-colors"
                       title={isPaused ? "Resume" : "Pause"}
+                      aria-label={isPaused ? "Resume recording" : "Pause recording"}
                     >
                       {isPaused ? <Play size={16} /> : <Pause size={16} />}
                     </button>

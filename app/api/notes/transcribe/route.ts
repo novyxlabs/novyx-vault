@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import OpenAI, { toFile } from "openai";
 import { getStorageContext } from "@/lib/auth";
-import { validateProviderBaseURL } from "@/lib/providers";
-import { resolveAndValidateHost } from "@/lib/providers.server";
+import { isLocalProviderBaseURL, validateProviderBaseURL } from "@/lib/providers";
+import { createSafeProviderFetch, resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ProviderPayload {
@@ -65,8 +65,7 @@ export async function POST(req: NextRequest) {
   const model = provider?.model || "whisper-1";
 
   if (!apiKey) {
-    const isLocal =
-      baseURL.includes("localhost") || baseURL.includes("127.0.0.1");
+    const isLocal = isLocalProviderBaseURL(baseURL);
     if (!isLocal) {
       return new Response(
         JSON.stringify({ error: "No API key configured for this provider" }),
@@ -94,6 +93,7 @@ export async function POST(req: NextRequest) {
   const client = new OpenAI({
     apiKey: apiKey || "not-needed",
     baseURL,
+    fetch: createSafeProviderFetch(),
   });
 
   try {

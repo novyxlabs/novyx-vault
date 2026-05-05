@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import NoteEditor from "@/components/NoteEditor";
-import CommandPalette from "@/components/CommandPalette";
+import CommandPalette, { type CommandAction } from "@/components/CommandPalette";
 import ChatSidebar from "@/components/ChatSidebar";
 import SettingsModal from "@/components/SettingsModal";
 import GraphView from "@/components/GraphView";
@@ -37,7 +37,23 @@ import { useMemoryStream } from "@/hooks/useMemoryStream";
 import { resolveWikiLink } from "@/lib/wikilink";
 import { loadCloudSettings, syncSettingsToCloud, clearUserLocalStorage } from "@/lib/providers";
 import type { VaultStatus } from "@/lib/vault-status";
-import { Upload, Menu, Search, MessageSquare, ChevronLeft } from "lucide-react";
+import {
+  Upload,
+  Menu,
+  Search,
+  MessageSquare,
+  ChevronLeft,
+  Plus,
+  Zap,
+  CalendarDays,
+  Network,
+  Settings,
+  HelpCircle,
+  Mic,
+  Scissors,
+  Sparkles,
+  Brain,
+} from "lucide-react";
 
 interface NoteEntry {
   name: string;
@@ -80,6 +96,7 @@ export default function AppShell() {
   const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
   const [isRollbackHistoryOpen, setIsRollbackHistoryOpen] = useState(false);
   const [isMissionControlOpen, setIsMissionControlOpen] = useState(false);
+  const [blockedNavigationPath, setBlockedNavigationPath] = useState<string | null>(null);
   const closeAllModals = useCallback(() => {
     setIsGraphOpen(false);
     setIsMemoryOpen(false);
@@ -110,6 +127,7 @@ export default function AppShell() {
   const pendingSave = useRef<{ path: string; content: string } | null>(null);
   const lastSnapshotRef = useRef<number>(0);
   const loadedContentLenRef = useRef<number>(0);
+  const lastPersistedContentRef = useRef<string>("");
 
   const loadNotes = useCallback(async () => {
     try {
@@ -136,19 +154,34 @@ export default function AppShell() {
       const noteContent = data.content || "";
       setContent(noteContent);
       loadedContentLenRef.current = noteContent.length;
+      lastPersistedContentRef.current = noteContent;
     } catch (err) {
       console.error("Failed to load note:", err);
     }
   }, []);
 
-  const flushSave = useCallback(async () => {
+  const flushSave = useCallback(async (): Promise<boolean> => {
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
       saveTimeout.current = null;
     }
     const pending = pendingSave.current;
-    if (pending && pending.content.trim()) {
+    if (pending) {
       try {
+        const previousContent = lastPersistedContentRef.current;
+        const isLargeReduction =
+          previousContent.length > 50 &&
+          pending.content.trim().length < previousContent.trim().length * 0.2 &&
+          pending.content !== previousContent;
+
+        if (isLargeReduction) {
+          await fetch("/api/notes/history", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: pending.path, content: previousContent }),
+          }).catch(() => {});
+        }
+
         const res = await fetch("/api/notes", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -158,32 +191,60 @@ export default function AppShell() {
           const msg = await res.text().catch(() => "Unknown error");
           throw new Error(`Save failed (${res.status}): ${msg}`);
         }
-        pendingSave.current = null;
-        setSaveError(null);
+        const savedPendingStillCurrent =
+          pendingSave.current?.path === pending.path &&
+          pendingSave.current.content === pending.content;
+        if (savedPendingStillCurrent) {
+          pendingSave.current = null;
+          setSaveError(null);
+          setBlockedNavigationPath(null);
+        } else {
+          setSaveError("Additional unsaved changes are still pending. Retry before leaving this note.");
+        }
+        lastPersistedContentRef.current = pending.content;
+        loadedContentLenRef.current = pending.content.length;
+        return savedPendingStillCurrent;
       } catch (err) {
         console.error("Failed to flush save:", err);
         setSaveError(err instanceof Error ? err.message : "Save failed");
+        return false;
       } finally {
         setIsSaving(false);
       }
     }
+    setBlockedNavigationPath(null);
+    return true;
   }, []);
 
   const saveNote = useCallback(
     (path: string, newContent: string) => {
-      // Prevent saving when undo wipes most of the content
-      const loadedLen = loadedContentLenRef.current;
-      if (loadedLen > 50 && newContent.trim().length < loadedLen * 0.2) return;
-      if (!newContent.trim()) return;
-
       if (saveTimeout.current) {
         clearTimeout(saveTimeout.current);
+      }
+      if (pendingSave.current && pendingSave.current.path !== path) {
+        setSaveError(`Unsaved changes in ${pendingSave.current.path}. Retry or discard before editing another note.`);
+        setIsSaving(false);
+        return;
       }
       pendingSave.current = { path, content: newContent };
       setIsSaving(true);
       setSaveError(null);
       saveTimeout.current = setTimeout(async () => {
         try {
+          const previousContent = lastPersistedContentRef.current;
+          const isLargeReduction =
+            previousContent.length > 50 &&
+            newContent.trim().length < previousContent.trim().length * 0.2 &&
+            newContent !== previousContent;
+
+          if (isLargeReduction) {
+            await fetch("/api/notes/history", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ path, content: previousContent }),
+            }).catch(() => {});
+          }
+
           const res = await fetch("/api/notes", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -193,8 +254,16 @@ export default function AppShell() {
             const msg = await res.text().catch(() => "Unknown error");
             throw new Error(`Save failed (${res.status}): ${msg}`);
           }
-          pendingSave.current = null;
-          setSaveError(null);
+          if (
+            pendingSave.current?.path === path &&
+            pendingSave.current.content === newContent
+          ) {
+            pendingSave.current = null;
+            lastPersistedContentRef.current = newContent;
+            loadedContentLenRef.current = newContent.length;
+            setSaveError(null);
+            setBlockedNavigationPath(null);
+          }
           // Record writing activity for streak tracking
           try {
             const today = new Date().toISOString().slice(0, 10);
@@ -234,6 +303,20 @@ export default function AppShell() {
       if (pendingSave.current) {
         // Synchronous send — navigator.sendBeacon for reliability
         const pending = pendingSave.current;
+        const previousContent = lastPersistedContentRef.current;
+        const isLargeReduction =
+          previousContent.length > 50 &&
+          pending.content.trim().length < previousContent.trim().length * 0.2 &&
+          pending.content !== previousContent;
+        if (isLargeReduction) {
+          navigator.sendBeacon(
+            "/api/notes/history",
+            new Blob(
+              [JSON.stringify({ path: pending.path, content: previousContent })],
+              { type: "application/json" }
+            )
+          );
+        }
         navigator.sendBeacon(
           "/api/notes",
           new Blob(
@@ -267,12 +350,20 @@ export default function AppShell() {
 
   useEffect(() => {
     if (activeNote) {
+      if (pendingSave.current && pendingSave.current.path !== activeNote) {
+        setSaveError(`Unsaved changes in ${pendingSave.current.path}. Retry or discard before loading another note.`);
+        return;
+      }
       loadNote(activeNote);
     }
   }, [activeNote, loadNote]);
 
   const handleSelectNote = async (path: string) => {
-    await flushSave();
+    const saved = await flushSave();
+    if (!saved) {
+      setBlockedNavigationPath(path);
+      return;
+    }
     setActiveNote(path);
     setIsSidebarOpen(false);
     setRecentNotes((prev) => {
@@ -286,6 +377,36 @@ export default function AppShell() {
     setContent(newContent);
     if (activeNote) {
       saveNote(activeNote, newContent);
+    }
+  };
+
+  const handleRetrySave = async () => {
+    const saved = await flushSave();
+    if (saved && blockedNavigationPath) {
+      const nextPath = blockedNavigationPath;
+      setBlockedNavigationPath(null);
+      await handleSelectNote(nextPath);
+    }
+  };
+
+  const handleDiscardPendingSave = () => {
+    const pending = pendingSave.current;
+    pendingSave.current = null;
+    setSaveError(null);
+    setIsSaving(false);
+    setContent(lastPersistedContentRef.current);
+    if (blockedNavigationPath && pending?.path !== blockedNavigationPath) {
+      const nextPath = blockedNavigationPath;
+      setBlockedNavigationPath(null);
+      setActiveNote(nextPath);
+      setIsSidebarOpen(false);
+      setRecentNotes((prev) => {
+        const next = [nextPath, ...prev.filter((p) => p !== nextPath)].slice(0, 10);
+        localStorage.setItem("noctivault-recent", JSON.stringify(next));
+        return next;
+      });
+    } else {
+      setBlockedNavigationPath(null);
     }
   };
 
@@ -483,6 +604,89 @@ export default function AppShell() {
     }
   }, [loadNotes]);
 
+  const commandActions = useMemo<CommandAction[]>(() => [
+    {
+      id: "new-note",
+      label: "New note",
+      description: "Create a blank markdown note",
+      keywords: ["create", "file"],
+      icon: <Plus size={16} />,
+      run: () => handleCreateNote(""),
+    },
+    {
+      id: "quick-capture",
+      label: "Quick capture",
+      description: "Save a raw thought into the local vault",
+      keywords: ["capture", "inbox", "thought"],
+      icon: <Zap size={16} />,
+      run: () => { closeAllModals(); setIsQuickCaptureOpen(true); },
+    },
+    {
+      id: "brain-dump",
+      label: "Brain dump",
+      description: "Turn messy text into a structured capture note",
+      keywords: ["capture", "dump", "ai"],
+      icon: <Sparkles size={16} />,
+      run: () => { closeAllModals(); setIsBrainDumpOpen(true); },
+    },
+    {
+      id: "voice-capture",
+      label: "Voice capture",
+      description: "Record audio and structure it into markdown",
+      keywords: ["capture", "record", "audio", "transcribe"],
+      icon: <Mic size={16} />,
+      run: () => { closeAllModals(); setIsVoiceCaptureOpen(true); },
+    },
+    {
+      id: "clip-remix",
+      label: "Clip & Remix",
+      description: "Rewrite clipped text in your voice",
+      keywords: ["capture", "clip", "remix", "source"],
+      icon: <Scissors size={16} />,
+      run: () => { closeAllModals(); setIsClipRemixOpen(true); },
+    },
+    {
+      id: "daily-note",
+      label: "Daily note",
+      description: "Open today's daily note",
+      keywords: ["today", "journal"],
+      icon: <CalendarDays size={16} />,
+      run: () => handleDailyNote(),
+    },
+    {
+      id: "graph",
+      label: "Graph view",
+      description: "Open the note graph",
+      keywords: ["links", "network"],
+      icon: <Network size={16} />,
+      run: () => { closeAllModals(); setIsGraphOpen(true); },
+    },
+    {
+      id: "memory",
+      label: "Memory",
+      description: "Open memory timeline and controls",
+      keywords: ["ai", "learned", "timeline"],
+      icon: <Brain size={16} />,
+      run: () => { closeAllModals(); setIsMemoryOpen(true); },
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      description: "Providers, vault mode, and account controls",
+      keywords: ["provider", "vault", "mode", "account"],
+      icon: <Settings size={16} />,
+      run: () => { closeAllModals(); setIsSettingsOpen(true); },
+    },
+    {
+      id: "help",
+      label: "Keyboard shortcuts",
+      description: "Show help and available shortcuts",
+      keywords: ["help", "shortcuts"],
+      icon: <HelpCircle size={16} />,
+      run: () => { closeAllModals(); setIsHelpOpen(true); },
+    },
+  ], [closeAllModals, handleCreateNote, handleDailyNote]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -660,10 +864,11 @@ export default function AppShell() {
     <CommandPalette
       isOpen={isCommandPaletteOpen}
       onClose={() => setIsCommandPaletteOpen(false)}
-      onSelectNote={(path) => {
-        handleSelectNote(path);
-        setIsCommandPaletteOpen(false);
+      onSelectNote={async (path) => {
+        await handleSelectNote(path);
+        if (!pendingSave.current) setIsCommandPaletteOpen(false);
       }}
+      commands={commandActions}
     />
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
       {/* Mobile Header */}
@@ -671,8 +876,14 @@ export default function AppShell() {
         <div className="flex items-center gap-2 min-w-0">
           {activeNote ? (
             <button
-              onClick={() => { setActiveNote(null); setContent(""); }}
+              onClick={async () => {
+                const saved = await flushSave();
+                if (!saved) return;
+                setActiveNote(null);
+                setContent("");
+              }}
               className="p-1.5 -ml-1 rounded-lg text-muted hover:text-accent transition-colors"
+              aria-label="Back to notes"
             >
               <ChevronLeft size={20} />
             </button>
@@ -680,6 +891,7 @@ export default function AppShell() {
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="p-1.5 -ml-1 rounded-lg text-muted hover:text-foreground transition-colors"
+              aria-label="Open sidebar"
             >
               <Menu size={20} />
             </button>
@@ -694,6 +906,7 @@ export default function AppShell() {
               onClick={() => setIsSidebarOpen(true)}
               className="p-2 rounded-lg text-muted hover:text-foreground transition-colors"
               title="Menu"
+              aria-label="Open sidebar"
             >
               <Menu size={16} />
             </button>
@@ -701,6 +914,7 @@ export default function AppShell() {
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
             className="p-2 rounded-lg text-muted hover:text-foreground transition-colors"
+            aria-label="Open command palette"
           >
             <Search size={18} />
           </button>
@@ -708,6 +922,8 @@ export default function AppShell() {
             <button
               onClick={() => setIsChatOpen((prev) => !prev)}
               className={`p-2 rounded-lg transition-colors ${isChatOpen ? "text-accent" : "text-muted hover:text-foreground"}`}
+              aria-label={isChatOpen ? "Close chat" : "Open chat"}
+              aria-pressed={isChatOpen}
             >
               <MessageSquare size={18} />
             </button>
@@ -748,7 +964,12 @@ export default function AppShell() {
           await fetch("/api/auth/signout", { method: "POST" });
           window.location.href = "/login";
         } : undefined}
-        onGoHome={() => { setActiveNote(null); setContent(""); }}
+        onGoHome={async () => {
+          const saved = await flushSave();
+          if (!saved) return;
+          setActiveNote(null);
+          setContent("");
+        }}
         vaultStatus={vaultStatus}
         onDuplicateNote={handleDuplicateNote}
         pinnedNotes={pinnedNotes}
@@ -765,22 +986,47 @@ export default function AppShell() {
               onClose={() => setIsReflectOpen(false)}
             />
           ) : activeNote ? (
-            <NoteEditor
-              notePath={activeNote}
-              content={content}
-              onChange={handleContentChange}
-              isSaving={isSaving}
-              saveError={saveError}
-              onFileDrop={handleFileDrop}
-              onNavigateWikiLink={handleNavigateWikiLink}
-              onSelectNote={handleSelectNote}
-              onToggleChat={() => setIsChatOpen((prev) => !prev)}
-              isChatOpen={isChatOpen}
-              onRestore={handleRestoreVersion}
-              onIngestLink={() => setIngestUrl("")}
-              onPasteUrl={(url) => setIngestUrl(url)}
-              noteModifiedAt={activeNoteModifiedAt}
-            />
+            <div className="flex-1 flex flex-col min-w-0">
+              {saveError && pendingSave.current && (
+                <div className="mx-3 mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <span className="flex-1">
+                    Save failed for {pendingSave.current.path}. Your unsaved changes are still in this editor.
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRetrySave}
+                      className="px-2.5 py-1 rounded-md bg-red-500/20 text-red-100 hover:bg-red-500/30 transition-colors"
+                    >
+                      Retry save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDiscardPendingSave}
+                      className="px-2.5 py-1 rounded-md text-red-100/80 hover:text-red-50 hover:bg-red-500/15 transition-colors"
+                    >
+                      Discard changes
+                    </button>
+                  </div>
+                </div>
+              )}
+              <NoteEditor
+                notePath={activeNote}
+                content={content}
+                onChange={handleContentChange}
+                isSaving={isSaving}
+                saveError={saveError}
+                onFileDrop={handleFileDrop}
+                onNavigateWikiLink={handleNavigateWikiLink}
+                onSelectNote={handleSelectNote}
+                onToggleChat={() => setIsChatOpen((prev) => !prev)}
+                isChatOpen={isChatOpen}
+                onRestore={handleRestoreVersion}
+                onIngestLink={() => setIngestUrl("")}
+                onPasteUrl={(url) => setIngestUrl(url)}
+                noteModifiedAt={activeNoteModifiedAt}
+              />
+            </div>
           ) : (
             <div
               className="flex-1 overflow-y-auto relative"
