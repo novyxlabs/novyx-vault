@@ -119,5 +119,6 @@ describe("publish route desktop guard", () => {
     expect(updatePayloads[0].slug).toBe("race-note");
     expect(String(updatePayloads[1].slug)).toMatch(/^race-note-[a-z0-9]+-1$/);
     expect(body.slug).toBe(updatePayloads[1].slug);
+    expect(body.url).toBe(`http://localhost:3000/p/${body.slug}`);
   });
 });

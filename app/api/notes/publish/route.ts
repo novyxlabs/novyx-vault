@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status });
     }
 
-    const publicUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://vault.novyxlabs.com"}/p/${slug}`;
+    const publicUrl = `${req.nextUrl.origin}/p/${slug}`;
     return NextResponse.json({ isPublished: true, slug, url: publicUrl });
   } catch (e) {
     if (e instanceof Response) return e;

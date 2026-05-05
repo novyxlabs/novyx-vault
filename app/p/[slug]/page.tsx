@@ -1,14 +1,25 @@
 import { notFound } from "next/navigation";
-import { createServiceSupabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { escapeHtml, formatInlineMarkdown } from "@/lib/sanitize";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-async function getPublishedNote(slug: string) {
-  const supabase = createServiceSupabase();
+export async function getPublishedNote(slug: string) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
   const { data } = await supabase
     .from("published_notes")
     .select("name, content, published_at, slug")
