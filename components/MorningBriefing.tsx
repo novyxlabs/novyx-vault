@@ -267,7 +267,7 @@ export default function MorningBriefing({
             {[0, 1].map((i) => (
               <div
                 key={i}
-                className="h-20 rounded-xl bg-card-bg animate-pulse"
+                className="h-20 rounded-lg bg-card-bg animate-pulse"
               />
             ))}
           </div>
@@ -276,7 +276,7 @@ export default function MorningBriefing({
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-12 rounded-xl bg-card-bg animate-pulse"
+                className="h-12 rounded-lg bg-card-bg animate-pulse"
               />
             ))}
           </div>
@@ -291,40 +291,42 @@ export default function MorningBriefing({
       {/*  0. Onboarding — shown when no notes exist                    */}
       {/* ============================================================= */}
       {noteCount === 0 && (
-        <div className="ghost-fade-in rounded-xl border border-accent/20 bg-accent/5 p-5 space-y-4">
-          <div className="flex items-center gap-2.5">
-            <Rocket size={18} className="text-accent" />
-            <h3 className="text-base font-semibold">Get started with Novyx Vault</h3>
+        <div className="ghost-fade-in border-y border-sidebar-border py-5">
+          <div className="flex items-start gap-3">
+            <Rocket size={18} className="mt-0.5 text-emerald-300" />
+            <div>
+              <h3 className="text-base font-semibold">Start a markdown vault</h3>
+              <p className="mt-1 text-sm text-muted leading-relaxed">
+                Create a note first. Add AI providers or Novyx Memory only when you need those workflows.
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-muted leading-relaxed">
-            Set up your workspace in under a minute. Each step unlocks more capabilities.
-          </p>
-          <div className="space-y-2.5">
+          <div className="mt-5 divide-y divide-sidebar-border border-y border-sidebar-border">
             {/* Step 1: Create a note */}
             <button
               onClick={onCreateNote}
-              className="w-full flex items-center gap-3 rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3 text-left hover:border-accent/40 transition-colors group"
+              className="w-full flex items-center gap-3 px-1 py-3.5 text-left transition-colors group hover:text-foreground"
             >
-              <div className="w-7 h-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
-                <PlusCircle size={14} className="text-accent" />
+              <div className="w-7 h-7 bg-emerald-400/10 flex items-center justify-center shrink-0">
+                <PlusCircle size={14} className="text-emerald-300" />
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium">Create your first note</span>
-                <p className="text-[11px] text-muted">Start writing — Markdown, wikilinks, and tags supported.</p>
+                <p className="text-[11px] text-muted">Plain markdown, wiki-links, tags, autosave.</p>
               </div>
-              <ArrowRight size={14} className="text-muted group-hover:text-accent transition-colors shrink-0" />
+              <ArrowRight size={14} className="text-muted group-hover:text-emerald-300 transition-colors shrink-0" />
             </button>
 
             {/* Step 2: Add an AI provider */}
             <button
               onClick={onOpenSettings}
-              className="w-full flex items-center gap-3 rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3 text-left hover:border-accent/40 transition-colors group"
+              className="w-full flex items-center gap-3 px-1 py-3.5 text-left transition-colors group hover:text-foreground"
             >
-              <div className="w-7 h-7 rounded-md bg-blue-400/10 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 bg-cyan-400/10 flex items-center justify-center shrink-0">
                 {hasWorkingProvider ? (
                   <CheckCircle2 size={14} className="text-emerald-400" />
                 ) : (
-                  <Cpu size={14} className="text-blue-400" />
+                  <Cpu size={14} className="text-cyan-300" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -334,20 +336,20 @@ export default function MorningBriefing({
                 <p className="text-[11px] text-muted">
                   {hasWorkingProvider
                     ? `Using ${activeProvider?.name || "your provider"}.`
-                    : "21 hosted and local provider presets are supported."}
+                    : "Use one of 21 hosted or local provider presets."}
                 </p>
               </div>
               {!hasWorkingProvider && (
-                <ArrowRight size={14} className="text-muted group-hover:text-accent transition-colors shrink-0" />
+                <ArrowRight size={14} className="text-muted group-hover:text-cyan-300 transition-colors shrink-0" />
               )}
             </button>
 
             {/* Step 3: Connect Novyx Memory */}
             <button
               onClick={onOpenSettings}
-              className="w-full flex items-center gap-3 rounded-lg border border-sidebar-border bg-card-bg/50 px-4 py-3 text-left hover:border-accent/40 transition-colors group"
+              className="w-full flex items-center gap-3 px-1 py-3.5 text-left transition-colors group hover:text-foreground"
             >
-              <div className="w-7 h-7 rounded-md bg-amber-400/10 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 bg-amber-400/10 flex items-center justify-center shrink-0">
                 {hasNovyxKey ? (
                   <CheckCircle2 size={14} className="text-emerald-400" />
                 ) : (
@@ -360,12 +362,12 @@ export default function MorningBriefing({
                 </span>
                 <p className="text-[11px] text-muted">
                   {hasNovyxKey
-                    ? "Your AI remembers across sessions."
-                    : "Add your API key in Settings for persistent AI memory."}
+                    ? "Inspectable memory is available."
+                    : "Add a Novyx key for persistent memory, audit, and rollback."}
                 </p>
               </div>
               {!hasNovyxKey && (
-                <ArrowRight size={14} className="text-muted group-hover:text-accent transition-colors shrink-0" />
+                <ArrowRight size={14} className="text-muted group-hover:text-amber-300 transition-colors shrink-0" />
               )}
             </button>
           </div>
@@ -414,9 +416,9 @@ export default function MorningBriefing({
       </div>
 
       {/* AI Setup Prompt */}
-      {!hasWorkingProvider && onOpenSettings && (
+      {noteCount > 0 && !hasWorkingProvider && onOpenSettings && (
         <div
-          className="ghost-fade-in rounded-xl border border-accent/30 bg-accent/5 p-4"
+          className="ghost-fade-in rounded-lg border border-accent/30 bg-accent/5 p-4"
           style={{ animationDelay: "120ms" }}
         >
           <div className="flex items-start gap-3">
@@ -425,12 +427,11 @@ export default function MorningBriefing({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-medium text-foreground mb-1">
-                Set up AI to unlock your vault&apos;s full potential
+                Connect a provider for AI actions
               </h3>
               <p className="text-xs text-muted leading-relaxed mb-3">
                 Add an AI provider to use Brain Dump, Clip &amp; Remix, AI chat,
-                Ghost Connections, and more. Bring your own API key — works with
-                OpenAI, Anthropic, Ollama, and 10+ providers.
+                Ghost Connections, and weekly reviews. Bring your own API key.
               </p>
               <button
                 onClick={onOpenSettings}
@@ -494,7 +495,7 @@ export default function MorningBriefing({
                 <button
                   key={i}
                   onClick={() => notePath && onSelectNote(notePath)}
-                  className="w-full text-left rounded-xl border border-sidebar-border/60 bg-card-bg/50 p-4 hover:border-accent/30 hover:bg-card-bg/80 transition-all group"
+                  className="w-full text-left rounded-lg border border-sidebar-border/60 bg-card-bg/50 p-4 hover:border-accent/30 hover:bg-card-bg/80 transition-all group"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -533,7 +534,7 @@ export default function MorningBriefing({
         <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={onOpenQuickCapture || onOpenBrainDump}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
+            className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
           >
             <Mic
               size={16}
@@ -546,7 +547,7 @@ export default function MorningBriefing({
 
           <button
             onClick={onOpenBrainDump}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
+            className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
           >
             <Sparkles
               size={16}
@@ -559,7 +560,7 @@ export default function MorningBriefing({
 
           <button
             onClick={onOpenChat || onOpenClipRemix}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
+            className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
           >
             <MessageCircle
               size={16}
@@ -572,7 +573,7 @@ export default function MorningBriefing({
 
           <button
             onClick={onCreateNote}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
+            className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
           >
             <PenLine
               size={16}

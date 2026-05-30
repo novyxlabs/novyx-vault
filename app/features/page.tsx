@@ -42,7 +42,7 @@ export default function FeaturesPage() {
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
             A complete workspace for capturing, connecting, and recalling your knowledge &mdash;
-            with AI that gets smarter the longer you use it.
+            with AI memory you can inspect, audit, and roll back.
           </p>
         </section>
 

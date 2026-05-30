@@ -3,11 +3,11 @@
 import {
   Brain, FileText, Network, Github, ArrowRight,
   Sparkles, History, Key, PenTool, Link2, FolderTree,
-  Download, Mic, Menu, X,
+  Download, Mic, Menu, X, ShieldCheck,
 } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "motion/react";
+import { useState } from "react";
+import { motion } from "motion/react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -23,14 +23,10 @@ const viewportOnce = { once: true, margin: "-60px" as const };
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start end", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.98, 0.95]);
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Nav — touch targets 44px min */}
-      <nav aria-label="Main navigation" className="max-w-6xl mx-auto px-6 py-4">
+      <nav aria-label="Main navigation" className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <span className="text-xl font-bold tracking-tight">Novyx Vault</span>
           {/* Desktop nav */}
@@ -86,29 +82,37 @@ export default function LandingPage() {
       <main>
         {/* Hero */}
         <motion.section
-          className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center"
+          className="max-w-7xl mx-auto px-6 pt-10 sm:pt-14 pb-14"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
         >
+          <motion.div
+            className="mb-7 inline-flex items-center gap-2 border border-emerald-400/20 bg-emerald-400/5 px-3 py-1.5 text-xs font-medium text-emerald-200"
+            variants={fadeUp}
+            transition={{ duration: 0.45 }}
+          >
+            <span className="h-1.5 w-1.5 bg-emerald-300" />
+            Open source markdown workspace
+          </motion.div>
           <motion.h1
-            className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6 [text-wrap:balance]"
+            className="max-w-5xl text-4xl sm:text-5xl md:text-5xl font-bold tracking-tight leading-tight mb-5 [text-wrap:balance]"
             variants={fadeUp}
             transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            Notes for people who want AI{" "}
-            <span className="text-accent">with durable context.</span>
+            Novyx Vault is markdown notes with{" "}
+            <span className="text-cyan-200">memory you can inspect.</span>
           </motion.h1>
           <motion.p
-            className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-10 [text-wrap:balance]"
+            className="text-lg text-muted max-w-3xl mb-8 [text-wrap:balance]"
             variants={fadeUp}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            An open-source second brain with persistent AI memory, rollback,
-            bring-your-own provider keys, and markdown notes you can keep outside the app.
+            Write plain markdown, link ideas, ask AI with saved context, and roll back what it remembers.
+            Use your own provider keys or keep the desktop app local.
           </motion.p>
           <motion.div
-            className="flex flex-wrap items-center justify-center gap-4"
+            className="flex flex-wrap items-center gap-4"
             variants={fadeUp}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
@@ -123,17 +127,15 @@ export default function LandingPage() {
               href="/features"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-sidebar-border text-muted hover:text-foreground hover:border-muted transition-colors font-medium"
             >
-              See All Features
+              See How It Works
             </a>
           </motion.div>
           {/* App screenshot — scroll parallax */}
           <motion.div
-            ref={heroRef}
-            className="mt-16 -mx-2 sm:mx-0 rounded-xl overflow-hidden border border-sidebar-border shadow-2xl"
+            className="relative mt-9 -mx-4 overflow-hidden border border-sidebar-border bg-card-bg shadow-2xl sm:mx-0"
             initial={{ opacity: 0, y: 40, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ y: heroY, scale: heroScale }}
           >
             <Image
               src="/hero-app.jpeg"
@@ -144,32 +146,45 @@ export default function LandingPage() {
               className="w-full h-auto"
             />
           </motion.div>
+          <motion.div
+            className="mt-5 grid grid-cols-2 gap-px border border-sidebar-border bg-sidebar-border text-sm sm:grid-cols-4"
+            variants={fadeUp}
+            transition={{ duration: 0.5, delay: 0.28 }}
+          >
+            <ProofItem icon={<FileText size={16} />} label="Plain markdown" value="No lock-in" />
+            <ProofItem icon={<Key size={16} />} label="21 provider presets" value="Hosted + local" />
+            <ProofItem icon={<ShieldCheck size={16} />} label="Memory rollback" value="Audit trail included" />
+            <ProofItem icon={<Github size={16} />} label="MIT open source" value="Self-hostable" />
+          </motion.div>
         </motion.section>
 
-        {/* The problem — left-aligned for variety */}
+        {/* The workflow */}
         <motion.section
-          className="max-w-3xl mx-auto px-6 py-20"
+          className="max-w-7xl mx-auto px-6 py-16"
           initial="hidden"
           whileInView="visible"
           viewport={viewportOnce}
           variants={staggerContainer}
         >
-          <motion.p
-            className="text-lg text-muted leading-relaxed"
+          <motion.div
+            className="grid grid-cols-1 gap-8 lg:grid-cols-[0.8fr_1.2fr]"
             variants={fadeUp}
             transition={{ duration: 0.6 }}
           >
-            Most AI note tools only see the current prompt and whatever they retrieve.
-            You explain your project again, repeat your preferences, and rebuild
-            context when the session changes.
-          </motion.p>
-          <motion.p
-            className="text-lg text-foreground font-medium mt-6"
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-          >
-            Novyx Vault fixes that.
-          </motion.p>
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+                Built around the loop people actually use.
+              </h2>
+              <p className="mt-4 max-w-xl text-muted">
+                Capture notes, connect them, let AI keep useful context, then inspect or undo that context when it changes.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <WorkflowStep number="01" title="Capture" description="Write markdown, import notes, record voice, or clip a URL." />
+              <WorkflowStep number="02" title="Connect" description="Use wiki-links, backlinks, graph views, and AI-suggested relationships." />
+              <WorkflowStep number="03" title="Control" description="Review memory, audit changes, and roll back context when needed." />
+            </div>
+          </motion.div>
         </motion.section>
 
         {/* Core experience — bento/asymmetric layout instead of 3-col grid */}
@@ -266,8 +281,8 @@ export default function LandingPage() {
             variants={fadeUp}
             transition={{ duration: 0.5 }}
           >
-            This is what makes Novyx Vault different. Your AI builds persistent memory
-            from your notes and conversations. The longer you use it, the more useful it becomes.
+            Vault can preserve useful memory from your notes and conversations,
+            then expose that memory through audit, timeline, and rollback views.
           </motion.p>
           {/* Asymmetric 2-col: large left, stacked right */}
           <motion.div
@@ -275,7 +290,7 @@ export default function LandingPage() {
             variants={staggerContainer}
           >
             <motion.div
-              className="lg:col-span-7 p-8 rounded-xl border border-sidebar-border bg-card-bg"
+              className="lg:col-span-7 p-8 rounded-lg border border-sidebar-border bg-card-bg"
               variants={fadeUp}
               transition={{ duration: 0.5 }}
             >
@@ -292,7 +307,7 @@ export default function LandingPage() {
               variants={staggerContainer}
             >
               <motion.div
-                className="p-6 rounded-xl border border-sidebar-border bg-card-bg flex-1"
+                className="p-6 rounded-lg border border-sidebar-border bg-card-bg flex-1"
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
               >
@@ -304,7 +319,7 @@ export default function LandingPage() {
                 </p>
               </motion.div>
               <motion.div
-                className="p-6 rounded-xl border border-sidebar-border bg-card-bg flex-1"
+                className="p-6 rounded-lg border border-sidebar-border bg-card-bg flex-1"
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
               >
@@ -317,7 +332,7 @@ export default function LandingPage() {
               </motion.div>
             </motion.div>
             <motion.div
-              className="lg:col-span-12 p-6 rounded-xl border border-sidebar-border bg-card-bg"
+              className="lg:col-span-12 p-6 rounded-lg border border-sidebar-border bg-card-bg"
               variants={fadeUp}
               transition={{ duration: 0.5 }}
             >
@@ -384,7 +399,7 @@ export default function LandingPage() {
           variants={fadeUp}
           transition={{ duration: 0.6 }}
         >
-          <div className="p-8 rounded-2xl border border-sidebar-border bg-card-bg">
+          <div className="p-8 rounded-lg border border-sidebar-border bg-card-bg">
             <div className="flex items-center gap-3 mb-4">
               <Key size={24} className="text-accent" />
               <h2 className="text-2xl sm:text-3xl font-bold [text-wrap:balance]">Works with the AI you already use</h2>
@@ -426,7 +441,7 @@ export default function LandingPage() {
             variants={staggerContainer}
           >
             <motion.div
-              className="md:col-span-7 p-8 rounded-xl border border-sidebar-border bg-card-bg"
+              className="md:col-span-7 p-8 rounded-lg border border-sidebar-border bg-card-bg"
               variants={fadeUp}
               transition={{ duration: 0.5 }}
             >
@@ -440,7 +455,7 @@ export default function LandingPage() {
               </p>
             </motion.div>
             <motion.div
-              className="md:col-span-5 p-8 rounded-xl border border-sidebar-border bg-card-bg"
+              className="md:col-span-5 p-8 rounded-lg border border-sidebar-border bg-card-bg"
               variants={fadeUp}
               transition={{ duration: 0.5 }}
             >
@@ -464,7 +479,7 @@ export default function LandingPage() {
           variants={fadeUp}
           transition={{ duration: 0.6 }}
         >
-          <div className="p-8 rounded-2xl border border-sidebar-border bg-card-bg text-center">
+          <div className="p-8 rounded-lg border border-sidebar-border bg-card-bg text-center">
             <Github size={32} className="mx-auto mb-4 text-muted" />
             <h2 className="text-2xl sm:text-3xl font-bold mb-3 [text-wrap:balance]">Open Source</h2>
             <p className="text-muted mb-6 max-w-lg mx-auto">
@@ -562,7 +577,7 @@ export default function LandingPage() {
 function FeatureCard({ icon, title, description, className = "", accent }: { icon: React.ReactNode; title: string; description: string; className?: string; accent?: "emerald" | "purple" }) {
   return (
     <motion.div
-      className={`p-6 rounded-xl border border-sidebar-border bg-card-bg hover:border-muted transition-colors text-left ${className}`}
+      className={`p-6 rounded-lg border border-sidebar-border bg-card-bg hover:border-muted transition-colors text-left ${className}`}
       variants={fadeUp}
       transition={{ duration: 0.4 }}
     >
@@ -570,5 +585,27 @@ function FeatureCard({ icon, title, description, className = "", accent }: { ico
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <p className="text-sm text-muted leading-relaxed">{description}</p>
     </motion.div>
+  );
+}
+
+function ProofItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="min-h-[86px] bg-background p-4">
+      <div className="flex items-center gap-2 text-muted">
+        {icon}
+        <span className="text-xs font-medium uppercase">{label}</span>
+      </div>
+      <p className="mt-2 text-sm font-semibold text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function WorkflowStep({ number, title, description }: { number: string; title: string; description: string }) {
+  return (
+    <div className="border-l border-sidebar-border pl-4">
+      <div className="font-mono text-xs text-emerald-300">{number}</div>
+      <h3 className="mt-2 text-lg font-semibold">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{description}</p>
+    </div>
   );
 }
