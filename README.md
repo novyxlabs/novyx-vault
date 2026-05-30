@@ -170,7 +170,7 @@ Cloud mode adds auth, account-backed storage, sharing, and publishing via Supaba
 | `UPSTASH_REDIS_REST_URL` | Production | Redis for rate limiting. Production fails closed without this. |
 | `UPSTASH_REDIS_REST_TOKEN` | Production | Redis auth token. Production fails closed without this. |
 | `NEXT_PUBLIC_SENTRY_DSN` | Optional | Enables Sentry runtime error capture |
-| `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` | Optional | Enables Sentry source map upload during production builds |
+| `SENTRY_UPLOAD_SOURCEMAPS`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` | Optional | Set `SENTRY_UPLOAD_SOURCEMAPS=1` with the other Sentry values to upload production source maps |
 
 ### Deploy
 

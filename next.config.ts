@@ -10,7 +10,10 @@ const scriptSrc = [
   .join(" ");
 
 const sentrySourceMapsEnabled = Boolean(
-  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
+  process.env.SENTRY_UPLOAD_SOURCEMAPS === "1"
+    && process.env.SENTRY_AUTH_TOKEN
+    && process.env.SENTRY_ORG
+    && process.env.SENTRY_PROJECT
 );
 
 const nextConfig: NextConfig = {
