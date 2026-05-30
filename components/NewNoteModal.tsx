@@ -28,12 +28,14 @@ export default function NewNoteModal({ isOpen, folderPath, onClose, onCreate }: 
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const resetTimer = window.setTimeout(() => {
       setName("");
       setShowError(false);
       setSelectedTemplate(NOTE_TEMPLATES[0]);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+      inputRef.current?.focus();
+    }, 50);
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {

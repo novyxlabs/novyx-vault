@@ -13,17 +13,17 @@ const faqs = [
   {
     question: "What is Novyx Vault?",
     answer:
-      "Novyx Vault is an open-source, AI-powered personal knowledge base. It combines a markdown editor with wiki-links, a knowledge graph, and persistent AI memory that grows smarter the longer you use it. It is available as a web app and a desktop app for macOS, Windows, and Linux.",
+      "Novyx Vault is an open-source, AI-powered personal knowledge base. It combines a markdown editor with wiki-links, a knowledge graph, and persistent AI memory that can preserve useful context across sessions. It is available as a web app and as a Tauri desktop app source build.",
   },
   {
     question: "Is Novyx Vault free?",
     answer:
-      "Yes. The free tier includes the markdown editor, wiki-links, backlinks, knowledge graph, BYOK provider setup, and desktop/local storage. The $9/month Pro plan adds persistent AI memory, Ghost Connections, cortex insights, voice capture, audit history, and hosted cloud features such as publishing and account-backed access.",
+      "Yes. The free tier includes the markdown editor, wiki-links, backlinks, knowledge graph, BYOK provider setup, and desktop/local storage. The $9/month Pro plan adds persistent AI memory, Ghost Connections, cortex insights, voice capture, audit history, and hosted cloud features.",
   },
   {
     question: "How does AI memory work in Novyx Vault?",
     answer:
-      "Novyx Vault uses the Novyx SDK to give your AI assistant persistent memory. Every interaction is stored, timestamped, and versioned. Your AI remembers your projects, preferences, and writing style across sessions. You can browse the full memory timeline, verify the chain of memories, and roll back to any previous state.",
+      "Novyx Vault uses the Novyx SDK to give your AI assistant persistent memory. Memory operations are timestamped and exposed through timeline, audit, and rollback views. Depending on your plan and configuration, your AI can recall projects, preferences, and writing context across sessions.",
   },
   {
     question: "Can I use my own AI provider with Novyx Vault?",

@@ -43,6 +43,7 @@ export default function GhostNotification({
   const lastNotifyTimeRef = useRef(0);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const dismissTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dismissRef = useRef<() => void>(() => {});
   const abortRef = useRef<AbortController | null>(null);
   const lastNotePathRef = useRef(notePath);
   const queueRef = useRef<Notification[]>([]);
@@ -52,10 +53,6 @@ export default function GhostNotification({
     if (notePath !== lastNotePathRef.current) {
       lastNotePathRef.current = notePath;
       lastCheckedContentLengthRef.current = 0;
-      setNotification(null);
-      setIsVisible(false);
-      setIsDismissing(false);
-      setQueueCount(0);
       queueRef.current = [];
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -66,6 +63,13 @@ export default function GhostNotification({
         dismissTimerRef.current = null;
       }
       abortRef.current?.abort();
+      const resetTimer = window.setTimeout(() => {
+        setNotification(null);
+        setIsVisible(false);
+        setIsDismissing(false);
+        setQueueCount(0);
+      }, 0);
+      return () => window.clearTimeout(resetTimer);
     }
   }, [notePath]);
 
@@ -91,12 +95,16 @@ export default function GhostNotification({
           setIsDismissing(false);
           lastNotifyTimeRef.current = Date.now();
           dismissTimerRef.current = setTimeout(() => {
-            dismiss();
+            dismissRef.current();
           }, AUTO_DISMISS_MS);
         }, 400);
       }
     }, 300);
-  }, []);  
+  }, []);
+
+  useEffect(() => {
+    dismissRef.current = dismiss;
+  }, [dismiss]);
 
   const showNotification = useCallback(
     (n: Notification) => {

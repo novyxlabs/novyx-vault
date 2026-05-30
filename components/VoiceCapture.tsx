@@ -67,7 +67,8 @@ export default function VoiceCapture({
 
   // Reset state when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const resetTimer = window.setTimeout(() => {
       setPhase("record");
       setIsRecording(false);
       setIsPaused(false);
@@ -79,28 +80,8 @@ export default function VoiceCapture({
       setError(null);
       setIsSaving(false);
       chunksRef.current = [];
-    }
-  }, [isOpen]);
-
-  // Cleanup on unmount or close
-  useEffect(() => {
-    return () => {
-      stopAllTracks();
-      stopTimer();
-      stopVisualization();
-    };
-  }, []);
-
-  // Handle escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    }, 0);
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen]);
 
   // Get AI provider
@@ -125,7 +106,7 @@ export default function VoiceCapture({
     return `${m}:${s}`;
   };
 
-  const stopAllTracks = () => {
+  const stopAllTracks = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -136,30 +117,51 @@ export default function VoiceCapture({
     }
     analyserRef.current = null;
     mediaRecorderRef.current = null;
-  };
+  }, []);
 
-  const stopTimer = () => {
+  const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  };
+  }, []);
 
-  const stopVisualization = () => {
+  const stopVisualization = useCallback(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-  };
+  }, []);
 
-  const handleClose = () => {
+  // Cleanup on unmount or close
+  useEffect(() => {
+    return () => {
+      stopAllTracks();
+      stopTimer();
+      stopVisualization();
+    };
+  }, [stopAllTracks, stopTimer, stopVisualization]);
+
+  const handleClose = useCallback(() => {
     stopAllTracks();
     stopTimer();
     stopVisualization();
     setIsRecording(false);
     setIsPaused(false);
     onClose();
-  };
+  }, [onClose, stopAllTracks, stopTimer, stopVisualization]);
+
+  // Handle escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleClose]);
 
   const drawWaveform = () => {
     const canvas = canvasRef.current;

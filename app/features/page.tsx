@@ -14,7 +14,7 @@ import { FadeInSection } from "@/components/FadeInSection";
 export const metadata: Metadata = {
   title: "Features",
   description:
-    "Markdown notes, wiki-links, knowledge graph, persistent AI memory, Ghost Connections, memory rollback, 18+ AI providers, and more.",
+    "Markdown notes, wiki-links, knowledge graph, persistent AI memory, Ghost Connections, memory rollback, BYOK providers, and more.",
   alternates: { canonical: "/features" },
 };
 
@@ -120,17 +120,16 @@ export default function FeaturesPage() {
           >
             <p>
               Most AI tools forget everything when you close the tab. Novyx Vault is different.
-              Your AI assistant builds a persistent memory that grows over time. It remembers your
-              projects, your preferences, your writing style, and the relationships between your ideas.
+              Your AI assistant builds a persistent memory that grows over time. Depending on your
+              configuration, it can preserve project context, preferences, writing style, and relationships between ideas.
             </p>
             <p>
-              Ask about a project from last month and it responds with full context. The more you
-              use it, the more useful it becomes &mdash; like an assistant that actually knows you.
+              Ask about prior work and it can use saved memories alongside your notes instead of relying only on the current chat.
             </p>
             <ul>
-              <li>Memories persist across sessions &mdash; nothing is lost when you close the app</li>
+              <li>Memories persist across app sessions</li>
               <li>AI context improves with every note you save</li>
-              <li>Your memories are yours alone &mdash; fully private and portable</li>
+              <li>Memory timeline, audit views, and rollback controls</li>
             </ul>
             <MemoryDemo />
           </Feature>
@@ -143,7 +142,7 @@ export default function FeaturesPage() {
             <p>
               Ghost Connections are AI-discovered relationships between your notes that you never
               explicitly created. When you open a note, Vault analyzes its content and finds related
-              notes across your vault &mdash; even without shared keywords or links.
+              notes across your vault &mdash; even when they are not already connected by explicit links.
             </p>
             <p>
               Each connection includes a badge showing how it was discovered: shared tags, content
@@ -185,9 +184,8 @@ export default function FeaturesPage() {
             id="cortex"
           >
             <p>
-              As your vault grows, Vault analyzes your accumulated knowledge and surfaces
-              emerging themes, patterns, and connections you may not have noticed. It&apos;s like
-              having a research assistant that reads everything you write and highlights the bigger picture.
+              As your vault grows, Vault can analyze your accumulated knowledge and surface
+              emerging themes, patterns, and connections you may not have noticed.
             </p>
             <ul>
               <li>Automatic theme detection across your vault</li>
@@ -228,10 +226,10 @@ export default function FeaturesPage() {
               AI structures your transcript into clean, organized markdown notes.
             </p>
             <ul>
-              <li>Dual transcription: local (on-device, private) or cloud (faster, more accurate)</li>
+              <li>Dual transcription: local/on-device or cloud provider-backed</li>
               <li>Capture from microphone or system audio</li>
               <li>Real-time waveform visualization during recording</li>
-              <li>AI structuring &mdash; raw transcript becomes meeting notes, thought capture, or learning notes</li>
+              <li>AI structuring can turn raw transcripts into meeting notes, thought capture, or learning notes</li>
               <li>Save as a new note or merge into an existing one</li>
             </ul>
             <VoiceCaptureDemo />
@@ -299,7 +297,7 @@ export default function FeaturesPage() {
             <ul>
               <li>Full source code on GitHub</li>
               <li>Self-hostable</li>
-              <li>Desktop apps for macOS, Windows, and Linux</li>
+              <li>Tauri desktop app source for macOS, Windows, and Linux builds</li>
               <li>Built with Next.js, React, TypeScript, and Tailwind</li>
             </ul>
             <OpenSourceDemo />

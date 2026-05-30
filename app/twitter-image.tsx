@@ -64,7 +64,7 @@ export default function TwitterImage() {
               textAlign: "center",
             }}
           >
-            The only note app where AI gets smarter the longer you use it
+            Open-source notes with persistent AI memory
           </p>
         </div>
         <div

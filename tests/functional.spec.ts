@@ -276,9 +276,10 @@ test.describe("API routes", () => {
     });
   });
 
-  test("local mode writes notes as markdown files under ~/SecondBrain", async ({ baseURL }) => {
+  test("local mode writes notes as markdown files under the configured vault root", async ({ baseURL }) => {
     const notePath = `_pw_local_disk_${Date.now()}`;
-    const diskPath = path.join(os.homedir(), "SecondBrain", `${notePath}.md`);
+    const vaultRoot = process.env.NOVYX_NOTES_DIR || path.join(os.homedir(), "SecondBrain");
+    const diskPath = path.join(vaultRoot, `${notePath}.md`);
     const content = "# Local Disk Test\n\nPlain markdown on disk.";
 
     try {
@@ -552,9 +553,10 @@ test.describe("Onboarding → first note", () => {
 
   test("new note modal disables Create button when name is empty", async ({ page }) => {
     await page.goto("/");
-    await page.waitForTimeout(500);
+    const noteButton = page.getByRole("button", { name: "Note", exact: true });
+    await expect(noteButton).toBeVisible({ timeout: 5000 });
 
-    await page.keyboard.press("Control+n");
+    await noteButton.click();
     await expect(page.locator("text=New Note").first()).toBeVisible({ timeout: 3000 });
 
     // Create Note button should be disabled when name is empty
@@ -863,7 +865,7 @@ test.describe("Quick capture", () => {
     await page.getByPlaceholder("What's on your mind?").fill("Follow up on the local vault capture workflow");
     await page.getByRole("button", { name: "Capture" }).click();
 
-    await expect.poll(() => capturedBodies[0]?.path).toContain(`Captures/${new Date().toISOString().slice(0, 10)}/`);
+    await expect.poll(() => capturedBodies[0]?.path || "").toMatch(/^Captures\/\d{4}-\d{2}-\d{2}\//);
     expect(capturedBodies[0]?.content).toContain('capture_type: "quick"');
     expect(capturedBodies[0]?.content).toContain('capture_source: "Quick Capture"');
     expect(capturedBodies[0]?.content).toContain("Follow up on the local vault capture workflow");

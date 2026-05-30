@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { isCloudMode, getStorageContext } from "@/lib/auth";
 import { getStorage } from "@/lib/storage";
-import { FsAdapter } from "@/lib/storage/fs-adapter";
 import { createServiceSupabase } from "@/lib/supabase";
 import fs from "fs/promises";
 import path from "path";
@@ -9,9 +8,14 @@ import os from "os";
 
 const LOCAL_DIR = path.join(os.homedir(), "SecondBrain");
 
+async function createLocalAdapter() {
+  const { FsAdapter } = await import("@/lib/storage/fs-adapter");
+  return new FsAdapter();
+}
+
 async function localNotesExist(): Promise<number> {
   try {
-    const adapter = new FsAdapter();
+    const adapter = await createLocalAdapter();
     const notes = await adapter.walkAllNotes();
     return notes.length;
   } catch {
@@ -93,7 +97,7 @@ export async function POST() {
 
   try {
     // Read all local notes
-    const localAdapter = new FsAdapter();
+    const localAdapter = await createLocalAdapter();
     const localNotes = await localAdapter.walkAllNotes();
 
     if (localNotes.length === 0) {

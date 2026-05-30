@@ -56,15 +56,17 @@ export default function ClipRemix({
 
   // Reset state when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const resetTimer = window.setTimeout(() => {
       setPhase("input");
       setClipText("");
       setSourceUrl("");
       setResult(null);
       setEditableTitle("");
       setError(null);
-      setTimeout(() => textareaRef.current?.focus(), 50);
-    }
+      textareaRef.current?.focus();
+    }, 50);
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen]);
 
   // Escape to close

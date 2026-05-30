@@ -117,12 +117,15 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
 
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    setError(false);
+    let cancelled = false;
 
-    fetch("/api/memory/usage")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => {
+    const loadUsage = async () => {
+      setLoading(true);
+      setError(false);
+
+      try {
+        const data = await fetch("/api/memory/usage").then((r) => (r.ok ? r.json() : Promise.reject()));
+        if (cancelled) return;
         const raw = data.usage || {};
         const gating = data.gating;
         const t = gating?.tier || raw.tier || "free";
@@ -143,9 +146,17 @@ export default function UsageView({ isOpen, onClose }: UsageViewProps) {
         });
         // Store extra data for display
         setRawUsage(raw);
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadUsage();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

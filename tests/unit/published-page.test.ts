@@ -15,7 +15,7 @@ vi.mock("@/lib/supabase", () => ({
 
 describe("published page JSON-LD", () => {
   it("escapes user-controlled script terminators in note titles", async () => {
-    const { safeJsonLd } = await import("@/app/p/[slug]/page");
+    const { safeJsonLd } = await import("@/lib/published-note");
     const html = safeJsonLd({
       "@context": "https://schema.org",
       "@type": "Article",
@@ -52,7 +52,7 @@ describe("published page lookup", () => {
     const from = vi.fn().mockReturnValue({ select });
     mocks.createClient.mockReturnValue({ from });
 
-    const { getPublishedNote } = await import("@/app/p/[slug]/page");
+    const { getPublishedNote } = await import("@/lib/published-note");
     const note = await getPublishedNote("public-note");
 
     expect(mocks.createClient).toHaveBeenCalledWith(
@@ -98,7 +98,7 @@ describe("published page lookup", () => {
     const notesFrom = vi.fn().mockReturnValue({ select: notesSelect });
     mocks.createServiceSupabase.mockReturnValue({ from: notesFrom });
 
-    const { getPublishedNote } = await import("@/app/p/[slug]/page");
+    const { getPublishedNote } = await import("@/lib/published-note");
     const note = await getPublishedNote("fallback-note");
 
     expect(mocks.createServiceSupabase).toHaveBeenCalled();

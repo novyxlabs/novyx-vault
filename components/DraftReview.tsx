@@ -206,7 +206,6 @@ function ConfirmDialog({ title, description, confirmLabel, destructive, onConfir
 export default function DraftReview() {
   const [view, setView] = useState<View>("list");
   const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true); // start true for initial load
   const [statusFilter, setStatusFilter] = useState<string>("draft");
 
@@ -242,7 +241,6 @@ export default function DraftReview() {
       const res = await fetch(`/api/memory/drafts?${params}`);
       const data = await res.json();
       setDrafts(data.drafts || []);
-      setTotal(data.total || 0);
       setDecidedIds(new Set()); // clear stale state on fresh fetch
     } catch {
       setDrafts([]);

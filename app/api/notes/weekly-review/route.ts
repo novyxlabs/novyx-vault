@@ -95,8 +95,7 @@ export async function GET() {
   let newLinksThisWeek = 0;
   for (const note of modifiedThisWeek) {
     WIKILINK_RE.lastIndex = 0;
-    let match;
-    while ((match = WIKILINK_RE.exec(note.content)) !== null) {
+    while (WIKILINK_RE.exec(note.content) !== null) {
       newLinksThisWeek++;
     }
   }

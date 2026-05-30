@@ -1,19 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
 
-const TEST_VOICE_NOTE = `_pw_test_voice_${Date.now()}`;
 const BASE = "http://localhost:3001";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-// Helper: create a note via API
-async function createNote(baseURL: string, path: string, content: string) {
-  const res = await fetch(`${baseURL}/api/notes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path, content }),
-  });
-  if (!res.ok) throw new Error(`createNote failed: ${res.status}`);
-}
 
 // Helper: delete a note via API
 async function deleteNote(baseURL: string, path: string) {
@@ -189,8 +178,6 @@ test.describe("Voice Capture UI — Modal behavior", () => {
     const dialog = getVoiceDialog(page);
     await expect(dialog).toBeVisible({ timeout: 5000 });
 
-    // The X button is in the header area
-    const closeBtn = dialog.locator("button").filter({ has: page.locator("svg") }).first();
     // The close button is the one in the header — find the last button in the header row
     const headerCloseBtn = dialog
       .locator(".flex.items-center.justify-between")

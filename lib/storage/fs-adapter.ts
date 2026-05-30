@@ -4,7 +4,9 @@ import os from "os";
 import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile } from "./types";
 import { validateNotePath } from "./path-validator";
 
-const NOTES_DIR = path.join(os.homedir(), "SecondBrain");
+const NOTES_DIR = process.env.NOVYX_NOTES_DIR
+  ? path.resolve(process.env.NOVYX_NOTES_DIR)
+  : path.join(os.homedir(), "SecondBrain");
 const TRASH_DIR = path.join(NOTES_DIR, ".trash");
 const HISTORY_DIR = path.join(NOTES_DIR, ".history");
 

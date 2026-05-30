@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { History, RotateCcw, Eye, X } from "lucide-react";
+import { History, RotateCcw, X } from "lucide-react";
 
 interface Version {
   timestamp: number;
@@ -30,16 +30,21 @@ export default function HistoryPanel({ notePath, onRestore }: HistoryPanelProps)
   }, [notePath]);
 
   useEffect(() => {
-    if (isOpen) {
-      loadVersions();
-    }
+    if (!isOpen) return;
+    const loadTimer = window.setTimeout(() => {
+      void loadVersions();
+    }, 0);
+    return () => window.clearTimeout(loadTimer);
   }, [isOpen, loadVersions]);
 
   // Reset when note changes
   useEffect(() => {
-    setIsOpen(false);
-    setPreviewContent(null);
-    setPreviewTs(null);
+    const resetTimer = window.setTimeout(() => {
+      setIsOpen(false);
+      setPreviewContent(null);
+      setPreviewTs(null);
+    }, 0);
+    return () => window.clearTimeout(resetTimer);
   }, [notePath]);
 
   const handlePreview = async (ts: number) => {

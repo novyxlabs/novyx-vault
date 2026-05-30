@@ -517,8 +517,14 @@ export default function Sidebar({
   const [tags, setTags] = useState<TagInfo[]>([]);
   const [isTagsOpen, setIsTagsOpen] = useState(false);
   const [memoryCount, setMemoryCount] = useState<number | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [sortBy, setSortBy] = useState<string>("default");
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    return (localStorage.getItem("noctivault-theme") as "dark" | "light" | null) || "dark";
+  });
+  const [sortBy, setSortBy] = useState<string>(() => {
+    if (typeof window === "undefined") return "default";
+    return localStorage.getItem("noctivault-sort") || "default";
+  });
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -535,11 +541,6 @@ export default function Sidebar({
   }, []);
 
   useEffect(() => {
-    // Hydrate from localStorage after mount to avoid SSR mismatch
-    const storedTheme = localStorage.getItem("noctivault-theme") as "dark" | "light" | null;
-    if (storedTheme) setTheme(storedTheme);
-    const storedSort = localStorage.getItem("noctivault-sort");
-    if (storedSort) setSortBy(storedSort);
     initAccentColor();
   }, []);
 
@@ -580,13 +581,15 @@ export default function Sidebar({
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
 
     if (searchQuery.trim().length < 2) {
-      setSearchResults(null);
-      setIsSearching(false);
+      searchTimerRef.current = setTimeout(() => {
+        setSearchResults(null);
+        setIsSearching(false);
+      }, 0);
       return;
     }
 
-    setIsSearching(true);
     searchTimerRef.current = setTimeout(() => {
+      setIsSearching(true);
       fetch(`/api/notes/search?q=${encodeURIComponent(searchQuery.trim())}`)
         .then((r) => r.json())
         .then((data) => {

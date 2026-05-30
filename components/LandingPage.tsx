@@ -96,16 +96,16 @@ export default function LandingPage() {
             variants={fadeUp}
             transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            Your AI forgets everything.{" "}
-            <span className="text-accent">This one doesn&apos;t.</span>
+            Notes for people who want AI{" "}
+            <span className="text-accent">with durable context.</span>
           </motion.h1>
           <motion.p
             className="text-lg sm:text-xl text-muted max-w-2xl mx-auto mb-10 [text-wrap:balance]"
             variants={fadeUp}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            The only open-source second brain with AI memory that persists across every session.
-            Roll back what your AI knows at any point. Bring your own provider key and keep your notes in markdown.
+            An open-source second brain with persistent AI memory, rollback,
+            bring-your-own provider keys, and markdown notes you can keep outside the app.
           </motion.p>
           <motion.div
             className="flex flex-wrap items-center justify-center gap-4"
@@ -159,9 +159,9 @@ export default function LandingPage() {
             variants={fadeUp}
             transition={{ duration: 0.6 }}
           >
-            Every AI assistant starts from zero. Every conversation.
-            You explain your project again. You repeat your preferences.
-            You lose context the moment you close the tab.
+            Most AI note tools only see the current prompt and whatever they retrieve.
+            You explain your project again, repeat your preferences, and rebuild
+            context when the session changes.
           </motion.p>
           <motion.p
             className="text-lg text-foreground font-medium mt-6"
@@ -227,7 +227,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={<Key size={24} />}
               title="Bring Your Own AI"
-              description="18+ providers — OpenAI, Anthropic, Gemini, Ollama. Bring your own key — encrypted at rest."
+              description="21 hosted and local provider presets. Bring your own key; cloud-stored keys are encrypted at rest."
               className="lg:col-span-4"
             />
             <FeatureCard
@@ -259,7 +259,7 @@ export default function LandingPage() {
             variants={fadeUp}
             transition={{ duration: 0.5 }}
           >
-            Now add AI that <span className="text-accent">never forgets</span>
+            Now add AI with <span className="text-accent">persistent context</span>
           </motion.h2>
           <motion.p
             className="text-muted mb-14 max-w-2xl"
@@ -282,7 +282,7 @@ export default function LandingPage() {
               <Brain size={28} className="text-accent mb-4" />
               <h3 className="text-xl font-semibold mb-3">Persistent Memory</h3>
               <p className="text-muted leading-relaxed">
-                Your AI remembers your projects, preferences, and thinking patterns across every session.
+                Your AI can preserve useful project, preference, and writing context across sessions.
                 Ask about something from last month and it responds with full context.
                 No more re-explaining yourself.
               </p>
@@ -299,8 +299,8 @@ export default function LandingPage() {
                 <Sparkles size={24} className="text-emerald-400 mb-3" />
                 <h3 className="text-lg font-semibold mb-2">Ghost Connections</h3>
                 <p className="text-sm text-muted leading-relaxed">
-                  AI discovers hidden relationships between your notes &mdash; even without shared keywords
-                  or explicit links. Surface connections you never knew existed.
+                  AI surfaces likely relationships between your notes &mdash; even when the connection
+                  is not already captured as an explicit link.
                 </p>
               </motion.div>
               <motion.div
@@ -360,7 +360,7 @@ export default function LandingPage() {
                   ["AI with persistent memory", "Built in", "No"],
                   ["AI-discovered connections", "Built in", "No"],
                   ["Memory rollback & audit", "Built in", "No"],
-                  ["Voice capture & transcription", "Built in", "Recording only"],
+                  ["Voice capture & transcription", "Built in", "Plugin-dependent"],
                   ["Bring your own AI provider", "Built in", "Plugin-dependent"],
                   ["Open source", "MIT", "Source-available"],
                 ].map(([feature, vault, obsidian], i, arr) => (

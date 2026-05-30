@@ -150,13 +150,11 @@ function extractThemes(
 /* ------------------------------------------------------------------ */
 
 export default function MorningBriefing({
-  recentNotes,
   noteCount = 0,
   onSelectNote,
   onCreateNote,
   onOpenBrainDump,
   onOpenClipRemix,
-  onOpenWritingCoach,
   onOpenSettings,
   onOpenChat,
   onOpenQuickCapture,
@@ -336,7 +334,7 @@ export default function MorningBriefing({
                 <p className="text-[11px] text-muted">
                   {hasWorkingProvider
                     ? `Using ${activeProvider?.name || "your provider"}.`
-                    : "18 providers supported — OpenAI, Anthropic, local models, and more."}
+                    : "21 hosted and local provider presets are supported."}
                 </p>
               </div>
               {!hasWorkingProvider && (

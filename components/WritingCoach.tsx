@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Lightbulb,
   X,
@@ -58,13 +58,12 @@ export default function WritingCoach({
   onClose,
   onSelectNote,
   onCreateNote,
-  onOpenSettings,
 }: WritingCoachProps) {
   const [data, setData] = useState<WritingCoachData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     setLoading(true);
     setError(false);
     fetch("/api/notes/writing-coach")
@@ -80,17 +79,27 @@ export default function WritingCoach({
         setError(true);
         setLoading(false);
       });
-  };
+  }, []);
 
   // Fetch data when modal opens, reset on close
   useEffect(() => {
     if (!isOpen) {
-      setData(null);
-      setError(false);
-      return;
+      const resetTimer = window.setTimeout(() => {
+        setData(null);
+        setError(false);
+      }, 0);
+      return () => window.clearTimeout(resetTimer);
     }
-    fetchData();
-  }, [isOpen]);  
+
+    let cancelled = false;
+    const loadCoach = async () => {
+      if (!cancelled) fetchData();
+    };
+    void loadCoach();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, fetchData]);
 
   // Escape key to close
   useEffect(() => {

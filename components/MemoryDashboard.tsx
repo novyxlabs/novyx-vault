@@ -489,7 +489,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     } finally {
       setLearnedLoading(false);
     }
-  }, []);
+  }, [trackLearned]);
 
   const handleKeep = useCallback((id: string) => {
     const mem = learnedMemories.find(m => m.uuid === id);
@@ -536,6 +536,15 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
 
   const learnedCount = learnedMemories.filter(m => !dismissedIds.has(m.uuid)).length;
 
+  const isTabLocked = useCallback((tabId: Tab): boolean => {
+    if (!gating) return false; // No gating data = desktop mode or loading, show all
+    const { features } = gating;
+    if (tabId === "insights") return !features.insights;
+    if (tabId === "graph") return !features.graph;
+    if (tabId === "replay") return !features.replay;
+    return false;
+  }, [gating]);
+
   const handleRunCortex = async () => {
     setIsRunningCortex(true);
     setCortexResult(null);
@@ -578,7 +587,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       }).catch(() => {});
       setTimeout(() => searchRef.current?.focus(), 100);
     }
-  }, [isOpen, fetchMemories]);
+  }, [isOpen, fetchMemories, fetchLearned]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -611,7 +620,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       setDismissedIds(loadDismissedIds());
       fetchLearned();
     }
-  }, [tab, isOpen, insightsFetched, insightsLoading, contextFetched, contextLoading, graphFetched, graphLoading, timelineFetched, timelineLoading, replayFetched, replayLoading, auditFetched, auditLoading, learnedFetched, learnedLoading, fetchInsights, fetchContext, fetchGraph, fetchTimeline, fetchReplay, fetchAudit, fetchLearned]);
+  }, [tab, isOpen, insightsFetched, insightsLoading, contextFetched, contextLoading, graphFetched, graphLoading, timelineFetched, timelineLoading, replayFetched, replayLoading, auditFetched, auditLoading, learnedFetched, learnedLoading, fetchInsights, fetchContext, fetchGraph, fetchTimeline, fetchReplay, fetchAudit, fetchLearned, isTabLocked]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
@@ -648,15 +657,6 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-
-  const isTabLocked = (tabId: Tab): boolean => {
-    if (!gating) return false; // No gating data = desktop mode or loading, show all
-    const { features } = gating;
-    if (tabId === "insights") return !features.insights;
-    if (tabId === "graph") return !features.graph;
-    if (tabId === "replay") return !features.replay;
-    return false;
-  };
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "memories", label: "Memories", icon: <Brain size={14} /> },

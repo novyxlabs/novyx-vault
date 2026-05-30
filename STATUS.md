@@ -1,5 +1,5 @@
 # Novyx Vault — Master Status Summary
-**Date**: April 23, 2026
+**Date**: May 29, 2026
 **Live**: https://vault.novyxlabs.com
 **Repo**: https://github.com/novyxlabs/novyx-vault
 **Deploys**: Vercel auto-deploy from `main` (region: iad1)
@@ -10,16 +10,16 @@
 
 | Metric | Count |
 |---|---|
-| Total commits | 121 |
-| Components | 52 |
-| API routes | 64 |
-| Lib modules | 25 |
-| Pages | 9 (home, login, forgot-password, reset-password, features, terms, privacy, verify-email, p/[slug]) |
+| Total commits | 197 |
+| Components | 51 |
+| API routes | 72 |
+| Lib modules | 35 |
+| Pages | 12 app pages |
 
 ## Tech Stack
 - Next.js 16 + React 19 + TypeScript + Tailwind CSS 4
 - CodeMirror 6 (Markdown editor)
-- OpenAI SDK (provider-agnostic — 18+ providers supported)
+- OpenAI SDK-compatible provider layer with 21 hosted and local provider presets
 - Novyx SDK (persistent AI memory)
 - Supabase (Postgres + Auth + RLS)
 - Tauri v2 (desktop wrapper)
@@ -98,7 +98,7 @@
 | Feature | Component | Status |
 |---|---|---|
 | AI provider management | `SettingsModal` | Working |
-| 18+ provider presets | `lib/providers.ts` | Working |
+| 21 provider presets | `lib/providers.ts` | Working |
 | Model selector (dropdown) | `SettingsModal` | Working |
 | Novyx Memory key config | `SettingsModal` | Working |
 | Theme picker | `ThemePicker` | Working |
@@ -108,32 +108,13 @@
 
 ---
 
-## AI Provider Coverage (18 Providers)
+## AI Provider Coverage
 
-| Provider | Models | Key Format |
-|---|---|---|
-| OpenAI | gpt-4o, gpt-4o-mini, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano, o3, o3-mini, o4-mini, gpt-4-turbo, gpt-4, gpt-3.5-turbo | `sk-...` |
-| Anthropic | claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5, claude-opus-4-5, claude-sonnet-4-5, claude-opus-4-1, claude-sonnet-4-0, claude-opus-4-0, claude-haiku-3-5, claude-sonnet-3-5 | `sk-ant-...` |
-| Google Gemini | gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-1.5-pro, gemini-1.5-flash, gemini-1.5-flash-8b | `AIza...` |
-| xAI (Grok) | grok-3, grok-3-fast, grok-3-mini, grok-3-mini-fast, grok-2 | `xai-...` |
-| Perplexity | sonar-pro, sonar, sonar-reasoning-pro, sonar-reasoning, r1-1776 | `pplx-...` |
-| Cohere | command-a-03-2025, command-r-plus, command-r, command-r7b | `...` |
-| Mistral | mistral-large, mistral-medium, mistral-small, codestral, pixtral-large, open-mistral-nemo, open-mixtral-8x22b, ministral-8b, ministral-3b | `...` |
-| Groq | 13 models (Llama 3.x, Llama 4, Mixtral, Gemma, QwQ, DeepSeek) | `gsk_...` |
-| Together | 13 models (Llama, Mixtral, Qwen, QwQ, DeepSeek, Gemma) | `...` |
-| DeepSeek | deepseek-chat, deepseek-reasoner | `sk-...` |
-| Moonshot/Kimi | kimi-k2.5, kimi-k2 variants, moonshot-v1 variants (Global + China endpoints) | `sk-...` |
-| MiniMax | M2.5, M2.5-highspeed, M2.1, M2.1-highspeed | `eyJ...` |
-| OpenRouter | 8 models (aggregator — access any model) | `sk-or-...` |
-| Fireworks | 5 models (Llama, Qwen, DeepSeek) | `fw_...` |
-| Cerebras | llama-3.3-70b, llama-3.1-8b, llama-3.1-70b | `csk-...` |
-| SambaNova | 6 models (Llama, DeepSeek, Qwen) | `...` |
-| Ollama (Local) | 20 models (Llama, DeepSeek, Qwen, Phi, Gemma, Mistral, etc.) | Not required |
-| LM Studio (Local) | loaded-model | Not required |
+Verified from `lib/providers.ts`: 21 provider presets spanning hosted APIs, aggregators, and local runtimes. Current presets are OpenAI, Anthropic, Google Gemini, Moonshot/Kimi Global, Moonshot/Kimi China, MiniMax, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Nvidia NIM, Hyperbolic, Ollama, LM Studio, DeepSeek, Cerebras, SambaNova, OpenRouter, and Fireworks.
 
 ---
 
-## Recent Sprint (Through March 18 — 121 Commits)
+## Public Readiness Pass (May 2026)
 
 ### Bugs Fixed
 - [x] GitHub OAuth blocked by CSP `form-action` directive
@@ -147,14 +128,13 @@
 - [x] List indent behavior in editor
 - [x] Auth confirm route not handling PKCE flow
 
-### Features Added
-- [x] Companion Home (redesigned MorningBriefing — AI greeting, theme chips, revisit cards, quick actions)
-- [x] Reflect Timeline (chronological view of notes + memories + insights with sparkline)
-- [x] Novyx Memory API key management in Settings
-- [x] Server-side sign-out with full cookie cleanup
-- [x] 18 AI providers with comprehensive model lists (was 13 with sparse models)
-- [x] Dropdown model selector (replaces button grid)
-- [x] AI provider setup guidance across all AI features
+### Verified Changes
+- [x] Public copy softened where claims were broader than the code can prove
+- [x] README and status counts refreshed from the current workspace
+- [x] Sentry migrated to Next instrumentation files
+- [x] Production build switched to webpack for clean Next builds
+- [x] Deprecated/staged demo collateral removed from tracked tests
+- [x] Functional suite verified: 89 passed, 13 skipped
 
 ### Security Hardening
 - [x] localStorage cleared on sign-out (prevents cross-user key leakage)
@@ -173,7 +153,7 @@
 | P1 | Lighthouse/SEO score likely still low (~52) — no SEO sprint done | No |
 | P1 | Tauri desktop build untested against latest code | No |
 | P2 | "On Your Mind" theme chips empty for new users (needs memory volume) | No — works with data |
-| P2 | Pro-gated features (Graph, Insights, Replay, Audit) — billing integration shipped via Stripe | Done |
+| P2 | Pro-gated features (Graph, Insights, Replay, Audit) — billing flow routed through Novyx Core | Done |
 | P3 | Sync (Phase 6) — offline-first with conflict resolution | Deferred |
 
 ---
@@ -197,7 +177,7 @@ This unblocks the password reset flow.
 
 ```
 app/
-  api/              64 API routes (auth, notes, memory, chat, settings, billing, control)
+  api/              72 API routes (auth, notes, memory, chat, settings, billing, control)
   login/            Email/password + OAuth login
   forgot-password/  Password reset request
   reset-password/   New password form
@@ -205,8 +185,8 @@ app/
   features/         Public features page
   terms/            Terms of service
   privacy/          Privacy policy
-components/         52 React components
-lib/                25 modules (storage adapters, auth, novyx client, providers, transcription, etc.)
+components/         51 React components
+lib/                35 modules (storage adapters, auth, novyx client, providers, transcription, etc.)
 src-tauri/          Tauri v2 desktop wrapper (Rust)
 public/             Static assets, icons
 ```

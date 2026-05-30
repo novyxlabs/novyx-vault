@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test";
 import { config } from "dotenv";
+import { tmpdir } from "os";
+import { join } from "path";
 
 // Load .env.local so TEST_ANTHROPIC_API_KEY is available in tests
 config({ path: ".env.local" });
@@ -7,6 +9,9 @@ config({ path: ".env.local" });
 const localBaseURL = "http://localhost:3001";
 const cloudSmokeBaseURL = process.env.CLOUD_SMOKE_BASE_URL || localBaseURL;
 const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
+const localTestVaultDir =
+  process.env.NOVYX_TEST_VAULT_DIR || join(tmpdir(), `novyx-vault-playwright-${process.pid}`);
+process.env.NOVYX_NOTES_DIR = process.env.NOVYX_NOTES_DIR || localTestVaultDir;
 const vercelBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 const cloudSmokeExtraHeaders = vercelBypass
   ? { "x-vercel-protection-bypass": vercelBypass, "x-vercel-set-bypass-cookie": "true" }
@@ -31,7 +36,7 @@ export default defineConfig({
   webServer: skipWebServer
     ? undefined
     : {
-        command: "STORAGE_MODE= npx next dev --port 3001",
+        command: `STORAGE_MODE= NOVYX_MEMORY_API_KEY= NOVYX_NOTES_DIR="${process.env.NOVYX_NOTES_DIR}" npx next dev --port 3001`,
         url: localBaseURL,
         reuseExistingServer: true,
         timeout: 60_000,

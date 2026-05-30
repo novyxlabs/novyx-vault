@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Open-source second brain with AI memory that actually persists.</strong><br>
-  <em>Every other AI assistant starts from zero. This one learns.</em>
+  <em>Most note AIs retrieve context. Vault also builds memory that persists.</em>
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 
 ## The problem
 
-AI in note-taking apps doesn't remember you. Obsidian plugins and most AI note tools do the same thing: search your notes when you ask a question (RAG). Close the tab, start a new session, and the AI starts from zero.
+Many AI note tools and Obsidian plugins mostly search your notes when you ask a question (RAG). Without a durable memory layer, a new session has to reconstruct context from scratch.
 
 **Novyx Vault is different.** Your AI builds persistent memory from your notes and conversations — memory that survives sessions, consolidates over time, and can be rolled back when it goes wrong. The longer you use it, the smarter it gets.
 
@@ -35,7 +35,7 @@ AI in note-taking apps doesn't remember you. Obsidian plugins and most AI note t
 
 | | Novyx Vault | Obsidian |
 |---|---|---|
-| **AI remembers across sessions** | Yes — persistent memory | No |
+| **AI remembers across sessions** | With Novyx memory configured | No native equivalent |
 | **Memory rollback & audit trail** | Built in | No |
 | **AI discovers hidden connections** | Built in (Ghost Connections) | No |
 | **Bring your own AI provider** | Built in | Plugin-dependent |
@@ -58,7 +58,7 @@ cd novyx-vault
 npm install && npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). That's it — notes, wiki-links, knowledge graph, and AI chat all work immediately.
+Open [http://localhost:3000](http://localhost:3000). Notes, wiki-links, and the knowledge graph work immediately. AI chat and persistent memory require your AI provider and Novyx memory keys.
 
 Requires Node.js 20.9.0 or newer.
 
@@ -68,7 +68,7 @@ Requires Node.js 20.9.0 or newer.
 echo "NOVYX_MEMORY_API_KEY=your_key" > .env.local
 ```
 
-Get a free API key at [novyxlabs.com](https://novyxlabs.com) — unlocks cross-session memory, rollback, ghost connections, and cortex insights.
+Add a Novyx API key from [novyxlabs.com](https://novyxlabs.com) to unlock cross-session memory, rollback, ghost connections, and cortex insights.
 
 ### Docker (one command)
 
@@ -118,7 +118,7 @@ The core differentiator. Powered by [Novyx Core](https://novyxlabs.com).
 
 ### AI providers (BYOK)
 
-OpenAI, Anthropic, Google Gemini, DeepSeek, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Nvidia NIM, Hyperbolic, Cerebras, SambaNova, Fireworks, Moonshot, MiniMax, OpenRouter, Ollama, LM Studio.
+Vault ships 21 hosted and local provider presets: OpenAI, Anthropic, Google Gemini, Moonshot/Kimi Global, Moonshot/Kimi China, MiniMax, Groq, Together, Mistral, xAI Grok, Perplexity, Cohere, Nvidia NIM, Hyperbolic, Ollama, LM Studio, DeepSeek, Cerebras, SambaNova, OpenRouter, and Fireworks.
 
 Keys are encrypted at rest in cloud mode and stay on your device in desktop mode. Switch providers without losing memory or notes.
 
@@ -202,7 +202,7 @@ Or connect to [Vercel](https://vercel.com) for automatic deployments.
 
 Next.js 16 &middot; React 19 &middot; TypeScript &middot; Tailwind CSS 4 &middot; CodeMirror 6 &middot; Novyx SDK &middot; Supabase &middot; Tauri v2
 
-**52 components &middot; 64 API routes &middot; 18+ AI providers**
+**51 components &middot; 72 API routes &middot; 21 AI provider presets**
 
 ## Project structure
 
