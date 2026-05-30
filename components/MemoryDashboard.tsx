@@ -672,7 +672,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-background/95 flex flex-col"
+      className="fixed inset-0 z-50 bg-background flex flex-col"
       role="dialog"
       aria-modal="true"
       aria-label="Memory Dashboard"
@@ -755,6 +755,49 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
         })}
       </div>
 
+      <div className="px-4 py-3 border-b border-sidebar-border bg-card-bg/35">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] gap-3 items-center">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Shield size={14} className="text-accent" />
+              <p className="text-sm font-medium text-foreground">Memory Control Plane</p>
+            </div>
+            <p className="text-xs text-muted mt-1 leading-relaxed">
+              Inspect what Novyx remembers, approve learned facts, and roll back memory changes when operation history is available.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="min-w-0 rounded-md border border-sidebar-border bg-background/45 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-accent">
+                <Brain size={12} />
+                <span className="text-[10px] uppercase tracking-[0.12em] font-medium">Recall</span>
+              </div>
+              <p className="text-sm font-medium text-foreground mt-1 truncate">
+                {total.toLocaleString()} memories
+              </p>
+            </div>
+            <div className="min-w-0 rounded-md border border-sidebar-border bg-background/45 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-amber-400">
+                <GitPullRequest size={12} />
+                <span className="text-[10px] uppercase tracking-[0.12em] font-medium">Review</span>
+              </div>
+              <p className="text-sm font-medium text-foreground mt-1 truncate">
+                {learnedCount > 0 ? `${learnedCount} pending` : "No pending facts"}
+              </p>
+            </div>
+            <div className="min-w-0 rounded-md border border-sidebar-border bg-background/45 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-emerald-400">
+                <RotateCcw size={12} />
+                <span className="text-[10px] uppercase tracking-[0.12em] font-medium">Recover</span>
+              </div>
+              <p className="text-sm font-medium text-foreground mt-1 truncate">
+                Audit + rollback
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search (memories tab only) */}
       {tab === "memories" && (
         <div className="px-4 py-3 border-b border-sidebar-border">
@@ -820,10 +863,10 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               <div className="flex flex-col items-center justify-center h-full text-muted">
                 <Brain size={48} className="text-accent/20 mb-3" />
                 <p className="text-sm">
-                  {searchQuery ? "No memories match your search." : "No memories yet."}
+                  {searchQuery ? "No memories match your search." : "No memories stored yet."}
                 </p>
                 {!searchQuery && (
-                  <p className="text-xs mt-1">Chat with the AI to start building memory.</p>
+                  <p className="text-xs mt-1">Capture, chat, or save vault context to create the first inspectable memory.</p>
                 )}
               </div>
             ) : (
@@ -993,8 +1036,8 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
             ) : timelineMemories.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted">
                 <CalendarDays size={48} className="text-accent/20 mb-3" />
-                <p className="text-sm">No memories yet.</p>
-                <p className="text-xs mt-1">Your memory timeline will appear here as you chat.</p>
+                <p className="text-sm">No timeline entries yet.</p>
+                <p className="text-xs mt-1">Stored memories will appear here in chronological order.</p>
               </div>
             ) : (
               <div className="relative">
@@ -1347,7 +1390,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               <div className="flex flex-col items-center justify-center py-12 text-muted">
                 <History size={48} className="text-accent/20 mb-3" />
                 <p className="text-sm">No replay data yet.</p>
-                <p className="text-xs mt-1">Memory operations will be tracked here.</p>
+                <p className="text-xs mt-1">Memory operations appear here once Novyx Memory records them.</p>
               </div>
             ) : (
               <>
@@ -1618,7 +1661,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                 <Shield size={14} className="text-accent" />
                 Audit Trail
               </h3>
-              <p className="text-xs text-muted mt-0.5">Cryptographic log of all memory operations</p>
+              <p className="text-xs text-muted mt-0.5">Logged memory operations for transparency and rollback review</p>
             </div>
 
             {auditLoading ? (
@@ -1629,7 +1672,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               <div className="flex flex-col items-center justify-center py-12 text-muted">
                 <Shield size={48} className="text-accent/20 mb-3" />
                 <p className="text-sm">No audit entries yet.</p>
-                <p className="text-xs mt-1">All memory operations are logged for transparency.</p>
+                <p className="text-xs mt-1">Entries appear here after memory create, update, delete, or rollback events are recorded.</p>
               </div>
             ) : (
               <div className="space-y-1">
