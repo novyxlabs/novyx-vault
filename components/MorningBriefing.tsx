@@ -517,6 +517,7 @@ export default function MorningBriefing({
         <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={onOpenQuickCapture || onOpenBrainDump}
+            aria-label="Open quick note"
             className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-card-bg/60 border border-sidebar-border/50 hover:border-accent/30 hover:bg-card-bg transition-all group"
           >
             <Mic
