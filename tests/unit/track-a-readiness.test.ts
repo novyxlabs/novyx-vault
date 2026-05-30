@@ -60,7 +60,7 @@ describe("Phase 7 Track A Voice Capture headers", () => {
     expect(csp).toContain("https://cdn-lfs.huggingface.co");
     expect(csp).toContain("https://*.hf.co");
     expect(csp).toContain("worker-src 'self' blob:");
-    expect(csp).toContain("model-src 'self'");
+    expect(csp).toContain("https://*.ingest.us.sentry.io");
     expect(csp).toContain("'wasm-unsafe-eval'");
   });
 });
