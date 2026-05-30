@@ -18,13 +18,13 @@ function restoreEnv() {
 }
 
 describe("Phase 8 deployment readiness config", () => {
-  it("runs the digest cron frequently enough for user-local digest schedules", () => {
+  it("keeps the digest cron on a deploy-safe daily schedule", () => {
     const config = JSON.parse(readText("vercel.json")) as {
       crons?: Array<{ path: string; schedule: string }>;
     };
     const digestCron = config.crons?.find((cron) => cron.path === "/api/digest");
 
-    expect(digestCron?.schedule).toBe("0 * * * *");
+    expect(digestCron?.schedule).toBe("0 13 * * *");
   });
 
   it("runs production build in CI before the existing E2E gate", () => {
@@ -49,7 +49,7 @@ describe("Phase 8 deployment readiness config", () => {
     const envExample = readText(".env.example");
     const readme = readText("README.md");
 
-    for (const key of ["NEXT_PUBLIC_SENTRY_DSN", "SENTRY_ORG", "SENTRY_PROJECT", "SENTRY_AUTH_TOKEN"]) {
+    for (const key of ["NEXT_PUBLIC_SENTRY_DSN", "SENTRY_UPLOAD_SOURCEMAPS", "SENTRY_ORG", "SENTRY_PROJECT", "SENTRY_AUTH_TOKEN"]) {
       expect(envExample).toContain(key);
       expect(readme).toContain(key);
     }
