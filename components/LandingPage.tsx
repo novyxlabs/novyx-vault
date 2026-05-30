@@ -3,7 +3,7 @@
 import {
   Brain, FileText, Network, Github, ArrowRight,
   Sparkles, History, Key, PenTool, Link2, FolderTree,
-  Download, Mic, Menu, X, ShieldCheck,
+  Download, Mic, Menu, X, ShieldCheck, Boxes,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -20,6 +20,18 @@ const staggerContainer = {
 };
 
 const viewportOnce = { once: true, margin: "-60px" as const };
+
+const comparisonRows = [
+  ["Markdown files", "Yes", "Yes"],
+  ["Wiki-links & backlinks", "Yes", "Yes"],
+  ["Knowledge graph", "Yes", "Yes"],
+  ["AI with persistent memory", "Native", "Plugin-dependent"],
+  ["AI-discovered connections", "Native", "Plugin-dependent"],
+  ["Memory rollback & audit", "Native", "No native layer"],
+  ["Voice capture & transcription", "Native", "Plugin-dependent"],
+  ["Bring your own AI provider", "Native", "Plugin-dependent"],
+  ["License", "MIT", "Proprietary"],
+];
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -355,11 +367,40 @@ export default function LandingPage() {
           variants={fadeUp}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-3xl sm:text-4xl font-bold mb-12 [text-wrap:balance]">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-8 [text-wrap:balance]">
             How it compares
           </h2>
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-sm min-w-0">
+          <div className="mb-8 border-l-2 border-emerald-400/70 pl-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-400">
+              <Boxes size={16} />
+              <span>For Obsidian users</span>
+            </div>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted">
+              Keep the markdown mental model: files, wiki-links, backlinks, and graph views.
+              Vault adds built-in AI memory controls rather than asking you to assemble that layer from plugins.
+            </p>
+          </div>
+          <div className="space-y-3 sm:hidden">
+            {comparisonRows.map(([feature, vault, obsidian]) => (
+              <div key={feature} className="rounded-lg border border-sidebar-border bg-card-bg/40 p-4">
+                <div className="mb-3 text-sm font-medium text-foreground">{feature}</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-xs text-muted">Vault</div>
+                    <div className="mt-1 text-emerald-400">{vault}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted">Obsidian</div>
+                    <div className={obsidian === "No native layer" ? "mt-1 text-muted/60" : "mt-1 text-muted"}>
+                      {obsidian}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto -mx-2 sm:block">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sidebar-border">
                   <th className="text-left py-3 pr-2 sm:pr-4 font-medium text-muted" />
@@ -368,21 +409,13 @@ export default function LandingPage() {
                 </tr>
               </thead>
               <tbody className="text-muted">
-                {[
-                  ["Markdown files", "Yes", "Yes"],
-                  ["Wiki-links & backlinks", "Yes", "Yes"],
-                  ["Knowledge graph", "Yes", "Yes"],
-                  ["AI with persistent memory", "Built in", "No"],
-                  ["AI-discovered connections", "Built in", "No"],
-                  ["Memory rollback & audit", "Built in", "No"],
-                  ["Voice capture & transcription", "Built in", "Plugin-dependent"],
-                  ["Bring your own AI provider", "Built in", "Plugin-dependent"],
-                  ["Open source", "MIT", "Source-available"],
-                ].map(([feature, vault, obsidian], i, arr) => (
+                {comparisonRows.map(([feature, vault, obsidian], i, arr) => (
                   <tr key={feature} className={i < arr.length - 1 ? "border-b border-sidebar-border/50" : ""}>
                     <td className="py-3 pr-2 sm:pr-4">{feature}</td>
                     <td className="text-center py-3 px-2 sm:px-4 text-emerald-400">{vault}</td>
-                    <td className="text-center py-3 px-2 sm:px-4">{obsidian === "No" ? <span className="text-muted/50">{obsidian}</span> : obsidian}</td>
+                    <td className="text-center py-3 px-2 sm:px-4">
+                      {obsidian === "No native layer" ? <span className="text-muted/60">{obsidian}</span> : obsidian}
+                    </td>
                   </tr>
                 ))}
               </tbody>
