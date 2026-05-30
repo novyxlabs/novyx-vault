@@ -70,10 +70,11 @@ echo "NOVYX_MEMORY_API_KEY=your_key" > .env.local
 
 Add a Novyx API key from [novyxlabs.com](https://novyxlabs.com) to unlock cross-session memory, rollback, ghost connections, and cortex insights.
 
-### Docker (one command)
+### Docker (local image)
 
 ```bash
-docker run -p 3000:3000 ghcr.io/novyxlabs/novyx-vault
+docker build -t novyx-vault .
+docker run -p 3000:3000 novyx-vault
 ```
 
 ### Desktop app (Tauri)
@@ -109,7 +110,7 @@ The core differentiator. Powered by [Novyx Core](https://novyxlabs.com).
 
 ### AI writing tools
 
-- **Voice capture** — Record and transcribe on-device or via cloud. AI structures transcripts into clean notes.
+- **Voice capture** — Record and transcribe locally in the browser or through a supported cloud transcription endpoint. AI structures transcripts into clean notes.
 - **Brain dump** — Paste raw thoughts, get structured notes back.
 - **Clip remix** — Paste web content, get it rewritten in your voice.
 - **Slash commands** — Inline AI anywhere in the editor.
@@ -124,7 +125,7 @@ Keys are encrypted at rest in cloud mode and stay on your device in desktop mode
 
 ### Desktop-local & open source
 
-- **Desktop app** — Native via Tauri (macOS, Windows, Linux). Notes stored as plain markdown in `~/SecondBrain/`. Core note editing works offline.
+- **Desktop app** — Tauri source build targeting macOS, Windows, and Linux. Notes stored as plain markdown in `~/SecondBrain/`. Core note editing works offline.
 - **Cloud mode** — Optional Supabase-powered hosted mode with auth, sharing, and publishing.
 - **MIT licensed** — Inspect, contribute, or self-host.
 

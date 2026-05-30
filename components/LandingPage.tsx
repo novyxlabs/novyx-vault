@@ -266,7 +266,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={<Mic size={24} />}
               title="Voice Capture"
-              description="Record meetings, webinars, or voice memos. Auto-transcribe locally or via cloud. AI structures your notes."
+              description="Record meetings, webinars, or voice memos. Transcribe locally or through a supported cloud endpoint. AI structures your notes."
               className="lg:col-span-6"
               accent="emerald"
             />
@@ -484,7 +484,7 @@ export default function LandingPage() {
                 No hosted account needed. Core note editing works without internet.
               </p>
               <p className="text-sm text-muted/60">
-                macOS, Windows, and Linux via Tauri.
+                Tauri source build targets macOS, Windows, and Linux.
               </p>
             </motion.div>
             <motion.div

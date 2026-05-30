@@ -222,7 +222,8 @@ export default function FeaturesPage() {
           >
             <p>
               Record meetings, lectures, webinars, or voice memos &mdash; no bot joins your call.
-              Transcribe locally on-device using Whisper or via cloud with any OpenAI-compatible API.
+              Transcribe locally on-device using Whisper or via a cloud endpoint that supports
+              OpenAI-compatible audio transcription.
               AI structures your transcript into clean, organized markdown notes.
             </p>
             <ul>
