@@ -20,6 +20,19 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   poweredByHeader: false,
   ...(process.env.TAURI === "1" && { output: "standalone" }),
+  outputFileTracingExcludes: {
+    "/api/notes/weekly-review": [
+      "./next.config.ts",
+      "./.github/**/*",
+      "./coverage/**/*",
+      "./docs/**/*",
+      "./playwright-report/**/*",
+      "./src-tauri/**/*",
+      "./test-results/**/*",
+      "./tests/**/*",
+      "./*.md",
+    ],
+  },
   async headers() {
     const securityHeaders = [
       { key: "X-Frame-Options", value: "DENY" },
