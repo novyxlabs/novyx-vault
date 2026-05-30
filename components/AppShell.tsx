@@ -96,6 +96,7 @@ export default function AppShell() {
   const [isAuditTrailOpen, setIsAuditTrailOpen] = useState(false);
   const [isRollbackHistoryOpen, setIsRollbackHistoryOpen] = useState(false);
   const [isMissionControlOpen, setIsMissionControlOpen] = useState(false);
+  const [isMemoryStreamEnabled, setIsMemoryStreamEnabled] = useState(false);
   const [blockedNavigationPath, setBlockedNavigationPath] = useState<string | null>(null);
   const closeAllModals = useCallback(() => {
     setIsGraphOpen(false);
@@ -139,12 +140,20 @@ export default function AppShell() {
     }
   }, []);
 
+  useEffect(() => {
+    fetch("/api/auth/novyx-key")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setIsMemoryStreamEnabled(!!data?.hasKey))
+      .catch(() => setIsMemoryStreamEnabled(false));
+  }, []);
+
   // Real-time memory stream — invalidates notes list when memories change
   useMemoryStream({
     onInvalidate: useCallback(() => {
       loadNotes();
     }, [loadNotes]),
     types: ["memory.created", "memory.updated", "memory.deleted"],
+    enabled: isMemoryStreamEnabled && vaultStatus?.mode === "cloud",
   });
 
   const loadNote = useCallback(async (path: string) => {

@@ -60,14 +60,6 @@ interface WritingSuggestion {
   priority: number;
 }
 
-interface InsightsData {
-  insights: {
-    observation: string;
-    tags: string[];
-    importance: number;
-  }[];
-}
-
 interface MorningBriefingProps {
   recentNotes: string[];
   noteCount?: number;
@@ -175,27 +167,22 @@ export default function MorningBriefing({
     try {
       const results = await Promise.allSettled([
         fetch("/api/briefing").then((r) => (r.ok ? r.json() : null)),
-        fetch("/api/memory/insights?limit=3").then((r) =>
-          r.ok ? r.json() : null
-        ),
-        fetch("/api/notes/writing-coach").then((r) =>
-          r.ok ? r.json() : null
-        ),
+        noteCount > 0
+          ? fetch("/api/notes/writing-coach").then((r) =>
+              r.ok ? r.json() : null
+            )
+          : Promise.resolve(null),
       ]);
 
       const briefingResult =
         results[0].status === "fulfilled" ? results[0].value : null;
-      const insightsResult: InsightsData | null =
-        results[1].status === "fulfilled" ? results[1].value : null;
       const coachResult =
-        results[2].status === "fulfilled" ? results[2].value : null;
+        results[1].status === "fulfilled" ? results[1].value : null;
 
       if (briefingResult) setBriefing(briefingResult);
 
       // Pick the single best insight
-      if (insightsResult?.insights?.length) {
-        setInsight(insightsResult.insights[0].observation);
-      } else if (briefingResult?.insights?.length) {
+      if (briefingResult?.insights?.length) {
         setInsight(briefingResult.insights[0].observation);
       }
 
@@ -215,7 +202,7 @@ export default function MorningBriefing({
     } finally {
       setLoaded(true);
     }
-  }, []);
+  }, [noteCount]);
 
   useEffect(() => {
     fetchData();
@@ -448,14 +435,14 @@ export default function MorningBriefing({
       {/* ============================================================= */}
       {/*  2. On Your Mind — theme chips                                */}
       {/* ============================================================= */}
-      <div
-        className="ghost-fade-in"
-        style={{ animationDelay: "160ms" }}
-      >
-        <h3 className="text-[11px] uppercase tracking-wider text-muted/50 font-medium mb-3">
-          On Your Mind
-        </h3>
-        {themes.length > 0 ? (
+      {noteCount > 0 && themes.length > 0 && (
+        <div
+          className="ghost-fade-in"
+          style={{ animationDelay: "160ms" }}
+        >
+          <h3 className="text-[11px] uppercase tracking-wider text-muted/50 font-medium mb-3">
+            On Your Mind
+          </h3>
           <div className="flex flex-wrap gap-2">
             {themes.map(({ topic, count }) => (
               <span
@@ -469,17 +456,13 @@ export default function MorningBriefing({
               </span>
             ))}
           </div>
-        ) : (
-          <p className="text-xs text-muted/50 italic">
-            Start writing notes and I&apos;ll pick up on what&apos;s on your mind.
-          </p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ============================================================= */}
       {/*  3. Worth Revisiting — connected notes                        */}
       {/* ============================================================= */}
-      {suggestions.length > 0 && (
+      {noteCount > 0 && suggestions.length > 0 && (
         <div
           className="ghost-fade-in"
           style={{ animationDelay: "240ms" }}
@@ -538,10 +521,10 @@ export default function MorningBriefing({
           >
             <Mic
               size={16}
-              className="text-purple-400/60 group-hover:text-purple-400 transition-colors shrink-0"
+              className="text-muted/60 group-hover:text-accent transition-colors shrink-0"
             />
             <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors">
-              Tell me something
+              Quick capture
             </span>
           </button>
 
@@ -551,10 +534,10 @@ export default function MorningBriefing({
           >
             <Sparkles
               size={16}
-              className="text-amber-400/60 group-hover:text-amber-400 transition-colors shrink-0"
+              className="text-muted/60 group-hover:text-accent transition-colors shrink-0"
             />
             <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors">
-              What&apos;s on your mind?
+              Brain dump
             </span>
           </button>
 
@@ -564,10 +547,10 @@ export default function MorningBriefing({
           >
             <MessageCircle
               size={16}
-              className="text-cyan-400/60 group-hover:text-cyan-400 transition-colors shrink-0"
+              className="text-muted/60 group-hover:text-accent transition-colors shrink-0"
             />
             <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors">
-              Let&apos;s chat
+              AI chat
             </span>
           </button>
 
@@ -577,10 +560,10 @@ export default function MorningBriefing({
           >
             <PenLine
               size={16}
-              className="text-emerald-400/60 group-hover:text-emerald-400 transition-colors shrink-0"
+              className="text-muted/60 group-hover:text-accent transition-colors shrink-0"
             />
             <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors">
-              Start writing
+              New note
             </span>
           </button>
         </div>
@@ -589,7 +572,7 @@ export default function MorningBriefing({
       {/* ============================================================= */}
       {/*  Vault Pulse (footer)                                         */}
       {/* ============================================================= */}
-      {briefing && (briefing.memoryCount > 0 || briefing.noteCount > 0) && (
+      {noteCount > 0 && briefing && (briefing.memoryCount > 0 || briefing.noteCount > 0) && (
         <div
           className="flex items-center justify-center gap-3 pt-2 text-[11px] text-muted/30 ghost-fade-in"
           style={{ animationDelay: "400ms" }}
