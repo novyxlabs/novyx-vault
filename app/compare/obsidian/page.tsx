@@ -280,9 +280,10 @@ export default function CompareObsidianPage() {
               </p>
               <p>
                 Vault&apos;s free tier includes the full editor, wiki-links, knowledge graph, BYOK
-                provider setup, the desktop/local app, and publishing. Its $9/month Pro plan adds
-                persistent AI memory, Ghost Connections, cortex insights, voice capture, audit
-                history, and hosted cloud features such as account-backed access and sharing.
+                provider setup, the desktop/local app, and markdown export. Its $9/month Pro plan
+                adds persistent AI memory, Ghost Connections, cortex insights, audit history, daily
+                digests, and hosted cloud features such as account-backed access, sharing, and
+                publishing.
               </p>
             </div>
           </div>

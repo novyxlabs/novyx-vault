@@ -142,6 +142,7 @@ function extractThemes(
 /* ------------------------------------------------------------------ */
 
 export default function MorningBriefing({
+  recentNotes,
   noteCount = 0,
   onSelectNote,
   onCreateNote,
@@ -433,7 +434,56 @@ export default function MorningBriefing({
       )}
 
       {/* ============================================================= */}
-      {/*  2. On Your Mind — theme chips                                */}
+      {/*  2. Recent Notes                                              */}
+      {/* ============================================================= */}
+      {noteCount > 0 && recentNotes.length > 0 && (
+        <div
+          className="ghost-fade-in border-y border-sidebar-border py-4"
+          style={{ animationDelay: "150ms" }}
+        >
+          <h3 className="text-[11px] uppercase tracking-wider text-muted/50 font-medium mb-2">
+            Recent
+          </h3>
+          <div className="divide-y divide-sidebar-border/70">
+            {recentNotes.slice(0, 5).map((notePath) => {
+              const noteName = notePath.split("/").pop() || notePath;
+              const folder = notePath.includes("/")
+                ? notePath.split("/").slice(0, -1).join("/")
+                : "";
+
+              return (
+                <button
+                  key={notePath}
+                  onClick={() => onSelectNote(notePath)}
+                  className="group flex w-full items-center gap-3 px-1 py-3 text-left transition-colors hover:text-foreground"
+                >
+                  <FileText
+                    size={14}
+                    className="shrink-0 text-muted/60 transition-colors group-hover:text-accent"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-foreground/85 group-hover:text-foreground">
+                      {noteName}
+                    </div>
+                    {folder && (
+                      <div className="truncate text-[11px] text-muted/55">
+                        {folder}
+                      </div>
+                    )}
+                  </div>
+                  <ArrowRight
+                    size={14}
+                    className="shrink-0 text-muted/25 transition-colors group-hover:text-accent"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================= */}
+      {/*  3. On Your Mind — theme chips                                */}
       {/* ============================================================= */}
       {noteCount > 0 && themes.length > 0 && (
         <div
@@ -460,7 +510,7 @@ export default function MorningBriefing({
       )}
 
       {/* ============================================================= */}
-      {/*  3. Worth Revisiting — connected notes                        */}
+      {/*  4. Worth Revisiting — connected notes                        */}
       {/* ============================================================= */}
       {noteCount > 0 && suggestions.length > 0 && (
         <div
@@ -508,7 +558,7 @@ export default function MorningBriefing({
       )}
 
       {/* ============================================================= */}
-      {/*  4. Quick Actions — companion language                        */}
+      {/*  5. Quick Actions — companion language                        */}
       {/* ============================================================= */}
       <div
         className="ghost-fade-in"
