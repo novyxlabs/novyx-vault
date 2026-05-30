@@ -35,7 +35,6 @@ interface UseMemoryStreamReturn {
 }
 
 const RECONNECT_DELAY_MS = 5000;
-const RATE_LIMIT_BASE_MS = 30000;
 const INVALIDATE_DEBOUNCE_MS = 500;
 
 /**

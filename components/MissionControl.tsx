@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   X, Shield, Clock, Check, AlertCircle, Activity, FileText,
-  GitMerge, GitPullRequest, Eye, Loader2, RefreshCw, Radio,
+  GitMerge, GitPullRequest, Loader2, RefreshCw, Radio,
   ChevronRight, Zap, Brain, CheckCircle2, XCircle,
   LayoutDashboard, Plus, Trash2, Edit2,
 } from "lucide-react";

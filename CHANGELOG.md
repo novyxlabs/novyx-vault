@@ -104,7 +104,7 @@ All notable changes to Novyx Vault are documented here.
 ### Added
 - Initial release: Markdown editor, wiki-links, backlinks, knowledge graph
 - AI chat with persistent memory (Novyx SDK)
-- 18+ AI providers (OpenAI, Anthropic, Gemini, Ollama, etc.)
+- Hosted and local AI provider presets
 - Share, publish, and social export
 - Daily digest emails (Vercel Cron + Resend)
 - Obsidian import

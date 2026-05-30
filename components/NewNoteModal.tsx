@@ -28,13 +28,23 @@ export default function NewNoteModal({ isOpen, folderPath, onClose, onCreate }: 
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      setName("");
-      setShowError(false);
-      setSelectedTemplate(NOTE_TEMPLATES[0]);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!isOpen) return;
+    const focusTimer = window.setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => window.clearTimeout(focusTimer);
   }, [isOpen]);
+
+  const resetForm = () => {
+    setName("");
+    setShowError(false);
+    setSelectedTemplate(NOTE_TEMPLATES[0]);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,37 +56,47 @@ export default function NewNoteModal({ isOpen, folderPath, onClose, onCreate }: 
     const path = folderPath ? `${folderPath}/${name.trim()}` : name.trim();
     const content = selectedTemplate.content(name.trim());
     onCreate(path, content);
+    resetForm();
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleClose}>
       <div
         className="bg-sidebar-bg border border-sidebar-border rounded-xl shadow-2xl w-full max-w-[460px] mx-4 max-h-[80vh] overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-note-title"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-sidebar-border">
-          <h2 className="text-sm font-medium">New Note</h2>
-          <button onClick={onClose} className="p-1 rounded text-muted hover:text-foreground transition-colors">
+          <h2 id="new-note-title" className="text-sm font-medium">New Note</h2>
+          <button onClick={handleClose} className="p-1 rounded text-muted hover:text-foreground transition-colors" aria-label="Close new note dialog">
             <X size={14} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5">
           {/* Name input */}
+          <label htmlFor="new-note-name" className="text-xs text-muted block mb-1.5">
+            Note name
+          </label>
           <input
+            id="new-note-name"
             ref={inputRef}
             type="text"
             placeholder="Note name..."
             value={name}
             onChange={(e) => { setName(e.target.value); if (e.target.value.trim()) setShowError(false); }}
+            aria-invalid={showError}
+            aria-describedby={showError ? "new-note-name-error" : undefined}
             className={`w-full bg-card-bg border rounded-lg px-3 py-2 text-sm text-foreground placeholder-muted outline-none focus:border-accent/50 ${showError ? "border-red-500/50" : "border-sidebar-border"}`}
           />
           {showError && (
-            <p className="text-xs text-red-400 mt-1">Please enter a note name</p>
+            <p id="new-note-name-error" className="text-xs text-red-400 mt-1">Please enter a note name</p>
           )}
           <div className="mb-4" />
 

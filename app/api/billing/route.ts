@@ -4,6 +4,7 @@ import { getUserNovyxKey } from "@/lib/novyx";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 const NOVYX_API_URL = process.env.NOVYX_API_URL || "https://novyx-ram-api.fly.dev";
+const VALID_TIERS = new Set(["pro"]);
 
 /**
  * POST /api/billing — Create a Stripe checkout session via Novyx Core
@@ -31,7 +32,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const tier = body.tier || "pro";
+  const tier = body.tier === undefined ? "pro" : body.tier;
+  if (typeof tier !== "string" || !VALID_TIERS.has(tier)) {
+    return NextResponse.json({ error: "Unsupported billing tier" }, { status: 400 });
+  }
 
   const res = await fetch(`${NOVYX_API_URL}/v1/checkout`, {
     method: "POST",
@@ -42,7 +46,6 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       tier,
       email: user.email,
-      api_key: apiKey,
     }),
   });
 

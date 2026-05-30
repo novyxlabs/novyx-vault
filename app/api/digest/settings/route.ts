@@ -17,7 +17,8 @@ export async function GET() {
     return NextResponse.json({
       digestEnabled: settings.digestEnabled ?? false,
       digestTime: settings.digestTime ?? "08:00",
-      digestTimezone: settings.digestTimezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      digestTimezone: settings.digestTimezone ?? "UTC",
+      digestLastSentAt: settings.digestLastSentAt ?? null,
     });
   } catch (e) {
     if (e instanceof Response) return e;
@@ -44,7 +45,7 @@ export async function PUT(req: NextRequest) {
       ...currentSettings,
       digestEnabled: digestEnabled ?? currentSettings.digestEnabled ?? false,
       digestTime: digestTime ?? currentSettings.digestTime ?? "08:00",
-      digestTimezone: digestTimezone ?? currentSettings.digestTimezone,
+      digestTimezone: digestTimezone ?? currentSettings.digestTimezone ?? "UTC",
     };
 
     const { error } = await supabase

@@ -1,5 +1,4 @@
 import type { StorageAdapter } from "./types";
-import { FsAdapter } from "./fs-adapter";
 
 export type { StorageAdapter, NoteEntry, TrashEntry, NoteFile, SearchFilters } from "./types";
 
@@ -10,5 +9,7 @@ export function getStorage(userId?: string, cookieHeader?: string): StorageAdapt
     if (!userId) throw new Error("userId required in cloud mode");
     return new SupabaseAdapter(userId, cookieHeader);
   }
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { FsAdapter } = require("./fs-adapter");
   return new FsAdapter();
 }

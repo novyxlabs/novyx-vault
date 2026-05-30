@@ -29,24 +29,6 @@ interface NoteEditorProps {
 
 type ViewMode = "editor" | "preview" | "split";
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function formatInline(text: string): string {
-  return escapeHtml(text)
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, "<code>$1</code>")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
-    .replace(/\[\[([^\]]+)\]\]/g, '<em style="color:#8b5cf6">$1</em>');
-}
-
 function getStats(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return { words: 0, chars: 0, readTime: "0 min" };
@@ -57,10 +39,9 @@ function getStats(text: string) {
 }
 
 export default function NoteEditor({ notePath, content, onChange, isSaving, saveError, onFileDrop, onNavigateWikiLink, onSelectNote, onToggleChat, isChatOpen, onRestore, onIngestLink, onPasteUrl, noteModifiedAt }: NoteEditorProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("split");
-  useEffect(() => {
-    if (window.innerWidth < 768) setViewMode("editor");
-  }, []);  
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    typeof window !== "undefined" && window.innerWidth < 768 ? "editor" : "split"
+  );
   const [isDragOver, setIsDragOver] = useState(false);
   const [pastedUrl, setPastedUrl] = useState<string | null>(null);
   const [rememberState, setRememberState] = useState<"idle" | "saving" | "saved">("idle");
@@ -74,7 +55,8 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, save
   const editorRef = useRef<EditorHandle>(null);
   const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
-    return () => { timerRefs.current.forEach(clearTimeout); };
+    const timers = timerRefs.current;
+    return () => { timers.forEach(clearTimeout); };
   }, []);
   const noteName = notePath.split("/").pop()?.replace(/\.md$/, "") || "Untitled";
   const pathSegments = notePath.split("/");
@@ -100,7 +82,13 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, save
   }, [content]);
 
   // Close info panel when switching notes
-  useEffect(() => { setIsInfoOpen(false); setIsShareOpen(false); }, [notePath]);
+  useEffect(() => {
+    const resetTimer = window.setTimeout(() => {
+      setIsInfoOpen(false);
+      setIsShareOpen(false);
+    }, 0);
+    return () => window.clearTimeout(resetTimer);
+  }, [notePath]);
 
   // Listen for /publish slash command
   useEffect(() => {
@@ -184,96 +172,6 @@ export default function NoteEditor({ notePath, content, onChange, isSaving, save
       }
     }
   }, [content, onChange]);
-
-  const handleExportHtml = useCallback(() => {
-    // Convert markdown to basic HTML with styling
-    const lines = content.split("\n");
-    const htmlLines: string[] = [];
-    let inList = false;
-    let inOrderedList = false;
-    let inCodeBlock = false;
-
-    for (const line of lines) {
-      if (line.startsWith("```")) {
-        if (inCodeBlock) {
-          htmlLines.push("</code></pre>");
-          inCodeBlock = false;
-        } else {
-          inCodeBlock = true;
-          htmlLines.push("<pre><code>");
-        }
-        continue;
-      }
-      if (inCodeBlock) {
-        htmlLines.push(line.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
-        continue;
-      }
-
-      // Close lists if needed
-      if (inList && !line.match(/^[-*]\s/)) { htmlLines.push("</ul>"); inList = false; }
-      if (inOrderedList && !line.match(/^\d+\.\s/)) { htmlLines.push("</ol>"); inOrderedList = false; }
-
-      const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
-      if (headingMatch) {
-        const level = headingMatch[1].length;
-        htmlLines.push(`<h${level}>${formatInline(headingMatch[2])}</h${level}>`);
-      } else if (line.match(/^[-*]\s\[[ xX]\]\s/)) {
-        const checked = !line.match(/^[-*]\s\[ \]/);
-        const text = line.replace(/^[-*]\s\[[ xX]\]\s*/, "");
-        htmlLines.push(`<p style="margin:4px 0"><input type="checkbox" ${checked ? "checked" : ""} disabled> ${formatInline(text)}</p>`);
-      } else if (line.match(/^[-*]\s/)) {
-        if (!inList) { htmlLines.push("<ul>"); inList = true; }
-        htmlLines.push(`<li>${formatInline(line.replace(/^[-*]\s/, ""))}</li>`);
-      } else if (line.match(/^\d+\.\s/)) {
-        if (!inOrderedList) { htmlLines.push("<ol>"); inOrderedList = true; }
-        htmlLines.push(`<li>${formatInline(line.replace(/^\d+\.\s/, ""))}</li>`);
-      } else if (line.startsWith("> ")) {
-        htmlLines.push(`<blockquote>${formatInline(line.slice(2))}</blockquote>`);
-      } else if (line.match(/^---+$/)) {
-        htmlLines.push("<hr>");
-      } else if (line.trim()) {
-        htmlLines.push(`<p>${formatInline(line)}</p>`);
-      }
-    }
-    if (inList) htmlLines.push("</ul>");
-    if (inOrderedList) htmlLines.push("</ol>");
-    if (inCodeBlock) htmlLines.push("</code></pre>");
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${noteName}</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.7; color: #1a1a1a; background: #fafafa; }
-  h1 { border-bottom: 1px solid #e5e5e5; padding-bottom: 8px; }
-  h1, h2, h3, h4 { margin-top: 24px; }
-  pre { background: #f0f0f0; padding: 16px; border-radius: 8px; overflow-x: auto; }
-  code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-  pre code { background: none; padding: 0; }
-  blockquote { border-left: 3px solid #8b5cf6; margin: 16px 0; padding: 8px 16px; color: #666; background: #f8f7ff; border-radius: 0 8px 8px 0; }
-  a { color: #8b5cf6; }
-  hr { border: none; border-top: 1px solid #e5e5e5; margin: 24px 0; }
-  ul, ol { padding-left: 24px; }
-  li { margin: 4px 0; }
-  .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e5e5e5; font-size: 12px; color: #999; text-align: center; }
-</style>
-</head>
-<body>
-${htmlLines.join("\n")}
-<div class="footer">Exported from Novyx Vault</div>
-</body>
-</html>`;
-
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${noteName}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [content, noteName]);
 
   const handlePasteUrl = (url: string) => {
     setPastedUrl(url);
@@ -410,6 +308,8 @@ ${htmlLines.join("\n")}
                 viewMode === "editor" ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Editor only"
+              aria-label="Editor only"
+              aria-pressed={viewMode === "editor"}
             >
               <Code size={14} />
             </button>
@@ -419,6 +319,8 @@ ${htmlLines.join("\n")}
                 viewMode === "split" ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Split view"
+              aria-label="Split view"
+              aria-pressed={viewMode === "split"}
             >
               <Columns size={14} />
             </button>
@@ -428,6 +330,8 @@ ${htmlLines.join("\n")}
                 viewMode === "preview" ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Preview only"
+              aria-label="Preview only"
+              aria-pressed={viewMode === "preview"}
             >
               <Eye size={14} />
             </button>
@@ -444,6 +348,7 @@ ${htmlLines.join("\n")}
             }}
             className="p-1.5 rounded transition-colors text-muted hover:text-foreground"
             title="Download note"
+            aria-label="Download note"
           >
             <Download size={14} />
           </button>
@@ -453,6 +358,8 @@ ${htmlLines.join("\n")}
               onClick={() => setIsShareOpen((prev) => !prev)}
               className={`p-1.5 rounded transition-colors ${isShareOpen ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"}`}
               title="Share"
+              aria-label="Share note"
+              aria-expanded={isShareOpen}
             >
               <Share2 size={14} />
             </button>
@@ -476,6 +383,7 @@ ${htmlLines.join("\n")}
                     : "text-muted hover:text-foreground"
               }`}
               title="Remember this note"
+              aria-label="Remember this note"
             >
               {rememberState === "saved" ? <Check size={14} /> : <Brain size={14} />}
             </button>
@@ -494,6 +402,8 @@ ${htmlLines.join("\n")}
                 isTocOpen ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Table of Contents"
+              aria-label="Toggle table of contents"
+              aria-expanded={isTocOpen}
             >
               <ListTree size={14} />
             </button>
@@ -505,6 +415,8 @@ ${htmlLines.join("\n")}
                 isInfoOpen ? "bg-accent/20 text-accent" : "text-muted hover:text-foreground"
               }`}
               title="Note info"
+              aria-label="Toggle note info"
+              aria-expanded={isInfoOpen}
             >
               <Info size={14} />
             </button>

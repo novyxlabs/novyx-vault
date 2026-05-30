@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { inflateRawSync } from "zlib";
 import { getStorageContext } from "@/lib/auth";
 import { writeNote } from "@/lib/notes";
+import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 import { tryValidateNotePath } from "@/lib/storage/path-validator";
 
 export const runtime = "nodejs";
@@ -15,6 +16,12 @@ const MAX_TOTAL_UNCOMPRESSED_SIZE = 100 * 1024 * 1024;
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
+    const rateLimit = await checkRateLimit(
+      getRateLimitKey("import-obsidian", ctx.userId, req),
+      RATE_LIMITS.heavy
+    );
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit.resetMs);
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 

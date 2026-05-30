@@ -4,8 +4,8 @@ import { getStorage } from "@/lib/storage";
 import { rememberExchange } from "@/lib/memory";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
-import { validateProviderBaseURL } from "@/lib/providers";
-import { resolveAndValidateHost } from "@/lib/providers.server";
+import { isLocalProviderBaseURL, validateProviderBaseURL } from "@/lib/providers";
+import { createSafeProviderFetch, resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 interface ClipRemixRequest {
@@ -86,9 +86,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const isLocal =
-    provider.baseURL.includes("localhost") ||
-    provider.baseURL.includes("127.0.0.1");
+  const isLocal = isLocalProviderBaseURL(provider.baseURL);
   if (!isLocal && !provider.apiKey) {
     return new Response(
       JSON.stringify({ error: "No API key configured for this provider" }),
@@ -139,6 +137,7 @@ export async function POST(req: NextRequest) {
     apiKey: provider.apiKey || "not-needed",
     baseURL: provider.baseURL,
     defaultHeaders,
+    fetch: createSafeProviderFetch(),
   });
 
   const systemPrompt = buildSystemPrompt(samples, sourceUrl);

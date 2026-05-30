@@ -1,22 +1,12 @@
 import { notFound } from "next/navigation";
-import { createServiceSupabase } from "@/lib/supabase";
+import { getPublishedNote, safeJsonLd } from "@/lib/published-note";
 import { escapeHtml, formatInlineMarkdown } from "@/lib/sanitize";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ slug: string }>;
-}
-
-async function getPublishedNote(slug: string) {
-  const supabase = createServiceSupabase();
-  const { data } = await supabase
-    .from("notes")
-    .select("name, content, published_at, slug")
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .eq("is_trashed", false)
-    .single();
-  return data;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -171,7 +161,7 @@ export default async function PublishedNotePage({ params }: Props) {
       <body>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          dangerouslySetInnerHTML={{ __html: safeJsonLd({
             "@context": "https://schema.org",
             "@type": "Article",
             headline: note.name,

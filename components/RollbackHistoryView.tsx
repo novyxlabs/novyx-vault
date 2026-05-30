@@ -66,21 +66,25 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
 
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    setError(false);
-    setIsLocked(false);
+    let cancelled = false;
 
-    Promise.all([
-      fetch("/api/memory/replay?limit=200").then((r) => {
-        if (r.status === 403) {
-          setIsLocked(true);
-          return { entries: [], total: 0 };
-        }
-        return r.ok ? r.json() : Promise.reject();
-      }),
-      fetch("/api/memory/usage").then((r) => (r.ok ? r.json() : null)),
-    ])
-      .then(([replayData, usageData]) => {
+    const loadRollbackHistory = async () => {
+      setLoading(true);
+      setError(false);
+      setIsLocked(false);
+
+      try {
+        const [replayData, usageData] = await Promise.all([
+          fetch("/api/memory/replay?limit=200").then((r) => {
+            if (r.status === 403) {
+              return { entries: [], total: 0, locked: true };
+            }
+            return r.ok ? r.json() : Promise.reject();
+          }),
+          fetch("/api/memory/usage").then((r) => (r.ok ? r.json() : null)),
+        ]);
+        if (cancelled) return;
+        if (replayData.locked) setIsLocked(true);
         const tier = usageData?.gating?.tier || usageData?.usage?.tier || "free";
         if (tier === "free" || tier === "starter") setIsLocked(true);
 
@@ -91,9 +95,17 @@ export default function RollbackHistoryView({ isOpen, onClose }: RollbackHistory
           (e: TimelineEntry) => (e.operation || "").toLowerCase() === "rollback" || (e.operation || "").toLowerCase() === "restore"
         );
         setEntries(rollbacks);
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadRollbackHistory();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

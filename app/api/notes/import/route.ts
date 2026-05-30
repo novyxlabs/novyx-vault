@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { isCloudMode, getStorageContext } from "@/lib/auth";
 import { getStorage } from "@/lib/storage";
-import { FsAdapter } from "@/lib/storage/fs-adapter";
 import { createServiceSupabase } from "@/lib/supabase";
 import fs from "fs/promises";
 import path from "path";
@@ -9,9 +8,14 @@ import os from "os";
 
 const LOCAL_DIR = path.join(os.homedir(), "SecondBrain");
 
+async function createLocalAdapter() {
+  const { FsAdapter } = await import("@/lib/storage/fs-adapter");
+  return new FsAdapter();
+}
+
 async function localNotesExist(): Promise<number> {
   try {
-    const adapter = new FsAdapter();
+    const adapter = await createLocalAdapter();
     const notes = await adapter.walkAllNotes();
     return notes.length;
   } catch {
@@ -93,7 +97,7 @@ export async function POST() {
 
   try {
     // Read all local notes
-    const localAdapter = new FsAdapter();
+    const localAdapter = await createLocalAdapter();
     const localNotes = await localAdapter.walkAllNotes();
 
     if (localNotes.length === 0) {
@@ -103,6 +107,7 @@ export async function POST() {
     // Write each to cloud storage
     const cloudStorage = getStorage(ctx.userId, ctx.cookieHeader);
     let imported = 0;
+    const failures: Array<{ path: string; error: string }> = [];
 
     for (const note of localNotes) {
       try {
@@ -111,7 +116,24 @@ export async function POST() {
         imported++;
       } catch (err) {
         console.error(`Failed to import note ${note.relPath}:`, err);
+        failures.push({
+          path: note.relPath,
+          error: err instanceof Error ? err.message : "Unknown error",
+        });
       }
+    }
+
+    if (failures.length > 0) {
+      return NextResponse.json(
+        {
+          imported,
+          failed: failures.length,
+          total: localNotes.length,
+          completed: false,
+          failures,
+        },
+        { status: imported > 0 ? 207 : 500 }
+      );
     }
 
     // Mark import as completed
@@ -121,7 +143,12 @@ export async function POST() {
       .update({ import_completed_at: new Date().toISOString() })
       .eq("id", ctx.userId);
 
-    return NextResponse.json({ imported });
+    return NextResponse.json({
+      imported,
+      failed: 0,
+      total: localNotes.length,
+      completed: true,
+    });
   } catch (err) {
     console.error("Import failed:", err);
     return NextResponse.json(

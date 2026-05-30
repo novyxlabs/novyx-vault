@@ -3,12 +3,90 @@
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
 
+interface ImportFailure {
+  path: string;
+  error: string;
+}
+
+interface ImportResult {
+  kind: "success" | "partial" | "error";
+  message: string;
+  failures?: ImportFailure[];
+}
+
+export function buildImportResult(data: {
+  error?: string;
+  imported?: number;
+  failed?: number;
+  total?: number;
+  completed?: boolean;
+  failures?: ImportFailure[];
+}): ImportResult {
+  if (data.error) {
+    return { kind: "error", message: `Import failed: ${data.error}` };
+  }
+
+  const imported = data.imported ?? 0;
+  const failed = data.failed ?? data.failures?.length ?? 0;
+  const total = data.total ?? imported + failed;
+
+  if (data.completed === false || failed > 0) {
+    return {
+      kind: "partial",
+      message: `Partially imported ${imported} of ${total} notes. ${failed} failed.`,
+      failures: data.failures,
+    };
+  }
+
+  if (total === 0 && imported === 0) {
+    return { kind: "success", message: "No local notes to import." };
+  }
+
+  return { kind: "success", message: `Imported ${imported} notes successfully.` };
+}
+
+export function ImportResultView({
+  result,
+  importing,
+  onRetry,
+}: {
+  result: ImportResult;
+  importing: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[var(--text-primary,#e4e4e7)]">{result.message}</p>
+      {result.kind === "partial" && result.failures && result.failures.length > 0 && (
+        <ul className="max-h-24 overflow-auto space-y-1 text-xs text-[var(--text-secondary,#a1a1aa)]">
+          {result.failures.slice(0, 3).map((failure) => (
+            <li key={failure.path}>
+              <span className="font-medium text-[var(--text-primary,#e4e4e7)]">{failure.path}</span>
+              {failure.error ? `: ${failure.error}` : ""}
+            </li>
+          ))}
+          {result.failures.length > 3 && <li>+{result.failures.length - 3} more failed</li>}
+        </ul>
+      )}
+      {result.kind === "partial" && (
+        <button
+          onClick={onRetry}
+          disabled={importing}
+          className="px-3 py-1.5 rounded-lg bg-[var(--accent,#6366f1)] text-white text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {importing ? "Retrying..." : "Retry"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function ImportPrompt() {
   const [available, setAvailable] = useState(false);
   const [noteCount, setNoteCount] = useState(0);
   const [dismissed, setDismissed] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
 
   useEffect(() => {
     fetch("/api/notes/import")
@@ -29,14 +107,13 @@ export default function ImportPrompt() {
     try {
       const res = await fetch("/api/notes/import", { method: "POST" });
       const data = await res.json();
-      if (data.error) {
-        setResult(`Import failed: ${data.error}`);
-      } else {
-        setResult(`Imported ${data.imported} notes successfully.`);
+      const importResult = buildImportResult(data);
+      setResult(importResult);
+      if (importResult.kind === "success") {
         setTimeout(() => setDismissed(true), 3000);
       }
     } catch {
-      setResult("Import failed. Please try again.");
+      setResult({ kind: "error", message: "Import failed. Please try again." });
     } finally {
       setImporting(false);
     }
@@ -50,7 +127,7 @@ export default function ImportPrompt() {
             <Download size={20} className="text-[var(--accent,#6366f1)] mt-0.5 shrink-0" />
             <div>
               {result ? (
-                <p className="text-sm text-[var(--text-primary,#e4e4e7)]">{result}</p>
+                <ImportResultView result={result} importing={importing} onRetry={handleImport} />
               ) : (
                 <>
                   <p className="text-sm font-medium text-[var(--text-primary,#e4e4e7)] mb-1">

@@ -60,23 +60,21 @@ export function initAccentColor() {
 
 export default function ThemePicker() {
   const [isOpen, setIsOpen] = useState(false);
-  const [current, setCurrent] = useState<string>("#8b5cf6");
+  const [current, setCurrent] = useState<string>(() => {
+    if (typeof window === "undefined") return "#8b5cf6";
+    const saved = localStorage.getItem("noctivault-accent");
+    if (!saved) return "#8b5cf6";
+    try {
+      const { color } = JSON.parse(saved);
+      return color || "#8b5cf6";
+    } catch {
+      return "#8b5cf6";
+    }
+  });
   const [customColor, setCustomColor] = useState("");
   const btnRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    const saved = localStorage.getItem("noctivault-accent");
-    if (saved) {
-      try {
-        const { color } = JSON.parse(saved);
-        setCurrent(color);
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
 
   useEffect(() => {
     if (!isOpen) return;

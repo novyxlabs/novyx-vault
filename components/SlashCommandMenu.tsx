@@ -79,7 +79,8 @@ export default function SlashCommandMenu({ isOpen, filter, position, onSelect, o
   );
 
   useEffect(() => {
-    setSelectedIndex(0);
+    const resetTimer = window.setTimeout(() => setSelectedIndex(0), 0);
+    return () => window.clearTimeout(resetTimer);
   }, [filter]);
 
   const handleKeyDown = useCallback(

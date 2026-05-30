@@ -18,7 +18,7 @@ const sections = [
       { feature: "Knowledge graph", vault: true, obsidian: true },
       { feature: "Live preview", vault: true, obsidian: true },
       { feature: "Slash commands", vault: true, obsidian: true },
-      { feature: "Plugin / extension ecosystem", vault: "Limited", obsidian: "2,000+" },
+      { feature: "Plugin / extension ecosystem", vault: "Limited", obsidian: "Large" },
       { feature: "Mobile apps", vault: false, obsidian: true },
       { feature: "Templates", vault: true, obsidian: true },
     ],
@@ -26,7 +26,7 @@ const sections = [
   {
     name: "AI Features",
     rows: [
-      { feature: "Built-in AI chat", vault: true, obsidian: true },
+      { feature: "AI chat", vault: true, obsidian: "Plugin-dependent" },
       { feature: "Persistent AI memory", vault: true, obsidian: false },
       { feature: "Memory rollback & audit trail", vault: true, obsidian: false },
       { feature: "Ghost Connections (AI-discovered links)", vault: true, obsidian: false },
@@ -42,7 +42,7 @@ const sections = [
       { feature: "AI remembers across sessions", vault: true, obsidian: false },
       { feature: "Memory timeline with versioning", vault: true, obsidian: false },
       { feature: "Rollback to any memory state", vault: true, obsidian: false },
-      { feature: "Chain verification (tamper-proof audit)", vault: true, obsidian: false },
+      { feature: "Chain verification for memory audit", vault: true, obsidian: false },
       { feature: "Daily digest emails", vault: true, obsidian: false },
     ],
   },
@@ -69,10 +69,10 @@ const sections = [
   {
     name: "Community & Ecosystem",
     rows: [
-      { feature: "Community plugins", vault: "Growing", obsidian: "2,000+" },
-      { feature: "Community themes", vault: "Limited", obsidian: "Hundreds" },
-      { feature: "Public API", vault: true, obsidian: false },
-      { feature: "Years in market", vault: "2026 (new)", obsidian: "2020 (mature)" },
+      { feature: "Community plugins", vault: "Limited", obsidian: "Large ecosystem" },
+      { feature: "Community themes", vault: "Limited", obsidian: "Large ecosystem" },
+      { feature: "Developer extension surface", vault: "Source code", obsidian: "Plugin API" },
+      { feature: "Market maturity", vault: "Newer", obsidian: "Mature" },
       { feature: "Contribute to source code", vault: true, obsidian: false },
     ],
   },
@@ -124,8 +124,8 @@ export default function CompareObsidianPage() {
             Novyx Vault vs Obsidian
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Every AI notes app does RAG over your files. Vault has true persistent AI memory
-            that survives sessions, consolidates over time, and can be rolled back. Here&apos;s
+            Many AI notes workflows rely on retrieval over your files. Vault adds persistent AI memory
+            that can survive sessions, consolidate over time, and be rolled back. Here&apos;s
             an honest look at how Vault and Obsidian compare.
           </p>
         </section>
@@ -171,8 +171,7 @@ export default function CompareObsidianPage() {
                 backlinks, and an interactive knowledge graph for visualizing connections.
               </p>
               <p>
-                Where Obsidian pulls ahead is its massive plugin ecosystem. With over 1.5 million
-                users and 2,000+ community plugins, you can customize Obsidian to do almost
+                Where Obsidian pulls ahead is its mature plugin ecosystem. You can customize Obsidian to do almost
                 anything &mdash; from Kanban boards to spaced repetition. Obsidian also has polished
                 mobile apps for iOS and Android, which Vault does not have yet.
               </p>
@@ -188,22 +187,20 @@ export default function CompareObsidianPage() {
             <h2 className="text-xl font-bold mb-3">AI Features</h2>
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
-                Obsidian recently introduced AI features, but they are stateless &mdash; the AI
-                does RAG over your files without remembering previous conversations or building
-                context over time. Each interaction starts from scratch.
+                Obsidian AI workflows usually depend on plugins and retrieval over local files.
+                The exact behavior depends on the plugin and provider you choose.
               </p>
               <p>
-                Novyx Vault&apos;s AI is fundamentally different. It has true persistent memory
-                that survives sessions, consolidates over time, and can be rolled back to any
-                previous state. Ask about a project from last month and the AI responds with full
-                context. It also discovers hidden connections between your notes (Ghost
+                Novyx Vault&apos;s differentiator is the memory layer. It can preserve useful context
+                across sessions, consolidate over time, and be rolled back to a previous state.
+                It also discovers likely hidden connections between your notes (Ghost
                 Connections), extracts entities and relationships, and offers a full memory
                 timeline with audit trail.
               </p>
               <p>
                 Vault supports BYOK (Bring Your Own Key) across hosted providers,
                 OpenAI-compatible endpoints, and local options such as Ollama and LM Studio.
-                Obsidian&apos;s provider support depends on its first-party AI and plugins.
+                Obsidian&apos;s provider support depends on plugins and external services.
               </p>
             </div>
           </div>
@@ -213,13 +210,13 @@ export default function CompareObsidianPage() {
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
                 This is Vault&apos;s strongest differentiator. Powered by the Novyx SDK, Vault
-                gives your AI a real memory layer &mdash; every interaction is remembered,
-                timestamped, and versioned. You can browse the full timeline, verify the chain of
-                memories, and roll back to any previous state.
+                gives your AI a persistent memory layer with timestamped operations and versioned
+                history. You can browse the timeline, verify the chain of memories, and roll back
+                to a previous state.
               </p>
               <p>
-                Obsidian does not have an equivalent feature. Its AI works within the current
-                session only, with no persistence between conversations.
+                Obsidian does not ship an equivalent native memory layer. AI memory behavior
+                depends on the plugins and services a user installs.
               </p>
             </div>
           </div>
@@ -252,9 +249,8 @@ export default function CompareObsidianPage() {
             <h2 className="text-xl font-bold mb-3">Pricing</h2>
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
-                Obsidian is free for personal use, but its multi-device service costs $50/year and publish costs
-                $8/month. These add up quickly if you use both. Commercial use requires a $50/year
-                license per user.
+                Obsidian offers a strong free local app, with paid add-ons for sync, publishing,
+                and commercial use. Check Obsidian&apos;s current pricing before making a purchase decision.
               </p>
               <p>
                 Vault&apos;s free tier includes the full editor, wiki-links, knowledge graph, BYOK
@@ -269,8 +265,8 @@ export default function CompareObsidianPage() {
             <h2 className="text-xl font-bold mb-3">Community</h2>
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
-                Obsidian has a mature, thriving community that has been growing since 2020. Its
-                plugin and theme ecosystem is unmatched in the personal knowledge management space.
+                Obsidian has a mature, thriving community. Its plugin and theme ecosystem is one
+                of the strongest reasons to choose it.
                 If you need a specific workflow, there is probably a plugin for it.
               </p>
               <p>

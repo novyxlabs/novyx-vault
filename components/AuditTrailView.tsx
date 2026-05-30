@@ -99,22 +99,34 @@ export default function AuditTrailView({ isOpen, onClose }: AuditTrailViewProps)
 
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    setError(false);
+    let cancelled = false;
 
-    Promise.all([
-      fetch("/api/memory/audit?limit=100").then((r) => (r.ok ? r.json() : Promise.reject())),
-      fetch("/api/memory/usage").then((r) => (r.ok ? r.json() : null)),
-    ])
-      .then(([auditData, usageData]) => {
+    const loadAuditTrail = async () => {
+      setLoading(true);
+      setError(false);
+
+      try {
+        const [auditData, usageData] = await Promise.all([
+          fetch("/api/memory/audit?limit=100").then((r) => (r.ok ? r.json() : Promise.reject())),
+          fetch("/api/memory/usage").then((r) => (r.ok ? r.json() : null)),
+        ]);
+        if (cancelled) return;
         setEntries(auditData.entries || []);
         setChainHead(auditData.chain_head || null);
         setChainLength(auditData.chain_length || 0);
         setChainVerified(auditData.chain_verified ?? null);
         setTier(usageData?.gating?.tier || usageData?.usage?.tier || "free");
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadAuditTrail();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

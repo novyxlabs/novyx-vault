@@ -25,10 +25,19 @@ vi.mock("@/lib/novyx", () => ({
 
 vi.mock("@/lib/providers", () => ({
   validateProviderBaseURL: vi.fn().mockReturnValue(null),
+  isLocalProviderBaseURL: vi.fn((baseURL: string) => {
+    try {
+      const host = new URL(baseURL).hostname;
+      return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+    } catch {
+      return false;
+    }
+  }),
 }));
 
 vi.mock("@/lib/providers.server", () => ({
   resolveAndValidateHost: vi.fn().mockResolvedValue(null),
+  createSafeProviderFetch: vi.fn(() => vi.fn()),
 }));
 
 vi.mock("@/lib/search", () => ({
@@ -100,6 +109,25 @@ describe("API /api/chat", () => {
     });
   });
 
+  it("does not treat a remote URL path containing localhost as a local provider", async () => {
+    const { POST } = await import("@/app/api/chat/route");
+
+    const req = jsonRequest("http://localhost:3000/api/chat", {
+      messages: [{ role: "user", content: "hello" }],
+      provider: {
+        baseURL: "https://example.com/localhost",
+        apiKey: "",
+        model: "gpt-4.1-mini",
+      },
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({
+      error: "No API key configured for this provider",
+    });
+  });
+
   it("returns 400 when provider URL validation fails", async () => {
     const { validateProviderBaseURL } = await import("@/lib/providers");
     vi.mocked(validateProviderBaseURL).mockReturnValue("Invalid provider URL");
@@ -118,6 +146,65 @@ describe("API /api/chat", () => {
     expect(res.status).toBe(400);
     await expect(res.json()).resolves.toEqual({
       error: "Invalid provider URL",
+    });
+    vi.mocked(validateProviderBaseURL).mockReturnValue(null);
+  });
+});
+
+describe("API /api/chat/test", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("does not treat a remote URL path containing localhost as a local provider", async () => {
+    const { POST } = await import("@/app/api/chat/test/route");
+
+    const req = jsonRequest("http://localhost:3000/api/chat/test", {
+      baseURL: "https://example.com/localhost",
+      apiKey: "",
+      model: "gpt-4.1-mini",
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      ok: false,
+      error: "No API key",
+    });
+  });
+});
+
+describe("API /api/notes/slash-ai", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("does not treat a remote URL path containing localhost as a local provider", async () => {
+    const { POST } = await import("@/app/api/notes/slash-ai/route");
+
+    const req = jsonRequest("http://localhost:3000/api/notes/slash-ai", {
+      command: "expand",
+      context: "This has enough context to expand.",
+      noteTitle: "Draft",
+      provider: {
+        baseURL: "https://example.com/localhost",
+        apiKey: "",
+        model: "gpt-4.1-mini",
+      },
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({
+      error: "No API key configured",
     });
   });
 });

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Novyx Vault — AI-Powered Notes with Memory That Learns",
     description:
-      "The only note app where AI gets smarter the longer you use it.",
+      "Open-source markdown workspace with persistent AI memory and optional cloud mode.",
     siteName: "Novyx Vault",
     type: "website",
   },
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Novyx Vault — AI-Powered Notes with Memory That Learns",
     description:
-      "The only note app where AI gets smarter the longer you use it.",
+      "Open-source markdown workspace with persistent AI memory and optional cloud mode.",
   },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
@@ -71,7 +71,7 @@ const jsonLd = {
         "Persistent AI memory across sessions",
         "Wiki-style note linking with backlinks",
         "Interactive knowledge graph",
-        "Multi-provider AI (OpenAI, Anthropic, Ollama, 18+)",
+        "Multi-provider AI including hosted and local options",
         "Desktop-local markdown notes",
         "Optional cloud mode for account-based access and publishing",
         "Memory rollback and timeline",

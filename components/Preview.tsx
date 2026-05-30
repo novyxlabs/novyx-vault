@@ -134,7 +134,6 @@ function NoteEmbed({ noteName, onNavigate }: { noteName: string; onNavigate?: (l
 }
 
 export default function Preview({ content, onNavigateWikiLink, onToggleCheckbox }: PreviewProps) {
-  const checkboxCounter = useRef(0);
   // Strip frontmatter from preview display
   const displayContent = parseFrontmatter(content).body;
   const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
@@ -196,9 +195,6 @@ export default function Preview({ content, onNavigateWikiLink, onToggleCheckbox 
     }, 200);
   }, []);
 
-  // Reset checkbox counter on each render
-  checkboxCounter.current = 0;
-
   if (!displayContent.trim()) {
     return (
       <div className="h-full flex items-center justify-center text-muted text-sm">
@@ -223,10 +219,11 @@ export default function Preview({ content, onNavigateWikiLink, onToggleCheckbox 
     segments.push({ type: "text", value: displayContent.slice(lastIndex) });
   }
 
+  let checkboxCounter = 0;
   const markdownComponents = {
     input: ({ type, checked, ...props }: ComponentPropsWithoutRef<"input">) => {
       if (type === "checkbox") {
-        const idx = checkboxCounter.current++;
+        const idx = checkboxCounter++;
         return (
           <input
             type="checkbox"

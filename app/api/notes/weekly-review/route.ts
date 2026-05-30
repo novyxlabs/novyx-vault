@@ -8,8 +8,8 @@ import { getStorage } from "@/lib/storage";
 import { getStorageContext } from "@/lib/auth";
 import { getUserNovyxKey } from "@/lib/novyx";
 import OpenAI from "openai";
-import { validateProviderBaseURL } from "@/lib/providers";
-import { resolveAndValidateHost } from "@/lib/providers.server";
+import { isLocalProviderBaseURL, validateProviderBaseURL } from "@/lib/providers";
+import { createSafeProviderFetch, resolveAndValidateHost } from "@/lib/providers.server";
 import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from "@/lib/rate-limit";
 
 const TASK_REGEX = /^(\s*)-\s*\[([ xX])\]\s+(.+)$/;
@@ -95,8 +95,7 @@ export async function GET() {
   let newLinksThisWeek = 0;
   for (const note of modifiedThisWeek) {
     WIKILINK_RE.lastIndex = 0;
-    let match;
-    while ((match = WIKILINK_RE.exec(note.content)) !== null) {
+    while (WIKILINK_RE.exec(note.content) !== null) {
       newLinksThisWeek++;
     }
   }
@@ -167,9 +166,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const isLocal =
-    provider.baseURL.includes("localhost") ||
-    provider.baseURL.includes("127.0.0.1");
+  const isLocal = isLocalProviderBaseURL(provider.baseURL);
   if (!isLocal && !provider.apiKey) {
     return new Response(
       JSON.stringify({ error: "No API key configured" }),
@@ -203,6 +200,7 @@ export async function POST(req: NextRequest) {
     apiKey: provider.apiKey || "not-needed",
     baseURL: provider.baseURL,
     defaultHeaders,
+    fetch: createSafeProviderFetch(),
   });
 
   const systemPrompt =

@@ -28,15 +28,17 @@ export default function BrainDump({ isOpen, onClose, onNoteSaved, notes, onOpenS
 
   // Reset state when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const resetTimer = window.setTimeout(() => {
       setPhase("input");
       setRawText("");
       setTitle("");
       setStructuredContent("");
       setError(null);
       setIsSaving(false);
-      setTimeout(() => textareaRef.current?.focus(), 50);
-    }
+      textareaRef.current?.focus();
+    }, 50);
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen]);
 
   // Handle escape key

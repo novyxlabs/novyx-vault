@@ -23,7 +23,6 @@ function getStreakData(): { currentStreak: number; longestStreak: number; last30
   try {
     const raw = localStorage.getItem("noctivault-writing-days");
     const days: string[] = raw ? JSON.parse(raw) : [];
-    const today = new Date().toISOString().slice(0, 10);
     const daySet = new Set(days);
 
     // Current streak (counting back from today or yesterday)
@@ -76,15 +75,25 @@ export default function VaultStats({ isOpen, onClose, onSelectNote }: VaultStats
 
   useEffect(() => {
     if (!isOpen) return;
-    setStreak(getStreakData());
-    setLoading(true);
-    fetch("/api/notes/stats")
-      .then((r) => r.json())
-      .then((data) => {
+    let cancelled = false;
+
+    const loadStats = async () => {
+      setStreak(getStreakData());
+      setLoading(true);
+      try {
+        const data = await fetch("/api/notes/stats").then((r) => r.json());
+        if (cancelled) return;
         setStats(data);
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadStats();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

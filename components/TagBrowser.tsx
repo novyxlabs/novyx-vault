@@ -23,14 +23,24 @@ export default function TagBrowser({ isOpen, onClose, onSelectNote }: TagBrowser
 
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    fetch("/api/notes/tags")
-      .then((r) => r.json())
-      .then((data) => {
+    let cancelled = false;
+
+    const loadTags = async () => {
+      setLoading(true);
+      try {
+        const data = await fetch("/api/notes/tags").then((r) => r.json());
+        if (cancelled) return;
         setTags(data.tags || []);
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadTags();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

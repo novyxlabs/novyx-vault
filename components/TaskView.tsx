@@ -27,16 +27,26 @@ export default function TaskView({ isOpen, onClose, onSelectNote }: TaskViewProp
 
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
-    fetch("/api/notes/tasks")
-      .then((r) => r.json())
-      .then((data) => {
+    let cancelled = false;
+
+    const loadTasks = async () => {
+      setLoading(true);
+      try {
+        const data = await fetch("/api/notes/tasks").then((r) => r.json());
+        if (cancelled) return;
         setTasks(data.tasks || []);
         setTotal(data.total || 0);
         setCompleted(data.completed || 0);
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadTasks();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;

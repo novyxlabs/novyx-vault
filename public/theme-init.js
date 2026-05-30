@@ -8,5 +8,5 @@
       document.documentElement.style.setProperty('--accent-hover', a.hover);
       document.documentElement.style.setProperty('--accent-rgb', a.rgb);
     }
-  } catch(e) {}
+  } catch {}
 })();

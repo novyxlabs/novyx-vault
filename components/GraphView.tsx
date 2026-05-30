@@ -36,13 +36,7 @@ export default function GraphView({ isOpen, onClose, onSelectNote, activeNote }:
   const zoomRef = useRef(1);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const toScreen = useCallback((x: number, y: number) => {
-    return {
-      x: x * zoomRef.current + panRef.current.x,
-      y: y * zoomRef.current + panRef.current.y,
-    };
-  }, []);
+  const [graphCounts, setGraphCounts] = useState({ nodes: 0, links: 0 });
 
   const toWorld = useCallback((sx: number, sy: number) => {
     return {
@@ -54,11 +48,13 @@ export default function GraphView({ isOpen, onClose, onSelectNote, activeNote }:
   // Load graph data
   useEffect(() => {
     if (!isOpen) return;
-    setLoading(true);
+    let cancelled = false;
 
-    fetch("/api/notes/graph")
-      .then((res) => res.json())
-      .then((data) => {
+    const loadGraph = async () => {
+      setLoading(true);
+      try {
+        const data = await fetch("/api/notes/graph").then((res) => res.json());
+        if (cancelled) return;
         const canvas = canvasRef.current;
         const w = canvas?.width || 800;
         const h = canvas?.height || 600;
@@ -78,14 +74,22 @@ export default function GraphView({ isOpen, onClose, onSelectNote, activeNote }:
 
         nodesRef.current = nodes;
         linksRef.current = data.links;
+        setGraphCounts({ nodes: nodes.length, links: data.links.length });
 
         // Center the pan
         panRef.current = { x: 0, y: 0 };
         zoomRef.current = 1;
 
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadGraph();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
 
   // Physics simulation + rendering
@@ -331,7 +335,7 @@ export default function GraphView({ isOpen, onClose, onSelectNote, activeNote }:
         <h2 className="text-sm font-medium">Graph View</h2>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted">
-            {nodesRef.current.length} notes · {linksRef.current.length} connections
+            {graphCounts.nodes} notes · {graphCounts.links} connections
           </span>
           <button
             onClick={onClose}

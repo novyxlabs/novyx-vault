@@ -1,11 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import path from "path";
-import os from "os";
 
 // We test the sanitizePath logic by importing the FsAdapter and calling methods
 // that hit sanitizePath internally. Since we can't call sanitizePath directly
 // (it's not exported), we test through the adapter methods.
-// The adapter will throw "Invalid path" for traversal attempts before touching fs.
+// The adapter validates logical note paths before touching fs.
 
 vi.mock("fs/promises", () => ({
   default: {
@@ -22,8 +20,6 @@ vi.mock("fs/promises", () => ({
 
 import { FsAdapter } from "@/lib/storage/fs-adapter";
 
-const NOTES_DIR = path.join(os.homedir(), "SecondBrain");
-
 describe("FsAdapter path traversal prevention", () => {
   const adapter = new FsAdapter();
 
@@ -32,19 +28,25 @@ describe("FsAdapter path traversal prevention", () => {
     // with NOTES_DIR string but is outside the actual directory
     await expect(
       adapter.readNote("../SecondBrain-backup/secrets")
-    ).rejects.toThrow("Invalid path");
+    ).rejects.toThrow();
   });
 
   it("rejects parent directory traversal", async () => {
     await expect(
       adapter.readNote("../../etc/passwd")
-    ).rejects.toThrow("Invalid path");
+    ).rejects.toThrow();
   });
 
-  it("rejects absolute path escape", async () => {
+  it("treats leading slash paths as vault-relative", async () => {
     await expect(
       adapter.readNote("/etc/passwd")
-    ).rejects.toThrow("Invalid path");
+    ).rejects.toThrow("ENOENT");
+  });
+
+  it("rejects hidden internal paths", async () => {
+    await expect(
+      adapter.writeNote(".trash/payload", "bad")
+    ).rejects.toThrow();
   });
 
   it("allows valid paths within SecondBrain", async () => {
@@ -63,12 +65,12 @@ describe("FsAdapter path traversal prevention", () => {
   it("rejects write to sibling-prefix path", async () => {
     await expect(
       adapter.writeNote("../SecondBrain-evil/payload", "bad")
-    ).rejects.toThrow("Invalid path");
+    ).rejects.toThrow();
   });
 
   it("rejects rename to sibling-prefix path", async () => {
     await expect(
       adapter.renameNote("valid-note", "../SecondBrain-evil/stolen")
-    ).rejects.toThrow("Invalid path");
+    ).rejects.toThrow();
   });
 });

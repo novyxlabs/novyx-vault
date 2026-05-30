@@ -21,6 +21,16 @@ function isPrivateIP(ip: string): boolean {
     || ip.startsWith("fe80");
 }
 
+function isRedirectStatus(status: number): boolean {
+  return status >= 300 && status < 400;
+}
+
+function requestUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.toString();
+  return input.url;
+}
+
 /**
  * Resolve a hostname and verify none of its addresses are private.
  * Call this at request time (after validateProviderBaseURL passes) to catch
@@ -90,6 +100,10 @@ export async function resolveAndValidateUntrustedHost(urlStr: string): Promise<s
 
   const host = parsed.hostname;
 
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    return "URL must use HTTP or HTTPS";
+  }
+
   // Block localhost and loopback directly (no exemptions)
   if (host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "::1" || host === "0.0.0.0") {
     return "URL targets a local address";
@@ -122,4 +136,44 @@ export async function resolveAndValidateUntrustedHost(urlStr: string): Promise<s
   }
 
   return null;
+}
+
+/**
+ * Fetch wrapper for OpenAI-compatible provider SDK calls.
+ *
+ * Security invariant:
+ * A configured provider base URL is not trusted until protocol, hostname,
+ * DNS/IP resolution, and redirect behavior are all validated.
+ */
+export function createSafeProviderFetch(): typeof fetch {
+  return async (input, init) => {
+    const url = requestUrl(input);
+    const response = await fetch(input, {
+      ...init,
+      redirect: "manual",
+    });
+
+    if (!isRedirectStatus(response.status)) {
+      return response;
+    }
+
+    const location = response.headers.get("location");
+    if (!location) {
+      throw new Error("Provider redirect blocked");
+    }
+
+    let redirectUrl: string;
+    try {
+      redirectUrl = new URL(location, url).toString();
+    } catch {
+      throw new Error("Provider redirect blocked: Invalid redirect URL");
+    }
+
+    const redirectError = await resolveAndValidateUntrustedHost(redirectUrl);
+    if (redirectError) {
+      throw new Error(`Provider redirect blocked: ${redirectError}`);
+    }
+
+    throw new Error("Provider redirects are not allowed");
+  };
 }

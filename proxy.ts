@@ -23,6 +23,7 @@ export async function proxy(request: NextRequest) {
     const isPublicApi =
       pathname.startsWith("/api/auth/") ||
       pathname.startsWith("/api/health") ||
+      pathname.startsWith("/api/ready") ||
       pathname === "/api/digest"; // Cron job, uses its own secret
     if (!isPublicApi) {
       const supabase = createServerClient(

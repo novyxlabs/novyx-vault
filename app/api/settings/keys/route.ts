@@ -14,9 +14,8 @@ import { checkRateLimit, getRateLimitKey, rateLimitResponse, RATE_LIMITS } from 
  *
  * With ?reveal=true:
  *   Returns { keys: { openai: "sk-...", anthropic: "sk-..." } } — the
- *   full decrypted keys. Rate-limited. Used for:
- *   - First-time cloud restore to a new device (no local keys yet)
- *   - Explicit "Reveal key" action in the settings UI
+ *   full decrypted keys. Rate-limited and requires an explicit reveal header.
+ *   Used only for intentional user-initiated reveal flows.
  *
  * Why: the default GET no longer decrypts keys into the browser on every
  * page load. An XSS or malicious extension can only get provider names
@@ -42,6 +41,13 @@ export async function GET(req: NextRequest) {
     }
 
     const reveal = req.nextUrl.searchParams.get("reveal") === "true";
+
+    if (reveal && req.headers.get("x-novyx-explicit-key-reveal") !== "true") {
+      return Response.json(
+        { error: "Explicit key reveal required", keys: null, providers: [] },
+        { status: 400 }
+      );
+    }
 
     if (!reveal) {
       // Default: return provider names only (no decryption)

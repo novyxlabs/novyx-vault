@@ -241,6 +241,9 @@ export class SupabaseAdapter implements StorageAdapter {
             is_trashed: true,
             trashed_at: now,
             original_path: child.path,
+            is_published: false,
+            slug: null,
+            published_at: null,
           });
           updatedChildren.push(child.id);
         }
@@ -260,6 +263,9 @@ export class SupabaseAdapter implements StorageAdapter {
       is_trashed: true,
       trashed_at: now,
       original_path: target.path,
+      is_published: false,
+      slug: null,
+      published_at: null,
     });
   }
 
@@ -346,6 +352,9 @@ export class SupabaseAdapter implements StorageAdapter {
       is_trashed: false,
       trashed_at: null,
       path: restorePath,
+      is_published: false,
+      slug: null,
+      published_at: null,
     });
 
     if (data.is_folder) {
@@ -363,6 +372,9 @@ export class SupabaseAdapter implements StorageAdapter {
             is_trashed: false,
             trashed_at: null,
             path: childRestore,
+            is_published: false,
+            slug: null,
+            published_at: null,
           });
           restoredChildren.push({ id: child.id, path: child.path });
         }
