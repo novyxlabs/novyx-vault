@@ -763,7 +763,8 @@ test.describe("Note → memory integration", () => {
       body: JSON.stringify({ observation }),
     });
 
-    // In CI without a Novyx key, store may return 500 — skip gracefully
+    // In CI without a Novyx key, store returns unavailable — skip gracefully.
+    // The API must not report success unless the backend accepted the write.
     if (postRes.status !== 200) {
       test.skip();
       return;

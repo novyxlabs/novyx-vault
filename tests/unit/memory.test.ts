@@ -93,12 +93,25 @@ describe("memory functions", () => {
     expect(result).toEqual({ nodes: [], edges: [] });
   });
 
-  it("rememberExchange does nothing when no client", async () => {
+  it("rememberExchange reports false when no client is available", async () => {
     const { getNovyxForKey } = await import("@/lib/novyx");
     vi.mocked(getNovyxForKey).mockReturnValue(null);
 
     const { rememberExchange } = await import("@/lib/memory");
-    // Should not throw
-    await expect(rememberExchange("hello", "world")).resolves.toBeUndefined();
+    await expect(rememberExchange("hello", "world")).resolves.toBe(false);
+  });
+
+  it("rememberExchange reports true after SDK remember succeeds", async () => {
+    const mockRemember = vi.fn().mockResolvedValue({ uuid: "memory-1" });
+    const { getNovyxForKey } = await import("@/lib/novyx");
+    vi.mocked(getNovyxForKey).mockReturnValue({ remember: mockRemember } as unknown as ReturnType<typeof getNovyxForKey>);
+
+    const { rememberExchange } = await import("@/lib/memory");
+    await expect(rememberExchange("hello", "world", "user1", "key")).resolves.toBe(true);
+    expect(mockRemember).toHaveBeenCalledWith("hello", {
+      auto_link: true,
+      context: "world",
+      tags: ["user:user1", "source:vault"],
+    });
   });
 });

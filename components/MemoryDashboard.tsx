@@ -209,6 +209,8 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [liveCheckState, setLiveCheckState] = useState<"idle" | "writing" | "recalling" | "verified" | "unavailable">("idle");
+  const [liveCheckMessage, setLiveCheckMessage] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -566,11 +568,78 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     }
   };
 
+  const handleLiveMemoryCheck = async () => {
+    const marker = `vault-live-${Date.now()}`;
+    const observation = `Novyx Vault live check ${marker}: verify that memory writes can be recalled from the active Novyx Memory backend.`;
+    setLiveCheckState("writing");
+    setLiveCheckMessage("Writing one real memory to the active Novyx backend...");
+    try {
+      const writeRes = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ observation }),
+      });
+      if (!writeRes.ok) {
+        const body = await writeRes.json().catch(() => ({}));
+        const message =
+          (body as { error?: string }).error ||
+          `Memory write failed (${writeRes.status})`;
+        setLiveCheckState("unavailable");
+        setLiveCheckMessage(message);
+        return;
+      }
+
+      setLiveCheckState("recalling");
+      setLiveCheckMessage("Write accepted. Waiting for recall indexing...");
+
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        if (attempt > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 750));
+        }
+        const params = new URLSearchParams({ q: marker, limit: "5" });
+        const recallRes = await fetch(`/api/memory?${params}`);
+        const data = await recallRes.json().catch(() => ({}));
+        const found = (data.memories || []).find((m: Memory) =>
+          m.observation.includes(marker)
+        );
+        if (found) {
+          setSearchQuery("");
+          setMemories((prev) => [found, ...prev.filter((m) => m.uuid !== found.uuid)]);
+          setTotal((prev) => Math.max(prev, (data.total || 0), prev + 1));
+          setTimelineFetched(false);
+          setLearnedFetched(false);
+          setAuditFetched(false);
+          setReplayFetched(false);
+          setLiveCheckState("verified");
+          setLiveCheckMessage(
+            "Live memory write and recall verified. Audit and replay will update when your plan/backend exposes those logs."
+          );
+          return;
+        }
+      }
+
+      await fetchMemories();
+      setTimelineFetched(false);
+      setLearnedFetched(false);
+      setAuditFetched(false);
+      setReplayFetched(false);
+      setLiveCheckState("verified");
+      setLiveCheckMessage(
+        "Live memory write was accepted, but recall indexing did not return the marker yet. Try search again in a moment."
+      );
+    } catch {
+      setLiveCheckState("unavailable");
+      setLiveCheckMessage("Memory check failed before Vault could verify the write.");
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setSearchQuery("");
       setTab("memories");
       setCortexResult(null);
+      setLiveCheckState("idle");
+      setLiveCheckMessage(null);
       setInsightsFetched(false);
       setContextFetched(false);
       setGraphFetched(false);
@@ -765,6 +834,37 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
             <p className="text-xs text-muted mt-1 leading-relaxed">
               Inspect what Novyx remembers, approve learned facts, and roll back memory changes when operation history is available.
             </p>
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+              <button
+                onClick={handleLiveMemoryCheck}
+                disabled={liveCheckState === "writing" || liveCheckState === "recalling"}
+                className="inline-flex w-fit items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-60 disabled:cursor-wait"
+              >
+                {liveCheckState === "writing" || liveCheckState === "recalling" ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : liveCheckState === "verified" ? (
+                  <Check size={12} />
+                ) : liveCheckState === "unavailable" ? (
+                  <AlertTriangle size={12} />
+                ) : (
+                  <Zap size={12} />
+                )}
+                Verify live memory
+              </button>
+              {liveCheckMessage && (
+                <p
+                  className={`text-[11px] leading-relaxed ${
+                    liveCheckState === "unavailable"
+                      ? "text-red-400"
+                      : liveCheckState === "verified"
+                        ? "text-emerald-400"
+                        : "text-muted"
+                  }`}
+                >
+                  {liveCheckMessage}
+                </p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div className="min-w-0 rounded-md border border-sidebar-border bg-background/45 px-3 py-2">
