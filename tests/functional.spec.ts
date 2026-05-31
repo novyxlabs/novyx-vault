@@ -763,7 +763,8 @@ test.describe("Note → memory integration", () => {
       body: JSON.stringify({ observation }),
     });
 
-    // In CI without a Novyx key, store may return 500 — skip gracefully
+    // In CI without a Novyx key, store returns unavailable — skip gracefully.
+    // The API must not report success unless the backend accepted the write.
     if (postRes.status !== 200) {
       test.skip();
       return;
@@ -1644,17 +1645,19 @@ test.describe("Draft Review", () => {
     expect(visible).toBe(true);
   });
 
-  test("Review tab renders without crashing", async ({ page }) => {
+  test("Review tab exposes draft review content", async ({ page }) => {
     await page.goto("/");
-    await page.waitForTimeout(1000);
 
     await page.locator('button[title="Memory timeline, learned facts, graph, audit, and rollback"]').click();
-    await page.waitForTimeout(1000);
+    const dashboard = page.getByRole("dialog", { name: "Memory Dashboard" });
+    await expect(dashboard).toBeVisible();
 
-    await page.locator("button:has-text('Review')").nth(1).click();
-    await page.waitForTimeout(2000);
+    await dashboard.getByRole("button", { name: "Review" }).click();
 
-    // App should still be responsive — sidebar visible
-    await expect(page.locator("aside").first()).toBeVisible();
+    await expect(dashboard.getByRole("heading", { name: "Review" })).toBeVisible();
+    await expect(
+      dashboard.getByText(/drafts? waiting for review|Memory drafts from your agents appear here|No drafts to review/)
+        .first()
+    ).toBeVisible();
   });
 });

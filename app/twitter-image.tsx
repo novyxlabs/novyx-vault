@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Novyx Vault — AI-powered knowledge base with persistent memory";
+export const alt = "Novyx Vault — Markdown notes with inspectable AI memory";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -64,7 +64,7 @@ export default function TwitterImage() {
               textAlign: "center",
             }}
           >
-            Open-source notes with persistent AI memory
+            Markdown notes with inspectable AI memory
           </p>
         </div>
         <div

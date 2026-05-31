@@ -19,6 +19,7 @@ vi.mock("fs/promises", () => ({
 }));
 
 import { FsAdapter } from "@/lib/storage/fs-adapter";
+import fs from "fs/promises";
 
 describe("FsAdapter path traversal prevention", () => {
   const adapter = new FsAdapter();
@@ -60,6 +61,27 @@ describe("FsAdapter path traversal prevention", () => {
     // Empty path should resolve to NOTES_DIR itself — must be allowed
     const result = await adapter.listNotes("");
     expect(result).toEqual([]);
+  });
+
+  it("skips invalid local filenames while listing", async () => {
+    vi.mocked(fs.readdir).mockResolvedValueOnce([
+      { name: "valid.md", isDirectory: () => false } as never,
+      { name: "bad.", isDirectory: () => false } as never,
+    ]);
+    vi.mocked(fs.stat).mockResolvedValueOnce({
+      mtime: new Date("2026-05-30T00:00:00.000Z"),
+    } as never);
+
+    const result = await adapter.listNotes("");
+
+    expect(result).toEqual([
+      {
+        name: "valid",
+        path: "valid.md",
+        isFolder: false,
+        modifiedAt: "2026-05-30T00:00:00.000Z",
+      },
+    ]);
   });
 
   it("rejects write to sibling-prefix path", async () => {

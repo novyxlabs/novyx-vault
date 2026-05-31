@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, X } from "lucide-react";
+import { ArrowRight, Check, Minus, X } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Novyx Vault vs Obsidian (2026 Comparison)",
   description:
-    "An honest comparison of Novyx Vault and Obsidian for personal knowledge management. See how they differ on AI memory, providers, privacy, pricing, and more.",
+    "An honest comparison of Novyx Vault and Obsidian for markdown knowledge work, local files, AI memory, providers, privacy, and pricing.",
   alternates: { canonical: "/compare/obsidian" },
 };
 
@@ -17,7 +17,7 @@ const sections = [
       { feature: "Wiki-links & backlinks", vault: true, obsidian: true },
       { feature: "Knowledge graph", vault: true, obsidian: true },
       { feature: "Live preview", vault: true, obsidian: true },
-      { feature: "Slash commands", vault: true, obsidian: true },
+      { feature: "Slash commands", vault: true, obsidian: "Plugin-dependent" },
       { feature: "Plugin / extension ecosystem", vault: "Limited", obsidian: "Large" },
       { feature: "Mobile apps", vault: false, obsidian: true },
       { feature: "Templates", vault: true, obsidian: true },
@@ -26,44 +26,45 @@ const sections = [
   {
     name: "AI Features",
     rows: [
-      { feature: "AI chat", vault: true, obsidian: "Plugin-dependent" },
-      { feature: "Persistent AI memory", vault: true, obsidian: false },
-      { feature: "Memory rollback & audit trail", vault: true, obsidian: false },
-      { feature: "Ghost Connections (AI-discovered links)", vault: true, obsidian: false },
-      { feature: "Entity extraction & insights", vault: true, obsidian: false },
+      { feature: "AI chat", vault: "Native", obsidian: "Plugin-dependent" },
+      { feature: "Persistent AI memory", vault: "Native", obsidian: "Plugin-dependent" },
+      { feature: "Memory rollback & audit trail", vault: "Native", obsidian: false },
+      { feature: "Ghost Connections (AI-discovered links)", vault: "Native", obsidian: "Plugin-dependent" },
+      { feature: "Entity extraction & insights", vault: "Native", obsidian: "Plugin-dependent" },
       { feature: "BYOK AI providers", vault: true, obsidian: "Plugin-dependent" },
-      { feature: "Voice capture & transcription", vault: true, obsidian: false },
-      { feature: "AI writing tools (Brain Dump, Clip Remix)", vault: true, obsidian: false },
+      { feature: "Voice capture & transcription", vault: "Native", obsidian: "Plugin-dependent" },
+      { feature: "AI writing tools (Brain Dump, Clip Remix)", vault: "Native", obsidian: "Plugin-dependent" },
     ],
   },
   {
     name: "Memory & Knowledge",
     rows: [
-      { feature: "AI remembers across sessions", vault: true, obsidian: false },
-      { feature: "Memory timeline with versioning", vault: true, obsidian: false },
-      { feature: "Rollback to any memory state", vault: true, obsidian: false },
-      { feature: "Chain verification for memory audit", vault: true, obsidian: false },
-      { feature: "Daily digest emails", vault: true, obsidian: false },
+      { feature: "AI remembers across sessions", vault: "Native", obsidian: "Plugin-dependent" },
+      { feature: "Memory timeline with versioning", vault: "Native", obsidian: false },
+      { feature: "Rollback to any memory state", vault: "Native", obsidian: false },
+      { feature: "Chain verification for memory audit", vault: "Native", obsidian: false },
+      { feature: "Daily digest emails", vault: "Native", obsidian: "Plugin-dependent" },
     ],
   },
   {
     name: "Privacy & Ownership",
     rows: [
-      { feature: "Open source", vault: "MIT License", obsidian: "Source-available" },
+      { feature: "License", vault: "MIT open source", obsidian: "Proprietary" },
       { feature: "Desktop-local files", vault: true, obsidian: true },
       { feature: "Self-hostable", vault: true, obsidian: false },
       { feature: "Plain markdown files on disk", vault: true, obsidian: true },
-      { feature: "BYOK (no vendor AI lock-in)", vault: true, obsidian: false },
-      { feature: "End-to-end encryption", vault: false, obsidian: true },
+      { feature: "BYOK (no vendor AI lock-in)", vault: true, obsidian: "Plugin-dependent" },
+      { feature: "End-to-end encrypted sync", vault: false, obsidian: "Paid Sync add-on" },
     ],
   },
   {
     name: "Pricing",
     rows: [
-      { feature: "Free tier", vault: "Yes (full editor + BYOK)", obsidian: "Yes (personal use)" },
-      { feature: "Hosted cloud workspace", vault: "Optional", obsidian: "$50/year" },
-      { feature: "Publish to web", vault: "Free", obsidian: "$8/month" },
-      { feature: "Pro / AI memory features", vault: "$9/month", obsidian: "N/A" },
+      { feature: "Core app", vault: "Free editor + BYOK", obsidian: "Free without limits" },
+      { feature: "Sync / hosted workspace", vault: "Optional cloud mode", obsidian: "$4/user/mo annual" },
+      { feature: "Publish to web", vault: "Included", obsidian: "$8/site/mo annual" },
+      { feature: "Commercial license", vault: "MIT", obsidian: "Optional $50/user/yr" },
+      { feature: "Pro / AI memory features", vault: "$9/month", obsidian: "Plugin/service-dependent" },
     ],
   },
   {
@@ -81,6 +82,7 @@ const sections = [
 function CellValue({ value }: { value: boolean | string }) {
   if (value === true) return <Check size={18} className="text-green-500 mx-auto" />;
   if (value === false) return <X size={18} className="text-red-400/60 mx-auto" />;
+  if (value === "Plugin-dependent") return <span className="inline-flex items-center justify-center gap-1 text-sm text-muted"><Minus size={14} />Plugin</span>;
   return <span className="text-sm text-muted">{value}</span>;
 }
 
@@ -94,7 +96,7 @@ export default function CompareObsidianPage() {
     author: { "@type": "Organization", name: "Novyx Labs", url: "https://novyxlabs.com" },
     publisher: { "@type": "Organization", name: "Novyx Labs", url: "https://novyxlabs.com" },
     datePublished: "2026-03-30",
-    dateModified: "2026-04-06",
+    dateModified: "2026-05-30",
   };
 
   return (
@@ -117,30 +119,51 @@ export default function CompareObsidianPage() {
         </a>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 pb-24">
+      <main className="max-w-5xl mx-auto px-6 pb-24">
         {/* Hero */}
-        <section className="pt-16 pb-12 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Novyx Vault vs Obsidian
+        <section className="pt-14 pb-12">
+          <div className="mb-5 inline-flex border border-sidebar-border px-3 py-1.5 text-xs text-muted">
+            Last checked: May 30, 2026
+          </div>
+          <h1 className="max-w-4xl text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            Obsidian is the benchmark. Vault is the AI-memory wedge.
           </h1>
-          <p className="text-lg text-muted max-w-2xl mx-auto">
-            Many AI notes workflows rely on retrieval over your files. Vault adds persistent AI memory
-            that can survive sessions, consolidate over time, and be rolled back. Here&apos;s
-            an honest look at how Vault and Obsidian compare.
+          <p className="text-lg text-muted max-w-3xl">
+            If you want the largest local-first markdown ecosystem, Obsidian is still the standard.
+            Novyx Vault is for people who want that markdown workflow plus inspectable AI memory,
+            rollback, audit trails, and provider choice built into the product.
           </p>
+          <div className="mt-8 grid gap-px border border-sidebar-border bg-sidebar-border md:grid-cols-2">
+            <div className="bg-background p-5">
+              <h2 className="text-base font-semibold">Choose Obsidian if</h2>
+              <ul className="mt-3 space-y-2 text-sm text-muted">
+                <li>You need mature mobile apps today.</li>
+                <li>You rely on a large plugin and theme ecosystem.</li>
+                <li>Your workflow is already heavily customized around local files.</li>
+              </ul>
+            </div>
+            <div className="bg-background p-5">
+              <h2 className="text-base font-semibold">Choose Vault if</h2>
+              <ul className="mt-3 space-y-2 text-sm text-muted">
+                <li>You want AI memory you can inspect, audit, and roll back.</li>
+                <li>You want built-in BYOK across hosted and local providers.</li>
+                <li>You want an MIT-licensed product you can self-host or fork.</li>
+              </ul>
+            </div>
+          </div>
         </section>
 
         {/* Comparison Table */}
         {sections.map((section) => (
           <section key={section.name} className="mb-12">
             <h2 className="text-xl font-bold mb-4">{section.name}</h2>
-            <div className="rounded-xl border border-sidebar-border overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="rounded-lg border border-sidebar-border overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="bg-card-bg">
                     <th className="text-left px-4 py-3 font-semibold text-muted">Feature</th>
-                    <th className="text-center px-4 py-3 font-semibold text-accent w-28">Vault</th>
-                    <th className="text-center px-4 py-3 font-semibold text-muted w-28">Obsidian</th>
+                    <th className="text-center px-4 py-3 font-semibold text-accent w-32">Vault</th>
+                    <th className="text-center px-4 py-3 font-semibold text-muted w-32">Obsidian</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -233,8 +256,9 @@ export default function CompareObsidianPage() {
               <p>
                 The key difference is openness. Vault is open source under the MIT license &mdash;
                 you can read every line of code, contribute features, or fork the entire project.
-                Obsidian is source-available but not open source &mdash; you can inspect the code,
-                but you cannot modify or redistribute it. With Vault, you can verify and fork it.
+                Obsidian is proprietary software. With Vault, you can verify the implementation,
+                modify it, and keep a working fork if the product ever moves in a direction you
+                do not want.
               </p>
               <p>
                 Vault&apos;s BYOK model means your AI API keys are encrypted at rest (cloud) or
@@ -249,14 +273,17 @@ export default function CompareObsidianPage() {
             <h2 className="text-xl font-bold mb-3">Pricing</h2>
             <div className="space-y-3 text-muted leading-relaxed">
               <p>
-                Obsidian offers a strong free local app, with paid add-ons for sync, publishing,
-                and commercial use. Check Obsidian&apos;s current pricing before making a purchase decision.
+                Obsidian offers a strong free local app with optional paid add-ons. As of May 30,
+                2026, official Obsidian pricing lists Sync at $4/user/month billed annually and
+                Publish at $8/site/month billed annually. Obsidian&apos;s commercial license is
+                encouraged for organizations but is not required.
               </p>
               <p>
                 Vault&apos;s free tier includes the full editor, wiki-links, knowledge graph, BYOK
-                provider setup, the desktop/local app, and publishing. The $9/month Pro plan adds
-                persistent AI memory, Ghost Connections, cortex insights, voice capture, audit
-                history, and hosted cloud features such as account-backed access and sharing.
+                provider setup, the desktop/local app, and markdown export. Its $9/month Pro plan
+                adds persistent AI memory, Ghost Connections, cortex insights, audit history, daily
+                digests, and hosted cloud features such as account-backed access, sharing, and
+                publishing.
               </p>
             </div>
           </div>
@@ -283,7 +310,7 @@ export default function CompareObsidianPage() {
         <section className="text-center pt-8 pb-8">
           <h2 className="text-2xl font-bold mb-4">Ready to try Novyx Vault?</h2>
           <p className="text-muted mb-8">
-            Free to use. No credit card required. Import your Obsidian vault in one click.
+            Free to use. No credit card required. Import markdown files and keep your links.
           </p>
           <a
             href="/login"

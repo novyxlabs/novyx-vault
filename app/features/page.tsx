@@ -42,7 +42,7 @@ export default function FeaturesPage() {
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
             A complete workspace for capturing, connecting, and recalling your knowledge &mdash;
-            with AI that gets smarter the longer you use it.
+            with AI memory you can inspect, audit, and roll back.
           </p>
         </section>
 
@@ -222,7 +222,8 @@ export default function FeaturesPage() {
           >
             <p>
               Record meetings, lectures, webinars, or voice memos &mdash; no bot joins your call.
-              Transcribe locally on-device using Whisper or via cloud with any OpenAI-compatible API.
+              Transcribe locally on-device using Whisper or via a cloud endpoint that supports
+              OpenAI-compatible audio transcription.
               AI structures your transcript into clean, organized markdown notes.
             </p>
             <ul>

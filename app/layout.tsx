@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Novyx Vault — AI-Powered Notes with Memory That Learns",
+    default: "Novyx Vault — Markdown Notes with Inspectable AI Memory",
     template: "%s | Novyx Vault",
   },
   description:
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Novyx Vault — AI-Powered Notes with Memory That Learns",
+    title: "Novyx Vault — Markdown Notes with Inspectable AI Memory",
     description:
       "Open-source markdown workspace with persistent AI memory and optional cloud mode.",
     siteName: "Novyx Vault",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Novyx Vault — AI-Powered Notes with Memory That Learns",
+    title: "Novyx Vault — Markdown Notes with Inspectable AI Memory",
     description:
       "Open-source markdown workspace with persistent AI memory and optional cloud mode.",
   },
@@ -57,7 +57,7 @@ const jsonLd = {
       "@type": "SoftwareApplication",
       name: "Novyx Vault",
       description:
-        "AI-powered personal knowledge base with persistent memory that learns your thinking patterns.",
+        "Open-source markdown workspace with persistent AI memory, timeline, and rollback controls.",
       url: "https://vault.novyxlabs.com",
       applicationCategory: "ProductivityApplication",
       operatingSystem: "Web, macOS, Windows, Linux",

@@ -959,10 +959,10 @@ export default function Sidebar({
                   <button
                     key={tag}
                     onClick={() => setSearchQuery(`#${tag}`)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-accent/10 text-accent/75 hover:bg-accent/15 hover:text-accent transition-colors"
                   >
                     #{tag}
-                    <span className="text-cyan-400/50">{count}</span>
+                    <span className="text-accent/45">{count}</span>
                   </button>
                 ))}
               </div>
@@ -977,13 +977,13 @@ export default function Sidebar({
           {/* Capture */}
           <div className="px-2 pt-2.5 pb-1">
             <div className="flex items-center justify-between px-1 mb-1.5">
-              <div className="text-[9px] uppercase tracking-[0.15em] text-accent/45 font-medium">Capture</div>
-              <span className="text-[9px] text-muted/40">turn raw input into notes</span>
+              <div className="text-[9px] uppercase tracking-[0.15em] text-muted/45 font-medium">Capture</div>
+              <span className="text-[9px] text-muted/35">notes from input</span>
             </div>
             <div className="grid grid-cols-4 gap-1">
               <button
                 onClick={onOpenQuickCapture}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-accent/70 hover:bg-accent/10 hover:text-accent transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Quick Capture — save a raw thought to the local vault"
               >
                 <Zap size={16} />
@@ -991,7 +991,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenVoiceCapture}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-rose-400/70 hover:bg-rose-400/10 hover:text-rose-400 transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Voice Capture — record audio, auto-transcribe and structure"
               >
                 <Mic size={16} />
@@ -999,7 +999,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenClipRemix}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-cyan-400/70 hover:bg-cyan-400/10 hover:text-cyan-400 transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Clip & Remix — paste anything, AI rewrites in your voice"
               >
                 <Scissors size={16} />
@@ -1007,7 +1007,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenBrainDump}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-400/70 hover:bg-purple-400/10 hover:text-purple-400 transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Brain Dump — dump thoughts, AI structures them"
               >
                 <Sparkles size={16} />
@@ -1019,15 +1019,15 @@ export default function Sidebar({
           {/* Memory */}
           <div className="px-2 pb-1">
             <div className="flex items-center justify-between px-1 mb-1">
-              <div className="text-[9px] uppercase tracking-[0.15em] text-muted/35 font-medium">Memory</div>
+              <div className="text-[9px] uppercase tracking-[0.15em] text-muted/45 font-medium">Memory</div>
               {memoryCount !== null && memoryCount > 0 && (
-                <span className="text-[9px] text-purple-300/60">{memoryCount.toLocaleString()} learned</span>
+                <span className="text-[9px] text-muted/40">{memoryCount.toLocaleString()} memories</span>
               )}
             </div>
             <div className="grid grid-cols-4 gap-1">
               <button
                 onClick={onOpenMemory}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-purple-300/70 hover:bg-purple-400/10 hover:text-purple-300 transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Memory timeline, learned facts, graph, audit, and rollback"
               >
                 <Brain size={16} />
@@ -1035,7 +1035,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenReflect}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-teal-400/70 hover:bg-teal-400/10 hover:text-teal-400 transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Reflect — chronological timeline of notes, memories & insights"
               >
                 <History size={16} />
@@ -1043,7 +1043,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenThinking}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-violet-400/70 hover:bg-violet-400/10 hover:text-violet-400 transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="How has my thinking changed?"
               >
                 <TrendingUp size={16} />
@@ -1051,7 +1051,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenAuditTrail}
-                className="flex flex-col items-center gap-1 py-2 rounded-lg text-emerald-400/70 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all"
+                className="flex flex-col items-center gap-1 py-2 rounded-lg text-muted/60 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Audit trail for memory operations"
               >
                 <Shield size={16} />
@@ -1061,7 +1061,7 @@ export default function Sidebar({
             <div className="grid grid-cols-2 gap-1 mt-1">
               <button
                 onClick={onOpenRollbackHistory}
-                className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-amber-400/65 hover:bg-amber-400/10 hover:text-amber-400 transition-all"
+                className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-muted/55 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Rollback history"
               >
                 <History size={13} />
@@ -1080,11 +1080,11 @@ export default function Sidebar({
 
           {/* Vault Tools */}
           <div className="px-2 pb-1.5">
-            <div className="text-[9px] uppercase tracking-[0.15em] text-muted/30 font-medium px-1 mb-1">Vault</div>
+            <div className="text-[9px] uppercase tracking-[0.15em] text-muted/45 font-medium px-1 mb-1">Vault</div>
             <div className="grid grid-cols-4 gap-1">
               <button
                 onClick={onOpenTasks}
-                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-emerald-300/60 hover:bg-emerald-400/10 hover:text-emerald-300 transition-all"
+                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-muted/55 hover:bg-accent/10 hover:text-accent transition-all"
                 title="View all tasks"
               >
                 <CheckSquare size={14} />
@@ -1092,7 +1092,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenTags}
-                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-cyan-300/60 hover:bg-cyan-400/10 hover:text-cyan-300 transition-all"
+                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-muted/55 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Browse tags"
               >
                 <Hash size={14} />
@@ -1100,7 +1100,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenStats}
-                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-blue-300/60 hover:bg-blue-400/10 hover:text-blue-300 transition-all"
+                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-muted/55 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Vault statistics"
               >
                 <BarChart3 size={14} />
@@ -1108,7 +1108,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenWeeklyReview}
-                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-orange-300/60 hover:bg-orange-400/10 hover:text-orange-300 transition-all"
+                className="flex flex-col items-center gap-0.5 py-1.5 rounded-md text-muted/55 hover:bg-accent/10 hover:text-accent transition-all"
                 title="Weekly review"
               >
                 <CalendarRange size={14} />
@@ -1132,7 +1132,7 @@ export default function Sidebar({
                   <div className="grid grid-cols-2 gap-1">
                     <button
                       onClick={onOpenControl}
-                      className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-blue-400/60 hover:bg-blue-400/10 hover:text-blue-400 transition-all"
+                      className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-muted/55 hover:bg-accent/10 hover:text-accent transition-all"
                       title="Requires a Novyx API key with Control enabled"
                     >
                       <ShieldCheck size={13} />
@@ -1158,7 +1158,7 @@ export default function Sidebar({
                             window.alert("Could not start checkout. Please check your connection and try again.");
                           }
                         }}
-                        className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-emerald-400/60 hover:bg-emerald-400/10 hover:text-emerald-400 transition-all"
+                        className="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-muted/55 hover:bg-accent/10 hover:text-accent transition-all"
                         title="Upgrade to Pro"
                       >
                         <ArrowUpRight size={13} />

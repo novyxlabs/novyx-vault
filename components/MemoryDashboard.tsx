@@ -209,6 +209,8 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [liveCheckState, setLiveCheckState] = useState<"idle" | "writing" | "recalling" | "verified" | "unavailable">("idle");
+  const [liveCheckMessage, setLiveCheckMessage] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -566,11 +568,78 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
     }
   };
 
+  const handleLiveMemoryCheck = async () => {
+    const marker = `vault-live-${Date.now()}`;
+    const observation = `Novyx Vault live check ${marker}: verify that memory writes can be recalled from the active Novyx Memory backend.`;
+    setLiveCheckState("writing");
+    setLiveCheckMessage("Writing one real memory to the active Novyx backend...");
+    try {
+      const writeRes = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ observation }),
+      });
+      if (!writeRes.ok) {
+        const body = await writeRes.json().catch(() => ({}));
+        const message =
+          (body as { error?: string }).error ||
+          `Memory write failed (${writeRes.status})`;
+        setLiveCheckState("unavailable");
+        setLiveCheckMessage(message);
+        return;
+      }
+
+      setLiveCheckState("recalling");
+      setLiveCheckMessage("Write accepted. Waiting for recall indexing...");
+
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        if (attempt > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 750));
+        }
+        const params = new URLSearchParams({ q: marker, limit: "5" });
+        const recallRes = await fetch(`/api/memory?${params}`);
+        const data = await recallRes.json().catch(() => ({}));
+        const found = (data.memories || []).find((m: Memory) =>
+          m.observation.includes(marker)
+        );
+        if (found) {
+          setSearchQuery("");
+          setMemories((prev) => [found, ...prev.filter((m) => m.uuid !== found.uuid)]);
+          setTotal((prev) => Math.max(prev, (data.total || 0), prev + 1));
+          setTimelineFetched(false);
+          setLearnedFetched(false);
+          setAuditFetched(false);
+          setReplayFetched(false);
+          setLiveCheckState("verified");
+          setLiveCheckMessage(
+            "Live memory write and recall verified. Audit and replay will update when your plan/backend exposes those logs."
+          );
+          return;
+        }
+      }
+
+      await fetchMemories();
+      setTimelineFetched(false);
+      setLearnedFetched(false);
+      setAuditFetched(false);
+      setReplayFetched(false);
+      setLiveCheckState("verified");
+      setLiveCheckMessage(
+        "Live memory write was accepted, but recall indexing did not return the marker yet. Try search again in a moment."
+      );
+    } catch {
+      setLiveCheckState("unavailable");
+      setLiveCheckMessage("Memory check failed before Vault could verify the write.");
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setSearchQuery("");
       setTab("memories");
       setCortexResult(null);
+      setLiveCheckState("idle");
+      setLiveCheckMessage(null);
       setInsightsFetched(false);
       setContextFetched(false);
       setGraphFetched(false);
@@ -672,7 +741,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-background/95 flex flex-col"
+      className="fixed inset-0 z-50 bg-background flex flex-col"
       role="dialog"
       aria-modal="true"
       aria-label="Memory Dashboard"
@@ -755,6 +824,80 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
         })}
       </div>
 
+      <div className="px-4 py-3 border-b border-sidebar-border bg-card-bg/35">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)] gap-3 items-center">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Shield size={14} className="text-accent" />
+              <p className="text-sm font-medium text-foreground">Memory Control Plane</p>
+            </div>
+            <p className="text-xs text-muted mt-1 leading-relaxed">
+              Inspect what Novyx remembers, approve learned facts, and roll back memory changes when operation history is available.
+            </p>
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2">
+              <button
+                onClick={handleLiveMemoryCheck}
+                disabled={liveCheckState === "writing" || liveCheckState === "recalling"}
+                className="inline-flex w-fit items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-accent/15 text-accent hover:bg-accent/25 transition-colors disabled:opacity-60 disabled:cursor-wait"
+              >
+                {liveCheckState === "writing" || liveCheckState === "recalling" ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : liveCheckState === "verified" ? (
+                  <Check size={12} />
+                ) : liveCheckState === "unavailable" ? (
+                  <AlertTriangle size={12} />
+                ) : (
+                  <Zap size={12} />
+                )}
+                Verify live memory
+              </button>
+              {liveCheckMessage && (
+                <p
+                  className={`text-[11px] leading-relaxed ${
+                    liveCheckState === "unavailable"
+                      ? "text-red-400"
+                      : liveCheckState === "verified"
+                        ? "text-emerald-400"
+                        : "text-muted"
+                  }`}
+                >
+                  {liveCheckMessage}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="min-w-0 rounded-md border border-sidebar-border bg-background/45 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-accent">
+                <Brain size={12} />
+                <span className="text-[10px] uppercase tracking-[0.12em] font-medium">Recall</span>
+              </div>
+              <p className="text-sm font-medium text-foreground mt-1 truncate">
+                {total.toLocaleString()} memories
+              </p>
+            </div>
+            <div className="min-w-0 rounded-md border border-sidebar-border bg-background/45 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-amber-400">
+                <GitPullRequest size={12} />
+                <span className="text-[10px] uppercase tracking-[0.12em] font-medium">Review</span>
+              </div>
+              <p className="text-sm font-medium text-foreground mt-1 truncate">
+                {learnedCount > 0 ? `${learnedCount} pending` : "No pending facts"}
+              </p>
+            </div>
+            <div className="min-w-0 rounded-md border border-sidebar-border bg-background/45 px-3 py-2">
+              <div className="flex items-center gap-1.5 text-emerald-400">
+                <RotateCcw size={12} />
+                <span className="text-[10px] uppercase tracking-[0.12em] font-medium">Recover</span>
+              </div>
+              <p className="text-sm font-medium text-foreground mt-1 truncate">
+                Audit + rollback
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search (memories tab only) */}
       {tab === "memories" && (
         <div className="px-4 py-3 border-b border-sidebar-border">
@@ -820,10 +963,10 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               <div className="flex flex-col items-center justify-center h-full text-muted">
                 <Brain size={48} className="text-accent/20 mb-3" />
                 <p className="text-sm">
-                  {searchQuery ? "No memories match your search." : "No memories yet."}
+                  {searchQuery ? "No memories match your search." : "No memories stored yet."}
                 </p>
                 {!searchQuery && (
-                  <p className="text-xs mt-1">Chat with the AI to start building memory.</p>
+                  <p className="text-xs mt-1">Capture, chat, or save vault context to create the first inspectable memory.</p>
                 )}
               </div>
             ) : (
@@ -993,8 +1136,8 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
             ) : timelineMemories.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted">
                 <CalendarDays size={48} className="text-accent/20 mb-3" />
-                <p className="text-sm">No memories yet.</p>
-                <p className="text-xs mt-1">Your memory timeline will appear here as you chat.</p>
+                <p className="text-sm">No timeline entries yet.</p>
+                <p className="text-xs mt-1">Stored memories will appear here in chronological order.</p>
               </div>
             ) : (
               <div className="relative">
@@ -1347,7 +1490,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               <div className="flex flex-col items-center justify-center py-12 text-muted">
                 <History size={48} className="text-accent/20 mb-3" />
                 <p className="text-sm">No replay data yet.</p>
-                <p className="text-xs mt-1">Memory operations will be tracked here.</p>
+                <p className="text-xs mt-1">Memory operations appear here once Novyx Memory records them.</p>
               </div>
             ) : (
               <>
@@ -1618,7 +1761,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                 <Shield size={14} className="text-accent" />
                 Audit Trail
               </h3>
-              <p className="text-xs text-muted mt-0.5">Cryptographic log of all memory operations</p>
+              <p className="text-xs text-muted mt-0.5">Logged memory operations for transparency and rollback review</p>
             </div>
 
             {auditLoading ? (
@@ -1629,7 +1772,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
               <div className="flex flex-col items-center justify-center py-12 text-muted">
                 <Shield size={48} className="text-accent/20 mb-3" />
                 <p className="text-sm">No audit entries yet.</p>
-                <p className="text-xs mt-1">All memory operations are logged for transparency.</p>
+                <p className="text-xs mt-1">Entries appear here after memory create, update, delete, or rollback events are recorded.</p>
               </div>
             ) : (
               <div className="space-y-1">
