@@ -460,6 +460,7 @@ describe("SupabaseAdapter — NoteIndex methods", () => {
     const mockSupa = { from: vi.fn(() => thenable(rows)) };
     const adapter = new SupabaseAdapter("user1");
     (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+    (adapter as unknown as { indexBuiltCache: boolean }).indexBuiltCache = true;
 
     const result = await adapter.getBacklinks("target", "target");
     expect(result).toEqual([
@@ -482,6 +483,7 @@ describe("SupabaseAdapter — NoteIndex methods", () => {
     const mockSupa = { from: vi.fn(() => chain) };
     const adapter = new SupabaseAdapter("user1");
     (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+    (adapter as unknown as { indexBuiltCache: boolean }).indexBuiltCache = true;
 
     const result = await adapter.getNotesByTag("Work");
     expect(result).toEqual(["a", "dir/b"]);
@@ -504,13 +506,15 @@ describe("SupabaseAdapter — NoteIndex methods", () => {
     };
     const adapter = new SupabaseAdapter("user1");
     (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+    (adapter as unknown as { indexBuiltCache: boolean }).indexBuiltCache = true;
 
     const graph = await adapter.getGraph();
-    expect(graph.nodes).toEqual([
+    expect(graph).not.toBeNull();
+    expect(graph!.nodes).toEqual([
       { id: "a", name: "a" },
       { id: "dir/b", name: "b" },
     ]);
-    expect(graph.links).toEqual([{ source: "a", target: "dir/b" }]);
+    expect(graph!.links).toEqual([{ source: "a", target: "dir/b" }]);
   });
 
   it("indexNote parses content and calls reindex_note with deduped edges", async () => {
@@ -534,6 +538,47 @@ describe("SupabaseAdapter — NoteIndex methods", () => {
       { target: "target", context: "see [[Target]] #work and #work again" },
     ]);
     expect(params.p_tags).toEqual(["work"]); // tags deduped for storage
+  });
+
+  it("index reads return null when the user's index is not yet built", async () => {
+    // profiles.settings has no index_built flag → isIndexBuilt() resolves false.
+    const profileChain: Record<string, unknown> = {
+      select: vi.fn(() => profileChain),
+      eq: vi.fn(() => profileChain),
+      single: vi.fn(() => Promise.resolve({ data: { settings: {} }, error: null })),
+    };
+    const mockSupa = { from: vi.fn(() => profileChain) };
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    expect(await adapter.getBacklinks("x", "x")).toBeNull();
+    expect(await adapter.getGraph()).toBeNull();
+    expect(await adapter.getNotesByTag("x")).toBeNull();
+  });
+
+  it("reindexAll flips index_built to true (merging existing settings)", async () => {
+    const updates: Array<Record<string, unknown>> = [];
+    const chain: Record<string, unknown> = {
+      select: vi.fn(() => chain),
+      eq: vi.fn(() => chain),
+      delete: vi.fn(() => chain),
+      order: vi.fn(() => chain),
+      single: vi.fn(() => Promise.resolve({ data: { settings: { theme: "dark" } }, error: null })),
+      update: vi.fn((data: Record<string, unknown>) => {
+        updates.push(data);
+        return chain;
+      }),
+    };
+    (chain as { then: unknown }).then = (resolve: (v: unknown) => void) =>
+      resolve({ data: [], error: null });
+    const mockSupa = { from: vi.fn(() => chain) };
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.reindexAll();
+
+    expect(updates).toContainEqual({ settings: { theme: "dark", index_built: true } });
+    expect((adapter as unknown as { indexBuiltCache: boolean }).indexBuiltCache).toBe(true);
   });
 });
 

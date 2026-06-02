@@ -28,12 +28,15 @@ export interface IndexedLink {
  */
 export interface NoteIndex {
   // --- Reads (replace the scans) ---
+  // Reads return null to signal "index unavailable — fall back to the legacy
+  // scan" (e.g. cloud index not yet backfilled for this user). A non-null
+  // result is authoritative.
   /** Backlinks to a note, resolved by basename or full path. */
-  getBacklinks(noteName: string, notePath: string): Promise<Backlink[]>;
+  getBacklinks(noteName: string, notePath: string): Promise<Backlink[] | null>;
   /** The full wiki-link graph (nodes + resolved edges). */
-  getGraph(): Promise<GraphData>;
+  getGraph(): Promise<GraphData | null>;
   /** Normalized paths (no .md) of notes carrying a given tag. */
-  getNotesByTag(tag: string): Promise<string[]>;
+  getNotesByTag(tag: string): Promise<string[] | null>;
 
   // --- Maintenance (called from adapter mutations) ---
   /** (Re)index a single note from its current content. */

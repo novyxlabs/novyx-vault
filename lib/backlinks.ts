@@ -15,8 +15,10 @@ export async function findBacklinks(notePath: string, ctx?: StorageContext): Pro
   const noteName = path.basename(notePath, ".md").replace(/\.md$/, "");
 
   // Indexed path: O(log N) lookup when the adapter maintains an index.
+  // null = index unavailable (e.g. not yet backfilled) → fall back to scan.
   if (typeof storage.getBacklinks === "function") {
-    return storage.getBacklinks(noteName, notePath);
+    const indexed = await storage.getBacklinks(noteName, notePath);
+    if (indexed !== null) return indexed;
   }
 
   return scanBacklinks(storage, notePath, noteName);

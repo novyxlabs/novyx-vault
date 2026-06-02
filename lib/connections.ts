@@ -222,16 +222,25 @@ async function findTagConnections(
   let notes = await getCachedNotes(ctx);
 
   // Indexed path: narrow candidates to notes that carry a shared tag instead of
-  // scanning the whole vault. Falls back to the full candidate set otherwise.
+  // scanning the whole vault. Falls back to the full candidate set if the index
+  // is missing entirely or unavailable (getNotesByTag returns null).
   if (typeof storage.getNotesByTag === "function") {
     const tagged = new Set<string>();
+    let usable = true;
     for (const tag of sourceTags) {
-      for (const p of await storage.getNotesByTag(tag)) tagged.add(p);
+      const paths = await storage.getNotesByTag(tag);
+      if (paths === null) {
+        usable = false;
+        break;
+      }
+      for (const p of paths) tagged.add(p);
     }
-    notes = notes.filter((n) => {
-      const noMd = n.relPath.replace(/\.md$/, "");
-      return tagged.has(noMd) || tagged.has(n.relPath);
-    });
+    if (usable) {
+      notes = notes.filter((n) => {
+        const noMd = n.relPath.replace(/\.md$/, "");
+        return tagged.has(noMd) || tagged.has(n.relPath);
+      });
+    }
   }
 
   const connections: GhostConnection[] = [];

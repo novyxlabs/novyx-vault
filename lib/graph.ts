@@ -23,8 +23,10 @@ export async function buildGraph(ctx?: StorageContext): Promise<GraphData> {
   const storage = getStorage(ctx?.userId, ctx?.cookieHeader);
 
   // Indexed path: O(E) resolved edges when the adapter maintains an index.
+  // null = index unavailable (e.g. not yet backfilled) → fall back to scan.
   if (typeof storage.getGraph === "function") {
-    return storage.getGraph();
+    const indexed = await storage.getGraph();
+    if (indexed !== null) return indexed;
   }
 
   return scanGraph(storage);

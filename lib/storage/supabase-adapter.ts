@@ -9,10 +9,32 @@ import type { GraphData, GraphNode, GraphLink } from "../graph";
 export class SupabaseAdapter implements StorageAdapter {
   private supabase: SupabaseClient;
   private userId: string;
+  // Memoized per request: whether this user's index has been backfilled.
+  // Until it has, index reads return null so dispatchers fall back to the scan
+  // (zero-degraded rollout). Maintenance always runs, so the index is fresh by
+  // the time the backfill flips this flag.
+  private indexBuiltCache: boolean | null = null;
 
   constructor(userId: string, cookieHeader?: string) {
     this.userId = userId;
     this.supabase = createServerSupabase(cookieHeader);
+  }
+
+  /** Reads profiles.settings.index_built once per adapter instance. */
+  private async isIndexBuilt(): Promise<boolean> {
+    if (this.indexBuiltCache !== null) return this.indexBuiltCache;
+    try {
+      const { data } = await this.supabase
+        .from("profiles")
+        .select("settings")
+        .eq("id", this.userId)
+        .single();
+      const settings = (data?.settings ?? {}) as Record<string, unknown>;
+      this.indexBuiltCache = settings.index_built === true;
+    } catch {
+      this.indexBuiltCache = false; // be safe — fall back to scan
+    }
+    return this.indexBuiltCache;
   }
 
   /**
@@ -614,7 +636,8 @@ export class SupabaseAdapter implements StorageAdapter {
 
   // --- NoteIndex: indexed reads (replace the legacy full-vault scans) ---
 
-  async getBacklinks(noteName: string, notePath: string): Promise<Backlink[]> {
+  async getBacklinks(noteName: string, notePath: string): Promise<Backlink[] | null> {
+    if (!(await this.isIndexBuilt())) return null;
     const nameNorm = noteName.toLowerCase();
     const pathNorm = notePath.toLowerCase().replace(/\.md$/, "");
     const targets = nameNorm === pathNorm ? [nameNorm] : [nameNorm, pathNorm];
@@ -642,7 +665,8 @@ export class SupabaseAdapter implements StorageAdapter {
     return out;
   }
 
-  async getGraph(): Promise<GraphData> {
+  async getGraph(): Promise<GraphData | null> {
+    if (!(await this.isIndexBuilt())) return null;
     const [notesRes, linksRes] = await Promise.all([
       this.supabase
         .from("notes")
@@ -701,7 +725,8 @@ export class SupabaseAdapter implements StorageAdapter {
     return { nodes, links };
   }
 
-  async getNotesByTag(tag: string): Promise<string[]> {
+  async getNotesByTag(tag: string): Promise<string[] | null> {
+    if (!(await this.isIndexBuilt())) return null;
     const { data, error } = await this.supabase
       .from("note_tags")
       .select("source_path")
@@ -765,6 +790,21 @@ export class SupabaseAdapter implements StorageAdapter {
         console.warn(`[index] backfill failed for ${n.relPath}:`, e);
       }
     }
+
+    // Backfill complete — flip the flag so index reads go live. Merge into
+    // settings so other keys are preserved.
+    const { data } = await this.supabase
+      .from("profiles")
+      .select("settings")
+      .eq("id", this.userId)
+      .single();
+    const settings = { ...((data?.settings as Record<string, unknown>) ?? {}), index_built: true };
+    const { error } = await this.supabase
+      .from("profiles")
+      .update({ settings })
+      .eq("id", this.userId);
+    this.assertNoError(error, "Failed to set index_built flag");
+    this.indexBuiltCache = true;
   }
 
   // --- Best-effort wrappers used from note mutations ---
