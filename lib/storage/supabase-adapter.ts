@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerSupabase } from "../supabase";
 import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile, SearchFilters } from "./types";
 import { validateNotePath, tryValidateNotePath } from "./path-validator";
+import { parseLinks, parseTags } from "../index/resolve";
+import type { Backlink } from "../backlinks";
+import type { GraphData, GraphNode, GraphLink } from "../graph";
 
 export class SupabaseAdapter implements StorageAdapter {
   private supabase: SupabaseClient;
@@ -139,6 +142,7 @@ export class SupabaseAdapter implements StorageAdapter {
         is_folder: false,
         modified_at: now,
       });
+      await this.reindexNoteSafe(normalized, content);
       return;
     }
 
@@ -152,6 +156,7 @@ export class SupabaseAdapter implements StorageAdapter {
       modified_at: now,
     });
     this.assertNoError(error, `Failed to create note ${normalized}`);
+    await this.reindexNoteSafe(normalized, content);
   }
 
   private async ensureFolders(notePath: string): Promise<void> {
@@ -257,6 +262,10 @@ export class SupabaseAdapter implements StorageAdapter {
         }
         throw error;
       }
+
+      for (const child of children || []) {
+        await this.unindexNoteSafe(child.path);
+      }
     }
 
     await this.updateById(target.id, {
@@ -267,6 +276,8 @@ export class SupabaseAdapter implements StorageAdapter {
       slug: null,
       published_at: null,
     });
+
+    await this.unindexNoteSafe(normalized);
   }
 
   async renameNote(oldPath: string, newPath: string): Promise<void> {
@@ -290,6 +301,7 @@ export class SupabaseAdapter implements StorageAdapter {
     if (!target) throw new Error(`Note not found: ${oldPath}`);
 
     await this.updateById(target.id, { path: normalizedNew, name: newName });
+    await this.moveEdgesSafe(normalizedOld, normalizedNew);
 
     if (target.is_folder) {
       const { data: children } = await this.supabase
@@ -303,6 +315,7 @@ export class SupabaseAdapter implements StorageAdapter {
         for (const child of children || []) {
           const updatedPath = normalizedNew + child.path.slice(normalizedOld.length);
           await this.updateById(child.id, { path: updatedPath });
+          await this.moveEdgesSafe(child.path, updatedPath);
           updatedChildren.push({ id: child.id, path: child.path });
         }
       } catch (error) {
@@ -338,7 +351,7 @@ export class SupabaseAdapter implements StorageAdapter {
   async restoreFromTrash(id: string): Promise<string> {
     const { data, error } = await this.supabase
       .from("notes")
-      .select("id, original_path, path, is_folder")
+      .select("id, original_path, path, is_folder, content")
       .eq("id", id)
       .eq("user_id", this.userId)
       .eq("is_trashed", true)
@@ -357,10 +370,14 @@ export class SupabaseAdapter implements StorageAdapter {
       published_at: null,
     });
 
+    if (!data.is_folder) {
+      await this.reindexNoteSafe(restorePath, data.content ?? "");
+    }
+
     if (data.is_folder) {
       const { data: children } = await this.supabase
         .from("notes")
-        .select("id, original_path, path")
+        .select("id, original_path, path, content")
         .eq("user_id", this.userId)
         .eq("is_trashed", true)
         .or(`original_path.like.${restorePath}/%,path.like.${restorePath}/%`);
@@ -376,6 +393,7 @@ export class SupabaseAdapter implements StorageAdapter {
             slug: null,
             published_at: null,
           });
+          await this.reindexNoteSafe(childRestore, child.content ?? "");
           restoredChildren.push({ id: child.id, path: child.path });
         }
       } catch (error) {
@@ -592,5 +610,198 @@ export class SupabaseAdapter implements StorageAdapter {
     }
 
     return ts;
+  }
+
+  // --- NoteIndex: indexed reads (replace the legacy full-vault scans) ---
+
+  async getBacklinks(noteName: string, notePath: string): Promise<Backlink[]> {
+    const nameNorm = noteName.toLowerCase();
+    const pathNorm = notePath.toLowerCase().replace(/\.md$/, "");
+    const targets = nameNorm === pathNorm ? [nameNorm] : [nameNorm, pathNorm];
+
+    const { data, error } = await this.supabase
+      .from("note_links")
+      .select("source_path, context")
+      .eq("user_id", this.userId)
+      .in("target_raw", targets)
+      .order("source_path");
+    if (error) throw new Error(error.message);
+
+    const seen = new Set<string>();
+    const out: Backlink[] = [];
+    for (const row of (data ?? []) as { source_path: string; context: string | null }[]) {
+      if (row.source_path === pathNorm) continue; // skip self-links
+      if (seen.has(row.source_path)) continue; // one backlink entry per source note
+      seen.add(row.source_path);
+      out.push({
+        name: row.source_path.split("/").pop() ?? row.source_path,
+        path: row.source_path.endsWith(".md") ? row.source_path : row.source_path + ".md",
+        context: row.context ?? "",
+      });
+    }
+    return out;
+  }
+
+  async getGraph(): Promise<GraphData> {
+    const [notesRes, linksRes] = await Promise.all([
+      this.supabase
+        .from("notes")
+        .select("path, name")
+        .eq("user_id", this.userId)
+        .eq("is_trashed", false)
+        .eq("is_folder", false)
+        .order("path"),
+      this.supabase
+        .from("note_links")
+        .select("source_path, target_raw")
+        .eq("user_id", this.userId)
+        .order("source_path"),
+    ]);
+    if (notesRes.error) throw new Error(notesRes.error.message);
+    if (linksRes.error) throw new Error(linksRes.error.message);
+
+    // Resolve targets at read time: name match first, then full-path match —
+    // identical precedence to the legacy scan, so output is unchanged.
+    const nameToPath = new Map<string, string>();
+    const nodeIds = new Set<string>();
+    const nodes: GraphNode[] = [];
+    for (const r of (notesRes.data ?? []) as { path: string; name: string }[]) {
+      nodes.push({ id: r.path, name: r.name });
+      nodeIds.add(r.path);
+      nameToPath.set(r.name.toLowerCase(), r.path);
+    }
+
+    const links: GraphLink[] = [];
+    const perSource = new Map<string, Set<string>>();
+    for (const r of (linksRes.data ?? []) as { source_path: string; target_raw: string }[]) {
+      const sourceId = r.source_path;
+      if (!nodeIds.has(sourceId)) continue; // source trashed/removed since indexing
+
+      let targetId = nameToPath.get(r.target_raw);
+      if (!targetId) {
+        for (const id of nameToPath.values()) {
+          if (id.toLowerCase() === r.target_raw) {
+            targetId = id;
+            break;
+          }
+        }
+      }
+      if (!targetId || targetId === sourceId) continue;
+
+      let seen = perSource.get(sourceId);
+      if (!seen) {
+        seen = new Set();
+        perSource.set(sourceId, seen);
+      }
+      if (seen.has(targetId)) continue;
+      seen.add(targetId);
+      links.push({ source: sourceId, target: targetId });
+    }
+
+    return { nodes, links };
+  }
+
+  async getNotesByTag(tag: string): Promise<string[]> {
+    const { data, error } = await this.supabase
+      .from("note_tags")
+      .select("source_path")
+      .eq("user_id", this.userId)
+      .eq("tag", tag.toLowerCase());
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as { source_path: string }[]).map((r) => r.source_path);
+  }
+
+  // --- NoteIndex: maintenance ---
+
+  async indexNote(notePath: string, content: string): Promise<void> {
+    const normalized = validateNotePath(notePath).replace(/\.md$/, "");
+
+    // One row per distinct target, keeping the first occurrence's line context.
+    const seen = new Set<string>();
+    const links: { target: string; context: string }[] = [];
+    for (const l of parseLinks(content)) {
+      if (seen.has(l.targetRaw)) continue;
+      seen.add(l.targetRaw);
+      links.push({ target: l.targetRaw, context: l.context });
+    }
+    const tags = parseTags(content);
+
+    const { error } = await this.supabase.rpc("reindex_note", {
+      p_user: this.userId,
+      p_path: normalized,
+      p_links: links,
+      p_tags: tags,
+    });
+    this.assertNoError(error, `Failed to index note ${normalized}`);
+  }
+
+  async unindexNote(notePath: string): Promise<void> {
+    const normalized = validateNotePath(notePath).replace(/\.md$/, "");
+    const links = await this.supabase
+      .from("note_links")
+      .delete()
+      .eq("user_id", this.userId)
+      .eq("source_path", normalized);
+    this.assertNoError(links.error, `Failed to unindex links ${normalized}`);
+    const tags = await this.supabase
+      .from("note_tags")
+      .delete()
+      .eq("user_id", this.userId)
+      .eq("source_path", normalized);
+    this.assertNoError(tags.error, `Failed to unindex tags ${normalized}`);
+  }
+
+  async reindexAll(): Promise<void> {
+    // Idempotent full rebuild: clear this user's edges, then re-derive from
+    // every live note. Safe to run repeatedly (e.g. one-time backfill).
+    await this.supabase.from("note_links").delete().eq("user_id", this.userId);
+    await this.supabase.from("note_tags").delete().eq("user_id", this.userId);
+
+    const notes = await this.walkAllNotes();
+    for (const n of notes) {
+      try {
+        await this.indexNote(n.relPath, n.content);
+      } catch (e) {
+        console.warn(`[index] backfill failed for ${n.relPath}:`, e);
+      }
+    }
+  }
+
+  // --- Best-effort wrappers used from note mutations ---
+  // Index maintenance and the note write are separate PostgREST round-trips,
+  // so they can't be atomic. A failed maintenance call must not fail the write;
+  // drift is repaired by reindexAll().
+
+  private async reindexNoteSafe(notePath: string, content: string): Promise<void> {
+    try {
+      await this.indexNote(notePath, content);
+    } catch (e) {
+      console.warn(`[index] reindex failed for ${notePath}:`, e);
+    }
+  }
+
+  private async unindexNoteSafe(notePath: string): Promise<void> {
+    try {
+      await this.unindexNote(notePath);
+    } catch (e) {
+      console.warn(`[index] unindex failed for ${notePath}:`, e);
+    }
+  }
+
+  private async moveEdgesSafe(oldPath: string, newPath: string): Promise<void> {
+    try {
+      await this.supabase
+        .from("note_links")
+        .update({ source_path: newPath })
+        .eq("user_id", this.userId)
+        .eq("source_path", oldPath);
+      await this.supabase
+        .from("note_tags")
+        .update({ source_path: newPath })
+        .eq("user_id", this.userId)
+        .eq("source_path", oldPath);
+    } catch (e) {
+      console.warn(`[index] move edges failed ${oldPath} -> ${newPath}:`, e);
+    }
   }
 }

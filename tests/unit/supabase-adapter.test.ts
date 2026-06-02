@@ -437,6 +437,106 @@ describe("SupabaseAdapter — path normalization", () => {
   });
 });
 
+describe("SupabaseAdapter — NoteIndex methods", () => {
+  // A chain that resolves (await) to { data, error } and supports the query
+  // builder methods the adapter uses. `then` makes it awaitable.
+  function thenable(data: unknown[]) {
+    const chain: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "in", "order", "like", "ilike"]) {
+      chain[m] = vi.fn(() => chain);
+    }
+    (chain as { then: unknown }).then = (resolve: (v: unknown) => void) =>
+      resolve({ data, error: null });
+    return chain;
+  }
+
+  it("getBacklinks resolves by name or path, skips self, dedupes per source", async () => {
+    const rows = [
+      { source_path: "a", context: "links to [[Target]]" },
+      { source_path: "a", context: "also [[notes/target]]" }, // same source, dedupe
+      { source_path: "target", context: "self ref" },          // self, skip
+      { source_path: "dir/b", context: "see [[Target]]" },
+    ];
+    const mockSupa = { from: vi.fn(() => thenable(rows)) };
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const result = await adapter.getBacklinks("target", "target");
+    expect(result).toEqual([
+      { name: "a", path: "a.md", context: "links to [[Target]]" },
+      { name: "b", path: "dir/b.md", context: "see [[Target]]" },
+    ]);
+  });
+
+  it("getNotesByTag returns source paths for the lowercased tag", async () => {
+    const eqArgs: Array<[string, unknown]> = [];
+    const chain: Record<string, unknown> = {
+      select: vi.fn(() => chain),
+      eq: vi.fn((c: string, v: unknown) => {
+        eqArgs.push([c, v]);
+        return chain;
+      }),
+    };
+    (chain as { then: unknown }).then = (resolve: (v: unknown) => void) =>
+      resolve({ data: [{ source_path: "a" }, { source_path: "dir/b" }], error: null });
+    const mockSupa = { from: vi.fn(() => chain) };
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const result = await adapter.getNotesByTag("Work");
+    expect(result).toEqual(["a", "dir/b"]);
+    expect(eqArgs).toContainEqual(["tag", "work"]); // lowercased
+  });
+
+  it("getGraph builds nodes and resolves edges, dropping trashed sources", async () => {
+    const noteRows = [
+      { path: "a", name: "a" },
+      { path: "dir/b", name: "b" },
+    ];
+    const linkRows = [
+      { source_path: "a", target_raw: "b" },          // a -> dir/b (by name)
+      { source_path: "a", target_raw: "b" },          // dup, collapse
+      { source_path: "ghost", target_raw: "a" },      // source not a node, drop
+      { source_path: "dir/b", target_raw: "missing" }, // unresolved, drop
+    ];
+    const mockSupa = {
+      from: vi.fn((t: string) => (t === "notes" ? thenable(noteRows) : thenable(linkRows))),
+    };
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const graph = await adapter.getGraph();
+    expect(graph.nodes).toEqual([
+      { id: "a", name: "a" },
+      { id: "dir/b", name: "b" },
+    ]);
+    expect(graph.links).toEqual([{ source: "a", target: "dir/b" }]);
+  });
+
+  it("indexNote parses content and calls reindex_note with deduped edges", async () => {
+    const rpcCalls: Array<[string, Record<string, unknown>]> = [];
+    const mockSupa = {
+      rpc: vi.fn((name: string, params: Record<string, unknown>) => {
+        rpcCalls.push([name, params]);
+        return Promise.resolve({ error: null });
+      }),
+    };
+    const adapter = new SupabaseAdapter("user1");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.indexNote("folder/note.md", "see [[Target]] #work and #work again");
+
+    expect(rpcCalls).toHaveLength(1);
+    const [name, params] = rpcCalls[0];
+    expect(name).toBe("reindex_note");
+    expect(params.p_path).toBe("folder/note");
+    expect(params.p_links).toEqual([
+      { target: "target", context: "see [[Target]] #work and #work again" },
+    ]);
+    expect(params.p_tags).toEqual(["work"]); // tags deduped for storage
+  });
+});
+
 describe("SupabaseAdapter.restoreFromTrash — folder restore includes children", () => {
   it("restores a trashed folder and all its trashed children", async () => {
     const updateCalls: { data: Record<string, unknown>; id: string }[] = [];
