@@ -274,6 +274,9 @@ describe("SupabaseAdapter.deleteNote — folder trash preserves child paths", ()
             return Promise.resolve({ error: null });
           }),
         })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ error: null })) })),
+        })),
       }),
     };
 
@@ -329,6 +332,7 @@ describe("SupabaseAdapter — path normalization", () => {
           return Promise.resolve({ error: null });
         }),
       })),
+      rpc: vi.fn(() => Promise.resolve({ error: null })),
     };
 
     const adapter = new SupabaseAdapter("user1");
@@ -360,6 +364,7 @@ describe("SupabaseAdapter — path normalization", () => {
           }),
         })),
       }),
+      rpc: vi.fn(() => Promise.resolve({ error: null })),
     };
 
     const adapter = new SupabaseAdapter("user1");
@@ -395,6 +400,7 @@ describe("SupabaseAdapter — path normalization", () => {
           return Promise.resolve({ error: null });
         }),
       }),
+      rpc: vi.fn(() => Promise.resolve({ error: null })),
     };
 
     const adapter = new SupabaseAdapter("user1");
@@ -434,6 +440,189 @@ describe("SupabaseAdapter — path normalization", () => {
 
     await expect(adapter.readNote("/folder/note")).resolves.toBe("body");
     expect(orClause).toBe("path.eq.folder/note,path.eq.folder/note.md");
+  });
+});
+
+describe("SupabaseAdapter — NoteIndex methods", () => {
+  // A chain that resolves (await) to { data, error } and supports the query
+  // builder methods the adapter uses. `then` makes it awaitable.
+  function thenable(data: unknown[]) {
+    const chain: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "in", "order", "like", "ilike"]) {
+      chain[m] = vi.fn(() => chain);
+    }
+    (chain as { then: unknown }).then = (resolve: (v: unknown) => void) =>
+      resolve({ data, error: null });
+    return chain;
+  }
+
+  // A profiles query stub for isIndexBuilt() — from("profiles").select().eq().single().
+  function profileSettings(settings: Record<string, unknown>) {
+    const c: Record<string, unknown> = {
+      select: vi.fn(() => c),
+      eq: vi.fn(() => c),
+      single: vi.fn(() => Promise.resolve({ data: { settings }, error: null })),
+    };
+    return c;
+  }
+
+  // Unique user ids per test: the index_built cache is a module-level Map that
+  // persists across tests, so distinct ids prevent cross-test pollution.
+
+  it("getBacklinks resolves by name or path, skips self, dedupes per source", async () => {
+    const rows = [
+      { source_path: "a", context: "links to [[Target]]" },
+      { source_path: "a", context: "also [[notes/target]]" }, // same source, dedupe
+      { source_path: "target", context: "self ref" },          // self, skip
+      { source_path: "dir/b", context: "see [[Target]]" },
+    ];
+    const mockSupa = {
+      from: vi.fn((t: string) =>
+        t === "profiles" ? profileSettings({ index_built: true }) : thenable(rows)
+      ),
+    };
+    const adapter = new SupabaseAdapter("user-bl");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const result = await adapter.getBacklinks("target", "target");
+    expect(result).toEqual([
+      { name: "a", path: "a.md", context: "links to [[Target]]" },
+      { name: "b", path: "dir/b.md", context: "see [[Target]]" },
+    ]);
+  });
+
+  it("getNotesByTag returns source paths for the lowercased tag", async () => {
+    const eqArgs: Array<[string, unknown]> = [];
+    const chain: Record<string, unknown> = {
+      select: vi.fn(() => chain),
+      eq: vi.fn((c: string, v: unknown) => {
+        eqArgs.push([c, v]);
+        return chain;
+      }),
+    };
+    (chain as { then: unknown }).then = (resolve: (v: unknown) => void) =>
+      resolve({ data: [{ source_path: "a" }, { source_path: "dir/b" }], error: null });
+    const mockSupa = {
+      from: vi.fn((t: string) =>
+        t === "profiles" ? profileSettings({ index_built: true }) : chain
+      ),
+    };
+    const adapter = new SupabaseAdapter("user-tag");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const result = await adapter.getNotesByTag("Work");
+    expect(result).toEqual(["a", "dir/b"]);
+    expect(eqArgs).toContainEqual(["tag", "work"]); // lowercased
+  });
+
+  it("getGraph builds nodes and resolves edges, dropping trashed sources", async () => {
+    const noteRows = [
+      { path: "a", name: "a" },
+      { path: "dir/b", name: "b" },
+    ];
+    const linkRows = [
+      { source_path: "a", target_raw: "b" },          // a -> dir/b (by name)
+      { source_path: "a", target_raw: "b" },          // dup, collapse
+      { source_path: "ghost", target_raw: "a" },      // source not a node, drop
+      { source_path: "dir/b", target_raw: "missing" }, // unresolved, drop
+    ];
+    const mockSupa = {
+      from: vi.fn((t: string) =>
+        t === "profiles"
+          ? profileSettings({ index_built: true })
+          : t === "notes"
+            ? thenable(noteRows)
+            : thenable(linkRows)
+      ),
+    };
+    const adapter = new SupabaseAdapter("user-graph");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    const graph = await adapter.getGraph();
+    expect(graph).not.toBeNull();
+    expect(graph!.nodes).toEqual([
+      { id: "a", name: "a" },
+      { id: "dir/b", name: "b" },
+    ]);
+    expect(graph!.links).toEqual([{ source: "a", target: "dir/b" }]);
+  });
+
+  it("indexNote parses content and calls reindex_note with deduped edges", async () => {
+    const rpcCalls: Array<[string, Record<string, unknown>]> = [];
+    const mockSupa = {
+      rpc: vi.fn((name: string, params: Record<string, unknown>) => {
+        rpcCalls.push([name, params]);
+        return Promise.resolve({ error: null });
+      }),
+    };
+    const adapter = new SupabaseAdapter("user-idx");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.indexNote("folder/note.md", "see [[Target]] #work and #work again");
+
+    expect(rpcCalls).toHaveLength(1);
+    const [name, params] = rpcCalls[0];
+    expect(name).toBe("reindex_note");
+    expect(params.p_path).toBe("folder/note");
+    expect(params.p_links).toEqual([
+      { target: "target", context: "see [[Target]] #work and #work again" },
+    ]);
+    expect(params.p_tags).toEqual(["work"]); // tags deduped for storage
+  });
+
+  it("retries reindex_note once when the first RPC returns an error", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    const mockSupa = {
+      rpc: vi.fn((_name: string, params: Record<string, unknown>) => {
+        calls.push(params);
+        return Promise.resolve(
+          calls.length === 1 ? { error: { message: "transient" } } : { error: null }
+        );
+      }),
+    };
+    const adapter = new SupabaseAdapter("user-retry");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.indexNote("n.md", "[[x]]");
+    expect(calls).toHaveLength(2); // first errored, second succeeded
+  });
+
+  it("index reads return null when the user's index is not yet built", async () => {
+    // profiles.settings has no index_built flag → isIndexBuilt() resolves false.
+    const mockSupa = { from: vi.fn(() => profileSettings({})) };
+    const adapter = new SupabaseAdapter("user-null");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    expect(await adapter.getBacklinks("x", "x")).toBeNull();
+    expect(await adapter.getGraph()).toBeNull();
+    expect(await adapter.getNotesByTag("x")).toBeNull();
+  });
+
+  it("reindexAll flips index_built to true (merging settings) and writes through", async () => {
+    const updates: Array<Record<string, unknown>> = [];
+    const chain: Record<string, unknown> = {
+      select: vi.fn(() => chain),
+      eq: vi.fn(() => chain),
+      delete: vi.fn(() => chain),
+      order: vi.fn(() => chain),
+      single: vi.fn(() => Promise.resolve({ data: { settings: { theme: "dark" } }, error: null })),
+      update: vi.fn((data: Record<string, unknown>) => {
+        updates.push(data);
+        return chain;
+      }),
+    };
+    (chain as { then: unknown }).then = (resolve: (v: unknown) => void) =>
+      resolve({ data: [], error: null });
+    const mockSupa = { from: vi.fn(() => chain) };
+    const adapter = new SupabaseAdapter("user-reindex");
+    (adapter as unknown as { supabase: unknown }).supabase = mockSupa;
+
+    await adapter.reindexAll();
+
+    expect(updates).toContainEqual({ settings: { theme: "dark", index_built: true } });
+    // Write-through: a subsequent read is served from cache (not null) without
+    // re-querying profiles.
+    expect(await adapter.getNotesByTag("x")).not.toBeNull();
   });
 });
 
@@ -485,6 +674,7 @@ describe("SupabaseAdapter.restoreFromTrash — folder restore includes children"
           }),
         })),
       }),
+      rpc: vi.fn(() => Promise.resolve({ error: null })),
     };
 
     const adapter = new SupabaseAdapter("user1");

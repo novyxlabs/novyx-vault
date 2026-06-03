@@ -3,6 +3,8 @@ import { readNote, type StorageContext } from "./notes";
 import { recallMemories } from "./memory";
 import { searchNotes, getCachedNotes } from "./search";
 import { getUserNovyxKey } from "./novyx";
+import { getStorage } from "./storage";
+import { parseLinkTargets, parseTags, extractTagNames } from "./index/resolve";
 
 export interface GhostConnection {
   notePath: string;
@@ -47,15 +49,8 @@ export function extractKeyConcepts(content: string, noteName: string): KeyConcep
     headings.push(hMatch[1].replace(/[#*_`\[\]]/g, "").trim());
   }
 
-  // Tags
-  const tags: string[] = [];
-  const tagRegex = /(?:^|\s)#([a-zA-Z][\w-]*)/g;
-  let tMatch;
-  while ((tMatch = tagRegex.exec(content)) !== null) {
-    if (!tags.includes(tMatch[1].toLowerCase())) {
-      tags.push(tMatch[1].toLowerCase());
-    }
-  }
+  // Tags (deduped)
+  const tags = parseTags(content);
 
   // Key terms — from first 500 chars + headings
   const textBlock = content.slice(0, 500) + " " + headings.join(" ");
@@ -79,13 +74,7 @@ export function extractKeyConcepts(content: string, noteName: string): KeyConcep
 // --- Wiki-link extraction (to exclude already-linked notes) ---
 
 function extractWikiLinks(content: string): Set<string> {
-  const links = new Set<string>();
-  const regex = /\[\[([^\]]+)\]\]/g;
-  let match;
-  while ((match = regex.exec(content)) !== null) {
-    links.add(match[1].trim().toLowerCase());
-  }
-  return links;
+  return new Set(parseLinkTargets(content));
 }
 
 // --- Strategy 1: Semantic (Novyx) ---
@@ -229,7 +218,31 @@ async function findTagConnections(
 ): Promise<GhostConnection[]> {
   if (sourceTags.length === 0) return [];
 
-  const notes = await getCachedNotes(ctx);
+  const storage = getStorage(ctx?.userId, ctx?.cookieHeader);
+  let notes = await getCachedNotes(ctx);
+
+  // Indexed path: narrow candidates to notes that carry a shared tag instead of
+  // scanning the whole vault. Falls back to the full candidate set if the index
+  // is missing entirely or unavailable (getNotesByTag returns null).
+  if (typeof storage.getNotesByTag === "function") {
+    const tagged = new Set<string>();
+    let usable = true;
+    for (const tag of sourceTags) {
+      const paths = await storage.getNotesByTag(tag);
+      if (paths === null) {
+        usable = false;
+        break;
+      }
+      for (const p of paths) tagged.add(p);
+    }
+    if (usable) {
+      notes = notes.filter((n) => {
+        const noMd = n.relPath.replace(/\.md$/, "");
+        return tagged.has(noMd) || tagged.has(n.relPath);
+      });
+    }
+  }
+
   const connections: GhostConnection[] = [];
   const tagSet = new Set(sourceTags);
 
@@ -237,15 +250,9 @@ async function findTagConnections(
     const relPathNoMd = note.relPath.replace(/\.md$/, "");
     if (relPathNoMd === sourcePath || relPathNoMd === sourcePath.replace(/\.md$/, "")) continue;
 
-    // Only check first 2000 chars for tags (performance)
-    const chunk = note.content.slice(0, 2000);
-    const fileTags: string[] = [];
-    const tagRegex = /(?:^|\s)#([a-zA-Z][\w-]*)/g;
-    let m;
-    while ((m = tagRegex.exec(chunk)) !== null) {
-      fileTags.push(m[1].toLowerCase());
-    }
-
+    // Only check first 2000 chars for tags (performance). Keep duplicates —
+    // the score below weights repeated shared tags.
+    const fileTags = extractTagNames(note.content.slice(0, 2000));
     const shared = fileTags.filter((t) => tagSet.has(t));
     if (shared.length === 0) continue;
 

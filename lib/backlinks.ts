@@ -1,6 +1,8 @@
 import path from "path";
 import { getStorage } from "./storage";
+import type { StorageAdapter } from "./storage";
 import type { StorageContext } from "./notes";
+import { parseLinks } from "./index/resolve";
 
 export interface Backlink {
   name: string;
@@ -8,12 +10,28 @@ export interface Backlink {
   context: string;
 }
 
-const WIKILINK_REGEX = /\[\[([^\]]+)\]\]/g;
-
 export async function findBacklinks(notePath: string, ctx?: StorageContext): Promise<Backlink[]> {
-  const noteName = path.basename(notePath, ".md").replace(/\.md$/, "").toLowerCase();
-  const notePathNorm = notePath.toLowerCase().replace(/\.md$/, "");
   const storage = getStorage(ctx?.userId, ctx?.cookieHeader);
+  const noteName = path.basename(notePath, ".md").replace(/\.md$/, "");
+
+  // Indexed path: O(log N) lookup when the adapter maintains an index.
+  // null = index unavailable (e.g. not yet backfilled) → fall back to scan.
+  if (typeof storage.getBacklinks === "function") {
+    const indexed = await storage.getBacklinks(noteName, notePath);
+    if (indexed !== null) return indexed;
+  }
+
+  return scanBacklinks(storage, notePath, noteName);
+}
+
+/** Legacy fallback: walk every note and scan for inbound wiki-links. */
+async function scanBacklinks(
+  storage: StorageAdapter,
+  notePath: string,
+  noteName: string
+): Promise<Backlink[]> {
+  const nameNorm = noteName.toLowerCase();
+  const notePathNorm = notePath.toLowerCase().replace(/\.md$/, "");
   const notes = await storage.walkAllNotes();
   const backlinks: Backlink[] = [];
 
@@ -22,26 +40,16 @@ export async function findBacklinks(notePath: string, ctx?: StorageContext): Pro
     // Skip self
     if (filePathNorm === notePathNorm) continue;
 
-    // Check if any wiki-link in this file points to our note
-    const lines = note.content.split("\n");
-    for (const line of lines) {
-      let match;
-      WIKILINK_REGEX.lastIndex = 0;
-      let found = false;
-
-      while ((match = WIKILINK_REGEX.exec(line)) !== null) {
-        const linkText = match[1].trim().toLowerCase();
-        if (linkText === noteName || linkText === notePathNorm) {
-          backlinks.push({
-            name: path.basename(note.relPath, ".md"),
-            path: note.relPath,
-            context: line.trim(),
-          });
-          found = true;
-          break;
-        }
-      }
-      if (found) break; // one backlink entry per file
+    // First inbound link to this note wins — its line becomes the context.
+    const link = parseLinks(note.content).find(
+      (l) => l.targetRaw === nameNorm || l.targetRaw === notePathNorm
+    );
+    if (link) {
+      backlinks.push({
+        name: path.basename(note.relPath, ".md"),
+        path: note.relPath,
+        context: link.context,
+      });
     }
   }
 
