@@ -110,6 +110,9 @@ export class FsIndex {
   }
 
   // --- NoteIndex maintenance ---
+  // TODO: add an async mutex around mutations + reconcile if concurrent writers
+  // are ever introduced. Today this is single-user/single-process, so the only
+  // interleaving is on await boundaries within one Node event loop — safe.
 
   async indexNote(notePath: string, content: string, mtimeMs?: number): Promise<void> {
     await this.ensureLoaded();

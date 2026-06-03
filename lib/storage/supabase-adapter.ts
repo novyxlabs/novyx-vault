@@ -6,23 +6,37 @@ import { parseLinks, parseTags } from "../index/resolve";
 import type { Backlink } from "../backlinks";
 import type { GraphData, GraphNode, GraphLink } from "../graph";
 
+// Per-user cache of the index_built flag, shared across request-scoped adapter
+// instances. The flag is monotonic (false -> true once backfilled), so a short
+// TTL is plenty: a stale "false" only costs one extra scan fallback, and
+// reindexAll() writes through to true. Mirrors gatingCache in lib/novyx.ts.
+const INDEX_BUILT_TTL_MS = 5 * 60 * 1000;
+const indexBuiltCache = new Map<string, { value: boolean; expiresAt: number }>();
+
+// reindex_note is atomic on the server, but the note write and the RPC are two
+// separate round-trips. Retry the RPC once on a transient failure (returned
+// error or a thrown rejection, e.g. a dropped connection) to bridge that seam.
+const RPC_RETRY_DELAY_MS = 300;
+
 export class SupabaseAdapter implements StorageAdapter {
   private supabase: SupabaseClient;
   private userId: string;
-  // Memoized per request: whether this user's index has been backfilled.
-  // Until it has, index reads return null so dispatchers fall back to the scan
-  // (zero-degraded rollout). Maintenance always runs, so the index is fresh by
-  // the time the backfill flips this flag.
-  private indexBuiltCache: boolean | null = null;
 
   constructor(userId: string, cookieHeader?: string) {
     this.userId = userId;
     this.supabase = createServerSupabase(cookieHeader);
   }
 
-  /** Reads profiles.settings.index_built once per adapter instance. */
+  /**
+   * Whether this user's index has been backfilled. Until it has, index reads
+   * return null so dispatchers fall back to the scan (zero-degraded rollout).
+   * Cached per-user with a short TTL; reindexAll() writes through to true.
+   */
   private async isIndexBuilt(): Promise<boolean> {
-    if (this.indexBuiltCache !== null) return this.indexBuiltCache;
+    const cached = indexBuiltCache.get(this.userId);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+    let value = false;
     try {
       const { data } = await this.supabase
         .from("profiles")
@@ -30,11 +44,13 @@ export class SupabaseAdapter implements StorageAdapter {
         .eq("id", this.userId)
         .single();
       const settings = (data?.settings ?? {}) as Record<string, unknown>;
-      this.indexBuiltCache = settings.index_built === true;
+      value = settings.index_built === true;
     } catch {
-      this.indexBuiltCache = false; // be safe — fall back to scan
+      value = false; // be safe — fall back to scan
     }
-    return this.indexBuiltCache;
+
+    indexBuiltCache.set(this.userId, { value, expiresAt: Date.now() + INDEX_BUILT_TTL_MS });
+    return value;
   }
 
   /**
@@ -751,13 +767,25 @@ export class SupabaseAdapter implements StorageAdapter {
     }
     const tags = parseTags(content);
 
-    const { error } = await this.supabase.rpc("reindex_note", {
+    await this.runReindexRpc({
       p_user: this.userId,
       p_path: normalized,
       p_links: links,
       p_tags: tags,
     });
-    this.assertNoError(error, `Failed to index note ${normalized}`);
+  }
+
+  /** Call reindex_note, retrying once on a transient error or thrown rejection. */
+  private async runReindexRpc(params: Record<string, unknown>): Promise<void> {
+    try {
+      const { error } = await this.supabase.rpc("reindex_note", params);
+      if (!error) return;
+    } catch {
+      // transient (e.g. dropped connection) — retry once below
+    }
+    await new Promise((resolve) => setTimeout(resolve, RPC_RETRY_DELAY_MS));
+    const { error } = await this.supabase.rpc("reindex_note", params);
+    this.assertNoError(error, `Failed to index note ${params.p_path}`);
   }
 
   async unindexNote(notePath: string): Promise<void> {
@@ -804,7 +832,8 @@ export class SupabaseAdapter implements StorageAdapter {
       .update({ settings })
       .eq("id", this.userId);
     this.assertNoError(error, "Failed to set index_built flag");
-    this.indexBuiltCache = true;
+    // Write through so reads go live immediately, no TTL wait.
+    indexBuiltCache.set(this.userId, { value: true, expiresAt: Date.now() + INDEX_BUILT_TTL_MS });
   }
 
   // --- Best-effort wrappers used from note mutations ---
