@@ -47,6 +47,30 @@ function extractQuotaResponse(err: unknown): Record<string, unknown> | null {
   return data;
 }
 
+const ROLLBACK_CONFLICT_CODE = "novyx_ram.v1.rollback.unachievable";
+
+// The SDK (>=3.3.0) throws NovyxRollbackConflictError for fail-closed 409s,
+// carrying the memory IDs that blocked the rollback. Match by name (consistent
+// with the quota handler above) so we don't import the SDK error class directly.
+function extractRollbackConflict(err: unknown): Record<string, unknown> | null {
+  if (!err || typeof err !== "object") return null;
+  const e = err as {
+    name?: string;
+    code?: string;
+    message?: string;
+    unrevertable?: unknown;
+    errors?: unknown;
+  };
+  if (e.name !== "NovyxRollbackConflictError") return null;
+  return {
+    error: e.code ?? ROLLBACK_CONFLICT_CODE,
+    message:
+      e.message ?? "Rollback aborted: target state cannot be fully restored. No changes were made.",
+    unrevertable: Array.isArray(e.unrevertable) ? e.unrevertable : [],
+    errors: Array.isArray(e.errors) ? e.errors : [],
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const ctx = await getStorageContext();
@@ -114,6 +138,8 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       const quotaBody = extractQuotaResponse(err);
       if (quotaBody) return Response.json(quotaBody, { status: 429 });
+      const conflictBody = extractRollbackConflict(err);
+      if (conflictBody) return Response.json(conflictBody, { status: 409 });
       throw err;
     }
   } catch (e) {

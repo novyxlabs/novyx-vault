@@ -265,6 +265,7 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
   const [rollbackResult, setRollbackResult] = useState<Record<string, unknown> | null>(null);
   const [rollbackError, setRollbackError] = useState<
     | { kind: "quota"; body: Record<string, unknown> }
+    | { kind: "conflict"; message: string; unrevertable: string[] }
     | { kind: "error"; message: string }
     | null
   >(null);
@@ -432,6 +433,18 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
       if (res.status === 429) {
         const body = await res.json().catch(() => ({}));
         setRollbackError({ kind: "quota", body: body as Record<string, unknown> });
+      } else if (res.status === 409) {
+        const body = (await res.json().catch(() => ({}))) as {
+          message?: string;
+          unrevertable?: unknown;
+        };
+        setRollbackError({
+          kind: "conflict",
+          message:
+            body.message ||
+            "Some memories changed since this checkpoint and cannot be automatically reverted.",
+          unrevertable: Array.isArray(body.unrevertable) ? (body.unrevertable as string[]) : [],
+        });
       } else if (res.ok) {
         const result = await res.json();
         setRollbackResult(result);
@@ -1435,6 +1448,35 @@ export default function MemoryDashboard({ isOpen, onClose }: MemoryDashboardProp
                           </div>
                         );
                       })()
+                    ) : rollbackError?.kind === "conflict" ? (
+                      <div className="text-center">
+                        <div className="w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center mx-auto mb-3">
+                          <AlertTriangle size={20} className="text-amber-400" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-foreground mb-1">Rollback Aborted</h3>
+                        <p className="text-xs text-muted mb-3">{rollbackError.message}</p>
+                        {rollbackError.unrevertable.length > 0 && (
+                          <div className="rounded-md bg-card-bg border border-sidebar-border p-3 mb-3 text-left max-h-32 overflow-y-auto">
+                            <p className="text-[11px] text-muted mb-1">
+                              {rollbackError.unrevertable.length} memory(ies) changed since this checkpoint:
+                            </p>
+                            <ul className="space-y-0.5">
+                              {rollbackError.unrevertable.map((id) => (
+                                <li key={id} className="text-[11px] font-mono text-foreground truncate">
+                                  {id}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <p className="text-[11px] text-muted mb-4">No changes were made — your memory is untouched.</p>
+                        <button
+                          onClick={handleRollbackCancel}
+                          className="px-4 py-2 rounded-md text-sm font-medium bg-accent text-white hover:bg-accent-hover transition-colors"
+                        >
+                          Close
+                        </button>
+                      </div>
                     ) : rollbackError?.kind === "error" ? (
                       <div className="text-center">
                         <div className="w-10 h-10 rounded-full bg-red-400/10 flex items-center justify-center mx-auto mb-3">
