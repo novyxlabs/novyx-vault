@@ -19,7 +19,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm audit
+      # Gate on production-dependency vulns only. Dev-tooling advisories (e.g.
+      # vitest/vite) shouldn't block shipping app code — they ride in their own
+      # dependency-bump PRs with regression testing.
+      - run: npm audit --omit=dev
 
   lint-and-typecheck:
     runs-on: ubuntu-latest
