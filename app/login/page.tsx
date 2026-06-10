@@ -96,7 +96,7 @@ export default function LoginPage() {
         fetch("/api/auth/provision", { method: "POST" }).catch(() => {});
         window.location.href = "/";
       } else {
-        const { error } = await getSupabase().auth.signUp({
+        const { data, error } = await getSupabase().auth.signUp({
           email,
           password,
         });
@@ -108,8 +108,12 @@ export default function LoginPage() {
           }
           throw error;
         }
-        // Provision Novyx key (fire-and-forget, idempotent)
-        fetch("/api/auth/provision", { method: "POST" }).catch(() => {});
+        // Provision Novyx key (fire-and-forget, idempotent). Skip when email
+        // confirmation is pending — there's no session yet, so the call can
+        // only 401; provisioning happens on first sign-in instead.
+        if (data.session) {
+          fetch("/api/auth/provision", { method: "POST" }).catch(() => {});
+        }
         setMessage("Check your email to confirm your account.");
       }
     } catch (err: unknown) {
