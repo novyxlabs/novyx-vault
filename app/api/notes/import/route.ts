@@ -6,7 +6,11 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 
-const LOCAL_DIR = path.join(os.homedir(), "SecondBrain");
+// Honor the same override as FsAdapter so tests and alternate setups
+// never read the real vault.
+const LOCAL_DIR = process.env.NOVYX_NOTES_DIR
+  ? path.resolve(process.env.NOVYX_NOTES_DIR)
+  : path.join(os.homedir(), "SecondBrain");
 
 async function createLocalAdapter() {
   const { FsAdapter } = await import("@/lib/storage/fs-adapter");
