@@ -1,11 +1,14 @@
 -- Performance indexes
-create index concurrently if not exists notes_user_modified_idx
+-- Plain CREATE INDEX (not CONCURRENTLY): supabase db push runs migrations
+-- inside a transaction, where CONCURRENTLY is not allowed — it made this
+-- whole migration unapplyable. Table sizes here make the brief lock fine.
+create index if not exists notes_user_modified_idx
   on public.notes (user_id, is_trashed, modified_at desc);
 
-create index concurrently if not exists note_versions_user_idx
+create index if not exists note_versions_user_idx
   on public.note_versions (user_id);
 
-create index concurrently if not exists notes_published_idx
+create index if not exists notes_published_idx
   on public.notes (is_published) where (is_published = true and is_trashed = false);
 
 -- Tighten published notes RLS: only expose safe columns via a view
