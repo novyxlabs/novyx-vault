@@ -18,9 +18,14 @@ export function sanitizeHref(url: string): string {
   return safe.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-/** HTML-escape a string for safe insertion into HTML */
+/** HTML-escape a string for safe insertion into HTML, including quoted attributes */
 export function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** Format inline markdown (bold, italic, code, links) with sanitized hrefs */

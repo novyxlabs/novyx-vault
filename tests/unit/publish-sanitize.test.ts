@@ -1,5 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeHref, formatInlineMarkdown } from "@/lib/sanitize";
+import { escapeHtml, sanitizeHref, formatInlineMarkdown } from "@/lib/sanitize";
+
+describe("escapeHtml", () => {
+  it("escapes quotes so values cannot break out of HTML attributes", () => {
+    const title = 'Alice\'s "Launch" Notes';
+    const escaped = escapeHtml(title);
+    expect(escaped).not.toContain('"');
+    expect(escaped).not.toContain("'");
+    expect(escaped).toBe("Alice&#39;s &quot;Launch&quot; Notes");
+  });
+});
 
 describe("published note link sanitization", () => {
   it("allows https links", () => {
