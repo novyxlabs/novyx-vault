@@ -185,8 +185,15 @@ export async function ensureNovyxKey(
  */
 export async function storeNovyxKey(
   userId: string,
-  apiKey: string
+  apiKey: string | null | undefined
 ): Promise<void> {
+  if (!apiKey) {
+    // Novyx returns api_key: null on idempotent re-provision when the
+    // existing key is v2 (non-deterministic — the server cannot re-derive
+    // it). The key already exists; never overwrite a stored key with null.
+    console.warn("storeNovyxKey: skipped null api_key (idempotent re-provision of existing key)");
+    return;
+  }
   const supabase = createServiceSupabase();
   const { error } = await supabase
     .from("profiles")
