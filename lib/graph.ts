@@ -1,8 +1,8 @@
 import path from "path";
 import { getStorage } from "./storage";
+import type { StorageAdapter } from "./storage";
 import type { StorageContext } from "./notes";
-
-const WIKILINK_REGEX = /\[\[([^\]]+)\]\]/g;
+import { parseLinkTargets } from "./index/resolve";
 
 export interface GraphNode {
   id: string;
@@ -21,48 +21,48 @@ export interface GraphData {
 
 export async function buildGraph(ctx?: StorageContext): Promise<GraphData> {
   const storage = getStorage(ctx?.userId, ctx?.cookieHeader);
+
+  // Indexed path: O(E) resolved edges when the adapter maintains an index.
+  // null = index unavailable (e.g. not yet backfilled) → fall back to scan.
+  if (typeof storage.getGraph === "function") {
+    const indexed = await storage.getGraph();
+    if (indexed !== null) return indexed;
+  }
+
+  return scanGraph(storage);
+}
+
+/** Legacy fallback: walk every note and resolve wiki-links to build the graph. */
+async function scanGraph(storage: StorageAdapter): Promise<GraphData> {
   const notes = await storage.walkAllNotes();
 
-  // Build a lookup: lowercased name (without .md) -> note path (without .md)
+  // Lookup: lowercased name (without .md) -> note path (without .md)
   const nameToPath = new Map<string, string>();
-  const pathToName = new Map<string, string>();
-
   for (const note of notes) {
     const notePath = note.relPath.replace(/\.md$/, "");
-    const noteName = path.basename(notePath);
-    nameToPath.set(noteName.toLowerCase(), notePath);
-    pathToName.set(notePath, noteName);
+    nameToPath.set(path.basename(notePath).toLowerCase(), notePath);
   }
 
   const nodes: GraphNode[] = [];
   const links: GraphLink[] = [];
-  const nodeIds = new Set<string>();
 
-  // Create nodes for all files
+  // One node per file
   for (const note of notes) {
     const id = note.relPath.replace(/\.md$/, "");
-    const name = path.basename(id);
-    nodes.push({ id, name });
-    nodeIds.add(id);
+    nodes.push({ id, name: path.basename(id) });
   }
 
-  // Extract links from wiki-links in each file
+  // Resolve wiki-links to edges
   for (const note of notes) {
     const sourceId = note.relPath.replace(/\.md$/, "");
-
     const seen = new Set<string>();
-    let match;
-    WIKILINK_REGEX.lastIndex = 0;
-    while ((match = WIKILINK_REGEX.exec(note.content)) !== null) {
-      const linkText = match[1].trim();
-      const linkLower = linkText.toLowerCase();
 
-      // Resolve: try exact path match first, then name match
-      let targetId = nameToPath.get(linkLower);
+    for (const target of parseLinkTargets(note.content)) {
+      // Resolve: try name match first, then full-path match.
+      let targetId = nameToPath.get(target);
       if (!targetId) {
-        // Try as a path
-        for (const [, notePath] of nameToPath) {
-          if (notePath.toLowerCase() === linkLower) {
+        for (const notePath of nameToPath.values()) {
+          if (notePath.toLowerCase() === target) {
             targetId = notePath;
             break;
           }

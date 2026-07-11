@@ -3,12 +3,19 @@ import path from "path";
 import os from "os";
 import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile } from "./types";
 import { validateNotePath } from "./path-validator";
+import { FsIndex } from "./fs-index";
+import type { Backlink } from "../backlinks";
+import type { GraphData } from "../graph";
 
 const NOTES_DIR = process.env.NOVYX_NOTES_DIR
   ? path.resolve(process.env.NOVYX_NOTES_DIR)
   : path.join(os.homedir(), "SecondBrain");
 const TRASH_DIR = path.join(NOTES_DIR, ".trash");
 const HISTORY_DIR = path.join(NOTES_DIR, ".history");
+
+// Module-level singleton: the in-memory index must outlive the per-request
+// FsAdapter instances within the long-lived local process.
+const fsIndex = new FsIndex(NOTES_DIR);
 
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
@@ -99,6 +106,14 @@ export class FsAdapter implements StorageAdapter {
     const resolvedPath = fullPath.endsWith(".md") ? fullPath : fullPath + ".md";
     await ensureDir(path.dirname(resolvedPath));
     await fs.writeFile(resolvedPath, content, "utf-8");
+
+    // Best-effort incremental index maintenance — must not fail the write.
+    try {
+      const stat = await fs.stat(resolvedPath);
+      await fsIndex.indexNote(notePath, content, stat.mtimeMs);
+    } catch (e) {
+      console.warn(`[index] indexNote failed for ${notePath}:`, e);
+    }
   }
 
   async createFolder(folderPath: string): Promise<void> {
@@ -126,6 +141,13 @@ export class FsAdapter implements StorageAdapter {
 
     const meta = { originalPath: notePath, deletedAt: new Date().toISOString(), fileName: baseName };
     await fs.writeFile(trashPath + ".meta.json", JSON.stringify(meta), "utf-8");
+
+    // Best-effort: drop the note (and any descendants, for folders) from the index.
+    try {
+      await fsIndex.unindexNote(notePath);
+    } catch (e) {
+      console.warn(`[index] unindexNote failed for ${notePath}:`, e);
+    }
   }
 
   async renameNote(oldPath: string, newPath: string): Promise<void> {
@@ -149,6 +171,14 @@ export class FsAdapter implements StorageAdapter {
 
     await ensureDir(path.dirname(fullNewPath));
     await fs.rename(fullOldPath, fullNewPath);
+
+    // Paths changed (possibly many, for a folder). A reconcile detects the
+    // moved file(s) by absence/presence and re-parses them. Best-effort.
+    try {
+      await fsIndex.reconcile();
+    } catch (e) {
+      console.warn(`[index] reconcile after rename failed:`, e);
+    }
   }
 
   async listTrash(): Promise<TrashEntry[]> {
@@ -193,6 +223,13 @@ export class FsAdapter implements StorageAdapter {
     await ensureDir(path.dirname(stat.isDirectory() ? restorePath : resolvedRestore));
     await fs.rename(trashPath, stat.isDirectory() ? restorePath : resolvedRestore);
     await fs.unlink(metaPath).catch(() => {});
+
+    // Restored note(s) re-enter the vault — reconcile picks them back up.
+    try {
+      await fsIndex.reconcile();
+    } catch (e) {
+      console.warn(`[index] reconcile after restore failed:`, e);
+    }
     return meta.originalPath;
   }
 
@@ -332,5 +369,33 @@ export class FsAdapter implements StorageAdapter {
     }
 
     return ts;
+  }
+
+  // --- NoteIndex: delegate to the module-level filesystem index ---
+  // Local index is always available (lazily built on first access), so reads
+  // never return null.
+
+  async getBacklinks(noteName: string, notePath: string): Promise<Backlink[]> {
+    return fsIndex.getBacklinks(noteName, notePath);
+  }
+
+  async getGraph(): Promise<GraphData> {
+    return fsIndex.getGraph();
+  }
+
+  async getNotesByTag(tag: string): Promise<string[]> {
+    return fsIndex.getNotesByTag(tag);
+  }
+
+  async indexNote(notePath: string, content: string, mtimeMs?: number): Promise<void> {
+    return fsIndex.indexNote(notePath, content, mtimeMs);
+  }
+
+  async unindexNote(notePath: string): Promise<void> {
+    return fsIndex.unindexNote(notePath);
+  }
+
+  async reindexAll(): Promise<void> {
+    return fsIndex.reindexAll();
   }
 }

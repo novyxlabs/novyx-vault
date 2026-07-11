@@ -26,7 +26,12 @@ export interface SearchFilters {
   tag?: string;
 }
 
-export interface StorageAdapter {
+import type { NoteIndex } from "../index/types";
+
+// Index methods are optional: adapters that implement NoteIndex serve
+// backlink/graph/tag queries from a maintained index; the rest fall back to
+// the legacy full-vault scan (see lib/backlinks.ts, lib/graph.ts, lib/connections.ts).
+export interface StorageAdapter extends Partial<NoteIndex> {
   // CRUD
   listNotes(dirPath?: string): Promise<NoteEntry[]>;
   readNote(notePath: string): Promise<string>;
