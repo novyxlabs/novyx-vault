@@ -54,7 +54,17 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Missing observation text" }, { status: 400 });
     }
 
-    await rememberExchange(observation.trim(), undefined, ctx.userId, apiKey ?? undefined);
+    if (!apiKey) {
+      return Response.json(
+        { error: "Novyx Memory API key is not configured" },
+        { status: 503 }
+      );
+    }
+
+    const saved = await rememberExchange(observation.trim(), undefined, ctx.userId, apiKey);
+    if (!saved) {
+      return Response.json({ error: "Failed to save memory" }, { status: 502 });
+    }
     return Response.json({ success: true });
   } catch (e) {
     if (e instanceof Response) return e;

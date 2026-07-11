@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import type { StorageAdapter, NoteEntry, TrashEntry, NoteFile } from "./types";
-import { validateNotePath } from "./path-validator";
+import { tryValidateNotePath, validateNotePath } from "./path-validator";
 
 const NOTES_DIR = process.env.NOVYX_NOTES_DIR
   ? path.resolve(process.env.NOVYX_NOTES_DIR)
@@ -58,6 +58,7 @@ export class FsAdapter implements StorageAdapter {
       if (entry.name.startsWith(".")) continue;
 
       const entryPath = path.join(dirPath, entry.name);
+      if (tryValidateNotePath(entryPath) === null) continue;
       const fullEntryPath = path.join(fullPath, entry.name);
       const stat = await fs.stat(fullEntryPath);
 

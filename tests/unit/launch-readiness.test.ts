@@ -9,6 +9,22 @@ function readText(filePath: string): string {
   return fs.readFileSync(path.join(root, filePath), "utf-8");
 }
 
+function countFiles(relativeDir: string, predicate: (filePath: string) => boolean): number {
+  const start = path.join(root, relativeDir);
+  let count = 0;
+
+  for (const entry of fs.readdirSync(start, { withFileTypes: true })) {
+    const fullPath = path.join(start, entry.name);
+    if (entry.isDirectory()) {
+      count += countFiles(path.relative(root, fullPath), predicate);
+    } else if (predicate(fullPath)) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 function restoreEnv() {
   for (const key of Object.keys(process.env)) {
     if (!(key in originalEnv)) delete process.env[key];
@@ -53,6 +69,51 @@ describe("Phase 8 deployment readiness config", () => {
       expect(envExample).toContain(key);
       expect(readme).toContain(key);
     }
+  });
+});
+
+describe("Public claims readiness", () => {
+  it("keeps pricing copy aligned with implemented feature gates", () => {
+    const pricing = readText("app/pricing/page.tsx");
+    const faq = readText("app/faq/page.tsx");
+    const comparison = readText("app/compare/obsidian/page.tsx");
+
+    expect(pricing).toContain("Free markdown notes, wiki-links, and knowledge graph");
+    expect(pricing).toContain("Export markdown ZIP");
+    expect(pricing).toContain("Hosted cloud access, sharing & publishing");
+    expect(pricing).not.toContain("Free markdown notes, AI memory");
+    expect(pricing).not.toContain('"Publishing",');
+    expect(pricing).not.toContain('"Voice Capture & Transcription"');
+
+    expect(faq).toContain("markdown export");
+    expect(faq).toContain("hosted cloud features such as sharing and publishing");
+    expect(faq).not.toContain("cortex insights, voice capture, audit history");
+
+    expect(comparison).toContain("the desktop/local app, and markdown export");
+    expect(comparison).toContain("account-backed access, sharing, and");
+    expect(comparison).not.toContain("the desktop/local app, and publishing");
+  });
+
+  it("does not publish stale competitor or broad memory claims", () => {
+    const readme = readText("README.md");
+
+    expect(readme).toContain("| **Open source** | MIT | Proprietary |");
+    expect(readme).toContain("| **AI discovers hidden connections** | Built in (Ghost Connections) | Plugin-dependent |");
+    expect(readme).not.toContain("Source-available");
+    expect(readme).not.toContain("The longer you use it, the smarter it gets.");
+    expect(readme).not.toContain("One API key, one memory, everywhere.");
+  });
+
+  it("keeps public inventory claims within the current repo shape", async () => {
+    const readme = readText("README.md");
+    const { PROVIDER_PRESETS } = await import("@/lib/providers");
+
+    expect(countFiles("components", (filePath) => filePath.endsWith(".tsx"))).toBeGreaterThanOrEqual(50);
+    expect(countFiles("app/api", (filePath) => filePath.endsWith("route.ts"))).toBeGreaterThanOrEqual(70);
+    expect(PROVIDER_PRESETS).toHaveLength(21);
+    expect(readme).toContain("50+ React components");
+    expect(readme).toContain("70+ API routes");
+    expect(readme).toContain("21 AI provider presets");
   });
 });
 

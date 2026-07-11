@@ -18,7 +18,7 @@ const faqs = [
   {
     question: "Is Novyx Vault free?",
     answer:
-      "Yes. The free tier includes the markdown editor, wiki-links, backlinks, knowledge graph, BYOK provider setup, and desktop/local storage. The $9/month Pro plan adds persistent AI memory, Ghost Connections, cortex insights, voice capture, audit history, and hosted cloud features.",
+      "Yes. The free tier includes the markdown editor, wiki-links, backlinks, knowledge graph, BYOK provider setup, desktop/local storage, and markdown export. The $9/month Pro plan adds persistent AI memory, Ghost Connections, cortex insights, audit history, daily digests, and hosted cloud features such as sharing and publishing.",
   },
   {
     question: "How does AI memory work in Novyx Vault?",
@@ -48,7 +48,7 @@ const faqs = [
   {
     question: "Does Novyx Vault work offline?",
     answer:
-      "Core note editing works offline in desktop/local mode because notes are plain markdown files on your machine. AI requests, provider setup, publishing, hosted cloud access, and account features require network access unless you configure a local model.",
+      "Core note editing works offline in desktop/local mode because notes are plain markdown files on your machine. Hosted sharing, cloud publishing, account features, and remote AI requests require network access unless you configure a local model for AI work.",
   },
   {
     question: "What AI providers does Novyx Vault support?",

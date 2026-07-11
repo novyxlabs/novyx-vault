@@ -1,16 +1,16 @@
 # Novyx Vault
 
-> Markdown knowledge vault with persistent memory that learns your thinking patterns.
+> Markdown knowledge vault with inspectable persistent AI memory.
 
-Novyx Vault is a markdown-first note-taking app where AI gets smarter the longer you use it. Built by Novyx Labs.
+Novyx Vault is a markdown-first note-taking app where AI can preserve useful context across sessions when Novyx memory is configured. Built by Novyx Labs.
 
 ## What is Novyx Vault?
 
-Novyx Vault is an open-source personal knowledge management application that combines wiki-style note-linking with persistent AI memory powered by the Novyx SDK. Unlike other AI note apps, the AI in Novyx Vault remembers your notes, preferences, and thinking patterns across every session.
+Novyx Vault is an open-source personal knowledge management application that combines wiki-style note-linking with persistent AI memory powered by the Novyx SDK. With memory configured, Vault can recall notes, preferences, and project context across sessions.
 
 ## Key Features
 
-- Persistent AI Memory: AI remembers your notes, preferences, and thinking patterns across sessions
+- Persistent AI Memory: AI can preserve notes, preferences, and project context across sessions
 - Wiki-Style Linking: Connect ideas with [[wiki-links]] and visualize your knowledge graph
 - Ghost Connections: AI automatically discovers hidden relationships between your notes
 - Knowledge Graph: Interactive force-directed graph visualization of your entire vault
@@ -29,7 +29,7 @@ Novyx Vault is an open-source personal knowledge management application that com
 - CodeMirror 6 editor
 - Novyx SDK for persistent AI memory
 - Supabase for cloud storage and authentication
-- Tauri for desktop apps (macOS, Windows, Linux)
+- Tauri source build for desktop apps targeting macOS, Windows, and Linux
 
 ## Links
 

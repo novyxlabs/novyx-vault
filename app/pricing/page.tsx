@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Free markdown notes, AI memory, and knowledge graph. Upgrade to Pro for persistent memory, Ghost Connections, cortex insights, and more.",
+    "Free markdown notes, wiki-links, and knowledge graph. Upgrade to Pro for persistent AI memory, Ghost Connections, cortex insights, and more.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -15,7 +15,7 @@ const free = [
   "Knowledge graph",
   "BYOK AI provider setup",
   "Desktop/local markdown files",
-  "Publishing",
+  "Export markdown ZIP",
   "Community support",
 ];
 
@@ -26,9 +26,8 @@ const pro = [
   "Memory Timeline & Rollback",
   "Cortex Insights & Entity Extraction",
   "Audit Trail with chain verification",
-  "Voice Capture & Transcription",
   "Daily Digest Emails",
-  "Hosted cloud access & publishing",
+  "Hosted cloud access, sharing & publishing",
   "Priority support",
 ];
 
@@ -63,7 +62,7 @@ export default function PricingPage() {
             Pricing
           </h1>
           <p className="text-lg text-muted max-w-2xl mx-auto">
-            Free to start. Upgrade when you want persistent memory and hosted cloud access.
+            Free to start. Upgrade when you want persistent memory, hosted sharing, and cloud publishing.
           </p>
         </section>
 

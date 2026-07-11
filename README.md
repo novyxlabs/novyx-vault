@@ -29,17 +29,17 @@
 
 Many AI note tools and Obsidian plugins mostly search your notes when you ask a question (RAG). Without a durable memory layer, a new session has to reconstruct context from scratch.
 
-**Novyx Vault is different.** Your AI builds persistent memory from your notes and conversations — memory that survives sessions, consolidates over time, and can be rolled back when it goes wrong. The longer you use it, the smarter it gets.
+**Novyx Vault is different.** Your AI can build persistent memory from your notes and conversations — memory that survives sessions, consolidates over time, and can be rolled back when it goes wrong. The longer you use it, the more useful context it can preserve.
 
 ## What makes it different
 
 | | Novyx Vault | Obsidian |
 |---|---|---|
 | **AI remembers across sessions** | With Novyx memory configured | No native equivalent |
-| **Memory rollback & audit trail** | Built in | No |
-| **AI discovers hidden connections** | Built in (Ghost Connections) | No |
+| **Memory rollback & audit trail** | Built in | No native equivalent |
+| **AI discovers hidden connections** | Built in (Ghost Connections) | Plugin-dependent |
 | **Bring your own AI provider** | Built in | Plugin-dependent |
-| **Open source** | MIT | Source-available |
+| **Open source** | MIT | Proprietary |
 | **Desktop-local files** | Yes (Tauri desktop) | Yes |
 | **Markdown files** | Yes | Yes |
 | **Knowledge graph** | Yes | Yes |
@@ -70,10 +70,11 @@ echo "NOVYX_MEMORY_API_KEY=your_key" > .env.local
 
 Add a Novyx API key from [novyxlabs.com](https://novyxlabs.com) to unlock cross-session memory, rollback, ghost connections, and cortex insights.
 
-### Docker (one command)
+### Docker (local image)
 
 ```bash
-docker run -p 3000:3000 ghcr.io/novyxlabs/novyx-vault
+docker build -t novyx-vault .
+docker run -p 3000:3000 novyx-vault
 ```
 
 ### Desktop app (Tauri)
@@ -109,7 +110,7 @@ The core differentiator. Powered by [Novyx Core](https://novyxlabs.com).
 
 ### AI writing tools
 
-- **Voice capture** — Record and transcribe on-device or via cloud. AI structures transcripts into clean notes.
+- **Voice capture** — Record and transcribe locally in the browser or through a supported cloud transcription endpoint. AI structures transcripts into clean notes.
 - **Brain dump** — Paste raw thoughts, get structured notes back.
 - **Clip remix** — Paste web content, get it rewritten in your voice.
 - **Slash commands** — Inline AI anywhere in the editor.
@@ -124,7 +125,7 @@ Keys are encrypted at rest in cloud mode and stay on your device in desktop mode
 
 ### Desktop-local & open source
 
-- **Desktop app** — Native via Tauri (macOS, Windows, Linux). Notes stored as plain markdown in `~/SecondBrain/`. Core note editing works offline.
+- **Desktop app** — Tauri source build targeting macOS, Windows, and Linux. Notes stored as plain markdown in `~/SecondBrain/`. Core note editing works offline.
 - **Cloud mode** — Optional Supabase-powered hosted mode with auth, sharing, and publishing.
 - **MIT licensed** — Inspect, contribute, or self-host.
 
@@ -149,7 +150,7 @@ pip install novyx-mcp
 claude mcp add novyx-memory -- python -m novyx_mcp
 ```
 
-Memories created in Claude Code appear in Vault. Memories from Vault are available to your coding agent. One API key, one memory, everywhere.
+Memories created in Claude Code can appear in Vault. Memories from Vault can be available to your coding agent when both tools use the same Novyx memory workspace.
 
 ---
 
@@ -202,7 +203,7 @@ Or connect to [Vercel](https://vercel.com) for automatic deployments.
 
 Next.js 16 &middot; React 19 &middot; TypeScript &middot; Tailwind CSS 4 &middot; CodeMirror 6 &middot; Novyx SDK &middot; Supabase &middot; Tauri v2
 
-**51 components &middot; 72 API routes &middot; 21 AI provider presets**
+**50+ React components &middot; 70+ API routes &middot; 21 AI provider presets**
 
 ## Project structure
 
